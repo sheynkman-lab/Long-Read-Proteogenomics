@@ -1,0 +1,17 @@
+# From here: https://github.com/reviewdog/action-misspell
+name: reviewdog misspell
+on: [pull_request]
+jobs:
+  misspell:
+    name: runner / misspell
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code.
+        uses: actions/checkout@v2
+      - name: misspell
+        uses: reviewdog/action-misspell@master
+        with:
+          github_token: ${{ secrets.github_token }}
+          locale: "US"
+          reporter: github-pr-review
+          level: error
