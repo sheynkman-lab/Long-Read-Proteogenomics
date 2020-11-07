@@ -25,9 +25,14 @@ namespace EngineLayer
         /// </summary>
         private readonly bool _treatModPeptidesAsDifferentPeptides;
 
-        public ProteinParsimonyEngine(List<PeptideSpectralMatch> allPsms, bool modPeptidesAreDifferent, CommonParameters commonParameters, List<(string fileName, CommonParameters fileSpecificParameters)> fileSpecificParameters, List<string> nestedIds) : base(commonParameters, fileSpecificParameters, nestedIds)
+        private readonly bool _useOrfInfoInProteinInference;
+
+        public ProteinParsimonyEngine(List<PeptideSpectralMatch> allPsms, bool modPeptidesAreDifferent, CommonParameters commonParameters,
+            List<(string fileName, CommonParameters fileSpecificParameters)> fileSpecificParameters, bool useOrfInfoInProteinInference, List<string> nestedIds)
+            : base(commonParameters, fileSpecificParameters, nestedIds)
         {
             _treatModPeptidesAsDifferentPeptides = modPeptidesAreDifferent;
+            _useOrfInfoInProteinInference = useOrfInfoInProteinInference;
 
             if (!allPsms.Any())
             {
@@ -348,13 +353,26 @@ namespace EngineLayer
                 int numNewSeqs = algDictionary.Max(p => p.Value.Count);
                 while (numNewSeqs != 0)
                 {
-                    // get the next best protein based on:
-                    // 1. the number of new peptide sequences and then (in case of a tie),
-                    // 2. the number of total peptides observed for the protein, regardless if they're unaccounted for or not
-                    Protein bestProtein = algDictionary
-                        .Where(p => p.Value.Count == numNewSeqs)
-                        .OrderByDescending(p => proteinToPepSeqMatch[p.Key].Count)
-                        .First().Key;
+                    Protein bestProtein;
+
+                    if (_useOrfInfoInProteinInference)
+                    {
+                        //TODO: edit this to use ORF info
+                        bestProtein = algDictionary
+                            .Where(p => p.Value.Count == numNewSeqs)
+                            .OrderByDescending(p => proteinToPepSeqMatch[p.Key].Count)
+                            .First().Key;
+                    }
+                    else
+                    {
+                        // get the next best protein based on:
+                        // 1. the number of new peptide sequences and then (in case of a tie),
+                        // 2. the number of total peptides observed for the protein, regardless if they're unaccounted for or not
+                        bestProtein = algDictionary
+                            .Where(p => p.Value.Count == numNewSeqs)
+                            .OrderByDescending(p => proteinToPepSeqMatch[p.Key].Count)
+                            .First().Key;
+                    }
 
                     parsimoniousProteinList.Add(bestProtein);
 
