@@ -1,5 +1,5 @@
 <!--
-# nf-core/proteogenomics feature request
+# sheynkman-lab/Long-Read-Proteogenomics feature request
 
 Hi there!
 
