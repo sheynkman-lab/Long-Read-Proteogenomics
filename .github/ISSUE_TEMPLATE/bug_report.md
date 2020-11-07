@@ -14,7 +14,7 @@ Please delete this text and anything that's not relevant from the template below
 
 ## Steps to reproduce
 
-Steps to reproduce the behaviour:
+Steps to reproduce the behavior:
 
 1. Command line: <!-- [e.g. `nextflow run ...`] -->
 2. See error: <!-- [Please provide your error message] -->
