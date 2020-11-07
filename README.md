@@ -16,5 +16,8 @@ Pipeline overview - A pipeline is provided here that can talk raw Pac-Bio data a
 
 ![pipeline](https://user-images.githubusercontent.com/16841846/98399434-fa4b8a00-2027-11eb-953b-edb440c7ff8e.png)
 
+=======
+## Authors
 
 Gloria Sheynkman
+Simran Kaur
