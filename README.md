@@ -18,4 +18,4 @@ Pipeline overview - A pipeline is provided here that can talk raw Pac-Bio data a
 
 ## Authors
 
-Simi Kaur
+Simran Kaur
