@@ -17,4 +17,10 @@ Pipeline overview - A pipeline is provided here that can talk raw Pac-Bio data a
 ![pipeline](https://user-images.githubusercontent.com/16841846/98399434-fa4b8a00-2027-11eb-953b-edb440c7ff8e.png)
 
 
-Author:  Anne Deslattes Mays, https://orcid.org/0000-0001-7951-3439
+## Authors
+
+Gloria Sheynkman
+Michael Shortreed
+Rachel M. Miller
+Simran Kaur
+Anne Deslattes Mays, https://orcid.org/0000-0001-7951-3439
