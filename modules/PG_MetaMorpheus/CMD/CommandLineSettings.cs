@@ -14,6 +14,7 @@ namespace MetaMorpheusCommandLine
         public List<string> Spectra { get; private set; }
         public List<string> Tasks { get; private set; }
         public List<string> Databases { get; private set; }
+        public List<string> OrfCallingTables { get; private set; }
 
         [Option('t', HelpText = "Single-task TOMLs (.toml file format); space-delimited")]
         public IEnumerable<string> _tasks { get; set; }
@@ -30,6 +31,9 @@ namespace MetaMorpheusCommandLine
         [Option('g', HelpText = "[Optional] Generate default task tomls")]
         public bool GenerateDefaultTomls { get; set; }
 
+        [Option("orf", HelpText = "[Optional] ORF calling tables (.tsv format)")]
+        public IEnumerable<string> _orfCallingTables { get; set; }
+
         [Option('v', Default = VerbosityType.normal, HelpText = "[Optional] Determines how much text is written. Options are no output ('none'), minimal output and errors  ('minimal'), or normal ('normal')")]
         public VerbosityType Verbosity { get; set; }
 
@@ -38,7 +42,7 @@ namespace MetaMorpheusCommandLine
 
         [Option("mmsettings", HelpText = "[Optional] Path to MetaMorpheus settings")]
         public string CustomDataDirectory { get; set; }
-        
+
         public enum VerbosityType { none, minimal, normal };
 
         public void ValidateCommandLineSettings()
@@ -46,6 +50,7 @@ namespace MetaMorpheusCommandLine
             Spectra = _spectra == null ? new List<string>() : _spectra.ToList();
             Tasks = _tasks == null ? new List<string>() : _tasks.ToList();
             Databases = _databases == null ? new List<string>() : _databases.ToList();
+            OrfCallingTables = _orfCallingTables == null ? null : _orfCallingTables.ToList();
 
             if ((GenerateDefaultTomls || RunMicroVignette) && OutputFolder == null)
             {
@@ -123,6 +128,26 @@ namespace MetaMorpheusCommandLine
                 {
                     throw new MetaMorpheusException("Unrecognized spectra file format: " + ext);
                 }
+            }
+
+            if (OrfCallingTables != null)
+            {
+                foreach (var path in OrfCallingTables)
+                {
+                    if (!File.Exists(path))
+                    {
+                        throw new MetaMorpheusException("The following file does not exist: " + path);
+                    }
+
+                    string ext = Path.GetExtension(path).ToLowerInvariant();
+
+                    if (ext != ".tsv")
+                    {
+                        throw new MetaMorpheusException("Unrecognized spectra file format for ORF calling table: " + ext);
+                    }
+                }
+
+                Console.WriteLine("Successfully found " + OrfCallingTables.Count + "ORF calling tables");
             }
         }
 
