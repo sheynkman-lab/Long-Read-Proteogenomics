@@ -2,6 +2,8 @@
 
 [Cold Spring Harbor Laboratory Biological Data Science Codeathon](https://datascience.nih.gov/news/cold-spring-harbor-laboratory-biological-data-science-codeathon)
 
+# [Get started immediately with the data vignette!](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Pipeline-Vignette)
+
 Protein isoforms are the direct translational product of fully spliced mRNA molecules. Protein isoforms can be modified during or subsequent to translation with additional chemical moities (e.g. phosphorylation or acetylation) or they can be cleaved resulting in a [proteoform](https://www.nature.com/articles/nmeth.2369), which is the ultimate biological actor in many important biological processes. 
 
 At a high level, protein isoforms can be predicted from genomic sequencing data and then observed by mass spectrometry. Despite impressive technological achievements in both realms (sequencing and mass spectrometry), many gaps exist in our ability to comprehensively identify all protein isoforms even for a single sample. Scientists ability to accomplish this goal depends on having detailed an accurate knowledge of all protein coding mRNA isoforms, comprehensive mass spectrometry data covering at least one unique region of each protein isoform, and a protein inference algorithm that can faithfully and accurately attribute observed peptides to the proper parent isoform. We provide below an overiew of the key remaining challenges and then provide for the first time a pipeline that solves these challenges.
