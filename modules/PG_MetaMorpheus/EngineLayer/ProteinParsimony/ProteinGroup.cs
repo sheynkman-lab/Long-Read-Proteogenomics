@@ -169,6 +169,7 @@ namespace EngineLayer
             sb.Append("Protein QValue" + '\t');
             sb.Append("Best Peptide Score" + '\t');
             sb.Append("Best Peptide Notch QValue");
+            sb.Append("ORF Reads");
             return sb.ToString();
         }
 
@@ -325,6 +326,28 @@ namespace EngineLayer
             // best peptide q value
             sb.Append(BestPeptideQValue);
             sb.Append("\t");
+
+            if (GlobalVariables.ProteinToProteogenomicInfo.Any())
+            {
+                for (int i = 0; i < ListOfProteinsOrderedByAccession.Count; i++)
+                {
+                    Protein protein = ListOfProteinsOrderedByAccession[i];
+
+                    if (GlobalVariables.ProteinToProteogenomicInfo.TryGetValue(protein, out LongReadInfo proteogenomicInfo))
+                    {
+                        sb.Append(proteogenomicInfo.ToString());
+                    }
+                    else
+                    {
+                        sb.Append("No ORF info");
+                    }
+
+                    if (i != ListOfProteinsOrderedByAccession.Count - 1)
+                    {
+                        sb.Append("|");
+                    }
+                }
+            }
 
             return sb.ToString();
         }

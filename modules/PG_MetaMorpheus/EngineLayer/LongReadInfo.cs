@@ -15,5 +15,14 @@ namespace EngineLayer
             this.Protein = protein;
             this.NumReads = numReads;
         }
+
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.Append(NumReads);
+
+            return sb.ToString();
+        }
     }
 }
