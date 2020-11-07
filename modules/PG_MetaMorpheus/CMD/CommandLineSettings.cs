@@ -143,11 +143,11 @@ namespace MetaMorpheusCommandLine
 
                     if (ext != ".tsv")
                     {
-                        throw new MetaMorpheusException("Unrecognized spectra file format for ORF calling table: " + ext);
+                        throw new MetaMorpheusException("Unrecognized file format for ORF calling table: " + ext);
                     }
                 }
 
-                Console.WriteLine("Successfully found " + OrfCallingTables.Count + "ORF calling tables");
+                Console.WriteLine("Successfully found " + OrfCallingTables.Count + " ORF calling tables");
             }
         }
 
