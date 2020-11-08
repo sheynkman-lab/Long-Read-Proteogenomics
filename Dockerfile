@@ -22,7 +22,7 @@ RUN conda env export --name proteogenomics-base > proteogenomics-base.yml
 RUN touch .Rprofile
 RUN touch .Renviron
 
-# Copy additonal scripts from bin and add to PATH
+# Copy additional scripts from bin and add to PATH
 RUN mkdir /opt/bin
 COPY bin/* /opt/bin/
 RUN chmod +x /opt/bin/*

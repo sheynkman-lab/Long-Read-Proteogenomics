@@ -19,7 +19,7 @@ Steps to reproduce the behavior:
 1. Command line: <!-- [e.g. `nextflow run ...`] -->
 2. See error: <!-- [Please provide your error message] -->
 
-## Expected behaviour
+## Expected behavior
 
 <!-- A clear and concise description of what you expected to happen. -->
 
