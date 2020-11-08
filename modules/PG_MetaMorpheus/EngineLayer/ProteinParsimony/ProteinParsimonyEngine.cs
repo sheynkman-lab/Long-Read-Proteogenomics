@@ -432,7 +432,7 @@ namespace EngineLayer
                                                 double parsimonyProteinWeight = GlobalVariables.ProteinToProteogenomicInfo.ContainsKey(parsimonyProtein) ?
                                                     GlobalVariables.ProteinToProteogenomicInfo[parsimonyProtein].ProteinInferenceWeight : LongReadInfo.ProteinInferenceWeightForNoTranscriptomicsData;
 
-                                                //if (otherProteinWeight >= parsimonyProteinWeight)
+                                                if (otherProteinWeight >= parsimonyProteinWeight)
                                                 {
                                                     indistinguishableProteins.Add(otherProtein);
                                                 }
