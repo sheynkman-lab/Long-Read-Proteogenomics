@@ -78,6 +78,41 @@ log.info "-\033[2m--------------------------------------------------\033[0m-"
  * STEP  - validate template
  */
 
+ch_raw_pacbio_bams_folder = params.raw_pacbio_bams_folder ? Channel.fromPath("${params.raw_pacbio_bams_folder}/*.{bam,bam.bai}") : null
+ch_design_reads_csv = params.input ? Channel.fromPath("${params.input}") : null
+
+// Fail early: Do not allow the user to provide input file and input folder simultaneously
+if (params.input && params.raw_pacbio_bams_folder ) {
+    exit 1, "You cannot provide an input file and input folder simultaneously. File: ${params.input}\n, Folder: ${params.raw_pacbio_bams_folder},\nSee --help for more information"
+}
+
+// Fail early: Do not allow the user to provide neither input file nor input folder
+if (!params.input && !params.raw_pacbio_bams_folder ) {
+    exit 1, "Malformed row in TSV file: ${row}, see --help for more information"
+}
+
+// If the user has provided input folder
+if (!params.input && params.raw_pacbio_bams_folder ) {
+    ch_raw_pacbio_bams_folder
+        .map { it -> [ it ] }
+        .set { ch_raw_pacbio_subreads_bams }
+}
+
+// // If the user has provided input design file
+// if (params.input && !params.raw_pacbio_bams_folder ) {
+//     ch_design_reads_csv
+//         .splitCsv(header:true, sep:',')
+//         .map { row -> [ file(row).simpleName, bam, bai ] }
+//         .into { ch_raw_pacbio_subreads_bams }
+// }
+
+ch_raw_pacbio_subreads_bams.view()
+
+
+/*
+ * STEP  - validate template
+ */
+
 process validate {
     publishDir "${params.outdir}/validate/", mode: params.publish_dir_mode
 
@@ -89,6 +124,52 @@ process validate {
     touch validated.txt
     """
 }
+
+/*
+ *  Module 1: SMARTLink - CCS
+ */
+
+process smartlink_ccs {
+    tag "${sample}"
+    publishDir "${params.outdir}/smartlink_ccs/", mode: params.publish_dir_mode
+
+    input:
+    set val(sample), file(raw_pacbio_subreads_bam), file(raw_pacbio_subreads_bai) from ch_raw_pacbio_subreads_bams
+
+    output:
+    set val("${sample}"), file("${sample}*bam"), file("${sample}*bai") into ch_ccs_pacbio_bams
+
+    script:
+    """
+    echo "when in pairs:"
+    echo "simpleName:${sample}\nbam:${raw_pacbio_subreads_bam}\nbai:${raw_pacbio_subreads_bai}"
+    echo "simpleName:${sample}\nbam:${raw_pacbio_subreads_bam}\nbai:${raw_pacbio_subreads_bai}" > "${sample}_fake_input.txt"
+    """
+}
+
+process isoseq3 {
+    tag "${sample}"
+    publishDir "${params.outdir}/isoseq3/", mode: params.publish_dir_mode
+
+    input:
+    set val("${sample}"), file("${sample}*bam"), file(bai) from ch_ccs_pacbio_bams
+
+    output:
+    file("*completed.bam")
+
+    script:
+    """
+    echo "when in pairs:"
+    echo "simpleName:${sample}\nbam:${raw_pacbio_subreads_bam}\nbai:${raw_pacbio_subreads_bai}"
+    echo "simpleName:${sample}\nbam:${raw_pacbio_subreads_bam}\nbai:${raw_pacbio_subreads_bai}" > "${sample}_fake_input.txt"
+    """
+}
+
+
+
+
+
+
 
 def logHeader() {
     // Log colors ANSI codes
@@ -128,3 +209,4 @@ def logHeader() {
     -${c_dim}--------------------------------------------------${c_reset}-
     """.stripIndent()
 }
+
