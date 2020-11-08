@@ -502,7 +502,8 @@ namespace TaskLayer
             return MyTaskResults;
         }
 
-        protected List<Protein> LoadProteins(string taskId, List<DbForTask> dbFilenameList, bool searchTarget, DecoyType decoyType, List<string> localizeableModificationTypes, CommonParameters commonParameters)
+        protected List<Protein> LoadProteins(string taskId, List<DbForTask> dbFilenameList, bool searchTarget, DecoyType decoyType, List<string> localizeableModificationTypes, CommonParameters commonParameters,
+            string pathToOrfCallingFile = null)
         {
             Status("Loading proteins...", new List<string> { taskId });
             int emptyProteinEntries = 0;
@@ -521,6 +522,9 @@ namespace TaskLayer
             {
                 Warn("Warning: " + emptyProteinEntries + " empty protein entries ignored");
             }
+
+            LoadProteogenomicsInfo(pathToOrfCallingFile, proteinList);
+
             return proteinList;
         }
 
@@ -625,6 +629,41 @@ namespace TaskLayer
         protected void NewCollection(string displayName, List<string> nestedIds)
         {
             NewCollectionHandler?.Invoke(this, new StringEventArgs(displayName, nestedIds));
+        }
+
+        private static void LoadProteogenomicsInfo(string pathToOrfCallingFile, List<Protein> proteinList)
+        {
+            GlobalVariables.ProteinToProteogenomicInfo = new Dictionary<Protein, LongReadInfo>();
+
+            if (pathToOrfCallingFile != null && File.Exists(pathToOrfCallingFile))
+            {
+                var fileLines = File.ReadAllLines(pathToOrfCallingFile);
+
+                var header = fileLines[0].Split(new char[] { '\t' }).Select(p => p.ToLowerInvariant()).ToArray();
+                int indexOfAccession = Array.IndexOf(header, "accession".ToLowerInvariant());//TODO: get right index of this info
+                int indexOfNumReads = Array.IndexOf(header, "reads".ToLowerInvariant());//TODO: get right index of this info
+
+                for (int i = 1; i < fileLines.Length; i++)
+                {
+                    string line = fileLines[i];
+                    string[] split = line.Split(new char[] { '\t' });
+                    string accession = split[indexOfAccession];
+                    int numReads = int.Parse(split[indexOfNumReads]);
+                    Protein protein = proteinList.FirstOrDefault(p => p.Accession == accession);
+
+                    if (protein == null)
+                    {
+                        throw new MetaMorpheusException("The ORF calling file line w/ accession " + accession + " was not found in the protein database!");
+                    }
+
+                    LongReadInfo longReadInfo = new LongReadInfo(protein, numReads);
+
+                    if (!GlobalVariables.ProteinToProteogenomicInfo.TryAdd(protein, longReadInfo))
+                    {
+                        throw new MetaMorpheusException("The protein accession " + protein.Accession + " occurred twice in the protein database! This is not allowed when using ORF calling data");
+                    }
+                }
+            }
         }
 
         private static List<string> GetModsTypesFromString(string value)

@@ -1,4 +1,5 @@
-# Long REad SMARTLinkCSS 
+# Deriving the "protein space" (aggregated 6-frame translation) from pacbio data. 
+
 *Description of the module*
 
 ## Input
