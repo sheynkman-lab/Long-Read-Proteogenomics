@@ -343,7 +343,7 @@ namespace EngineLayer
 
             AddMods(UniprotDeseralized.OfType<Modification>(), false);
             AddMods(UnimodDeserialized.OfType<Modification>(), false);
-            
+
             foreach (Modification mod in AllModsKnown)
             {
                 if (!AllModsKnownDictionary.ContainsKey(mod.IdWithMotif))

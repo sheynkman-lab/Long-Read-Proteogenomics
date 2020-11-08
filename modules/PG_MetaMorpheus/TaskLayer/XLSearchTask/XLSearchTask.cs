@@ -36,7 +36,8 @@ namespace TaskLayer
 
         public XlSearchParameters XlSearchParameters { get; set; }
 
-        protected override MyTaskResults RunSpecific(string OutputFolder, List<DbForTask> dbFilenameList, List<string> currentRawFileList, string taskId, FileSpecificParameters[] fileSettingsList)
+        protected override MyTaskResults RunSpecific(string OutputFolder, List<DbForTask> dbFilenameList, List<string> currentRawFileList, string taskId, FileSpecificParameters[] fileSettingsList,
+            List<string> orfFiles = null)
         {
             MyTaskResults = new MyTaskResults(this);
             List<List<CrosslinkSpectralMatch>> ListOfCsmsPerMS2Scan = new List<List<CrosslinkSpectralMatch>>();
