@@ -8,11 +8,11 @@ from collections import defaultdict
 
 
 # extract protein sequence from pb transcript and given cpat orf ranges
-
+data_directory = '/mnt/shared/ubuntu/session_data/data'
 # read in the transcript sequences
-pb_seqs = defaultdict() # pb_acc -> transcript_seq
-seqs = SeqIO.parse(open('../../a_SQANTI3_out/jurkat_corrected.fasta'), 'fasta')
-with open('a_redundant_pb_entries.txt', 'w') as ofile:
+pb_seqs = defaultdict() # pb_acc -> transcript_se
+seqs = SeqIO.parse(open(f'{data_directory}/jurkat_corrected.fasta'), 'fasta')
+with open(f'{data_directory}/redundant_pb_entries.txt', 'w') as ofile:
     for entry in seqs:
         seq = str(entry.seq)
         pb_acc = entry.id
@@ -23,14 +23,17 @@ with open('a_redundant_pb_entries.txt', 'w') as ofile:
         pb_seqs[pb_acc] = seq
 
 # read in cpat-predicted orf ranges
-df = pd.read_table('../0_cpat_analysis_output_all_orfs/jurkat_cpat.ORF_prob.best.tsv')
-df = df[['seq_ID', 'ORF_ID', 'ORF_frame', 'ORF_start', 'ORF_end']]
-df.columns = ['pb_acc', 'orf_acc', 'start', 'end', 'len']
+# df = pd.read_table('../0_cpat_analysis_output_all_orfs/jurkat_cpat.ORF_prob.best.tsv')
+# df = df[['seq_ID', 'ORF_ID', 'ORF_frame', 'ORF_start', 'ORF_end']]
+# df.columns = ['pb_acc', 'orf_acc', 'start', 'end', 'len']
+
+df = pd.read_csv(f"{data_directory}/orf-testset-fraction16.csv")
+df = df[['pb_acc', 'orf_start', 'orf_end', 'orf_len']]
 
 # extract, translate, and cluster protein sequences
 pb_pseqs = defaultdict(lambda: list()) # protein_seq -> list of pb acc
 for index, row in df.iterrows():
-    pb_acc, _, start, end, olen = list(row)
+    pb_acc, start, end, olen = list(row)
     seq = pb_seqs[pb_acc]
     orf_seq = seq[start-1:end]
     prot_seq = Seq.translate(orf_seq, to_stop=True)
@@ -50,7 +53,7 @@ def order_pb_acc_numerically(accs):
 
 
 # write out protein cluster data
-with open('a_pacbio_protein_clusters.tsv', 'w') as ofile, open('a_pacbio_protein_clusters.fasta', 'w') as ofile2:
+with open(f'{data_directory}/pacbio_protein_clusters.tsv', 'w') as ofile, open(f'{data_directory}/pacbio_protein_clusters.fasta', 'w') as ofile2:
     ofile.write('protein_sequence\tpb_accs\n')
     for seq, accs in pb_pseqs.items():
         accs_sorted = order_pb_acc_numerically(accs)
