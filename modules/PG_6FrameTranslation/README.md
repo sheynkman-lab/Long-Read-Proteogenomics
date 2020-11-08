@@ -1,16 +1,16 @@
-# Long REad SMARTLinkCSS 
+# Proteogenomics 6FrameTranslation
 *Description of the module*
 
 ## Input
-- A
-- B
+- SQANTI3 isoform structure file
+- ENSG to genename map
+- PacBio transcript FASTA
 
 ## Output
-- C
-- D
+- FASTA of the "protein space" for each gene
 
 ## Soure Module(s)
-- None
+- 
 
 ## Target Module(s)
 - None
