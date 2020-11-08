@@ -9,7 +9,7 @@ Please use the pre-filled template to save time.
 However, don't be put off by this template - other more general issues and suggestions are welcome!
 Contributions to the code are even more welcome ;)
 
-> If you need help using or modifying sheynkman-lab/Long-Read-Proteogenomics then the best place to ask is on the nf-core Slack [#proteogenomics](https://nfcore.slack.com/channels/proteogenomics) channel ([join our Slack here](https://nf-co.re/join/slack)).
+> If you need help using or modifying sheynkman-lab/Long-Read-Proteogenomics then the best way to do so is by opening an issue in the repo with the label `help-needed`.
 
 ## Contribution workflow
 
