@@ -1,4 +1,8 @@
-def orf_mapping(orf_coord, gencode, sample_gtf, seq_seq):
+import pandas as import pd
+import gtfparse
+from collections import defaultdict
+
+def orf_mapping(orf_coord, gencode, sample_gtf, orf_seq):
     exons = sample_gtf[sample_gtf['feature'] == 'exon']
     exons['exon_length'] = abs(exons['end'] - exons['start']) + 1
 
@@ -16,13 +20,13 @@ def orf_mapping(orf_coord, gencode, sample_gtf, seq_seq):
     def get_num_upstream_atgs(row):
         orf_start = int(row['orf_start'])
         acc = row['pb_acc']
-        seq = orfs[acc] # get orf seq
+        seq = orf_seq[acc] # get orf seq
         upstream_seq = seq[0:orf_start-1] # sequence up to the predicted ATG
         num_atgs = upstream_seq.count('ATG')
         return num_atgs
 
     all_cds['upstream_atgs'] = all_cds.apply(get_num_upstream_atgs, axis=1)
-
+    return all_cds
 
 def plus_mapping(exons,orf_coord, start_codons):
     """
@@ -140,3 +144,32 @@ def orf_calling(orf):
     return called_orf
     
     
+def main(**kwargs):
+    input_directory = kwards['-i']
+    output_directory = kwrargs['-o']
+    orf_coord = read_orf(f'{input_directory}/jurkat_cpat.ORF_prob.tsv')
+    gencode = read_gtf(f"{input_directory}/gencode.v35.annotation.gtf")
+    sample_gtf = read_gtf(f"{input_directory}/jurkat_corrected.gtf")
+    pb_gene = pd.read_csv(f"{input_directory}/pb_to_gene.tsv", sep = '\t')
+    classification = pd.read_csv(f"{input_directory}/jurkat_classification.txt", sep = '\t')
+    
+    orf_seq= defaultdict() # pb_acc -> orf_seq
+    for rec in SeqIO.parse(f'{input_directory}/jurkat_corrected.fasta', 'fasta'):
+        orf_seq[rec.id] = str(rec.seq)
+
+
+    all_orfs = orf_mapping(orf_coord, gencode, sample_gtf, orf_seq)
+    orfs = orf_calling(all_orfs)
+
+    classification = classification[['isoform', 'FL']]
+    total = classification['FL'].sum()
+    classification['CPM'] = classification['FL'] / total * 1000000
+
+    orfs = pd.merge(orfs, pb_gene, left_on = 'pb_acc', right_on='isoform', how = 'left')
+    orfs = pd.merge(orfs, classification, left_on='pb_acc', right_on = 'isoform', how = 'left')
+    orfs = orfs.drop(columns = ['isoform_x', 'isoform_y'])
+    orfs.to_csv(f"{output_directory}/orf_calling_results.csv", index = False)
+
+
+if __name__ == "__main__":
+    main(**dict(arg.split('=') for arg in sys.argv[1:]))

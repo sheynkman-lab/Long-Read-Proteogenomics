@@ -52,6 +52,7 @@ Bottom-up mass spectrometry is the premier method for protein identification. Ma
 - Simran Kaur
 - [Anne Deslattes Mays](https://orcid.org/0000-0001-7951-3439)
 - Christina Chatzipantsiou
+- [Benjamin Jordan](https://orcid.org/0000-0003-2268-5226)
 
 ## Repository template
 
