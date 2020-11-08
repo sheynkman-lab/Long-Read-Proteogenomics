@@ -168,8 +168,8 @@ namespace EngineLayer
             sb.Append("Protein Cumulative Decoy" + '\t');
             sb.Append("Protein QValue" + '\t');
             sb.Append("Best Peptide Score" + '\t');
-            sb.Append("Best Peptide Notch QValue");
-            sb.Append("ORF Reads");
+            sb.Append("Best Peptide Notch QValue" + '\t');
+            sb.Append("ORF CPM");
             return sb.ToString();
         }
 

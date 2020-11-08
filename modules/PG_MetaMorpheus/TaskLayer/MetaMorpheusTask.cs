@@ -651,15 +651,21 @@ namespace TaskLayer
                     string[] fileLines = File.ReadAllLines(file);
 
                     string[] header = fileLines[0].Split(new char[] { '\t' }).Select(p => p.ToLowerInvariant()).ToArray();
-                    int indexOfAccession = Array.IndexOf(header, "accession".ToLowerInvariant());//TODO: get right index of this info
-                    int indexOfNumReads = Array.IndexOf(header, "reads".ToLowerInvariant());//TODO: get right index of this info
+                    int indexOfAccession = Array.IndexOf(header, "pb_acc".ToLowerInvariant());
+                    int indexOfNumReads = Array.IndexOf(header, "CPM".ToLowerInvariant());
 
                     for (int i = 1; i < fileLines.Length; i++)
                     {
                         string line = fileLines[i];
                         string[] split = line.Split(new char[] { '\t' });
                         string accession = split[indexOfAccession];
-                        int numReads = int.Parse(split[indexOfNumReads]);
+                        string cpmString = split[indexOfNumReads];
+
+                        if(!double.TryParse(cpmString, out double cpm))
+                        {
+                            throw new MetaMorpheusException("Could not parse CPM: " + cpmString + " on line " + (i + 1));
+                        }
+
                         Protein protein = proteinList.FirstOrDefault(p => p.Accession == accession);
 
                         if (protein == null)
@@ -667,7 +673,7 @@ namespace TaskLayer
                             throw new MetaMorpheusException("The ORF calling file line w/ accession " + accession + " was not found in the protein database!");
                         }
 
-                        LongReadInfo longReadInfo = new LongReadInfo(protein, numReads);
+                        LongReadInfo longReadInfo = new LongReadInfo(protein, cpm);
 
                         if (!GlobalVariables.ProteinToProteogenomicInfo.TryAdd(protein, longReadInfo))
                         {

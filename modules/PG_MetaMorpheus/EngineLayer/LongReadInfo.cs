@@ -8,19 +8,19 @@ namespace EngineLayer
     public class LongReadInfo
     {
         public readonly Protein Protein;
-        public readonly int NumReads;
+        public readonly double CPM;
 
-        public LongReadInfo(Protein protein, int numReads)
+        public LongReadInfo(Protein protein, double cpm)
         {
             this.Protein = protein;
-            this.NumReads = numReads;
+            this.CPM = cpm;
         }
 
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
 
-            sb.Append(NumReads);
+            sb.Append(CPM);
 
             return sb.ToString();
         }

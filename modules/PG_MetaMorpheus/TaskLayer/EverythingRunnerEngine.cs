@@ -86,7 +86,7 @@ namespace TaskLayer
                     Directory.CreateDirectory(outputFolderForThisTask);
 
                 // Actual task running code
-                var myTaskResults = ok.Item2.RunTask(outputFolderForThisTask, CurrentXmlDbFilenameList, CurrentRawDataFilenameList, ok.Item1);
+                var myTaskResults = ok.Item2.RunTask(outputFolderForThisTask, CurrentXmlDbFilenameList, CurrentRawDataFilenameList, ok.Item1, OrfCallingTables);
 
                 if (myTaskResults.NewDatabases != null)
                 {

@@ -143,7 +143,7 @@ namespace MetaMorpheusCommandLine
 
                     if (ext != ".tsv")
                     {
-                        throw new MetaMorpheusException("Unrecognized file format for ORF calling table: " + ext);
+                        throw new MetaMorpheusException("Unrecognized file format for ORF calling table, must be .tsv");
                     }
                 }
 
