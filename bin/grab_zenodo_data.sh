@@ -1,0 +1,21 @@
+#!/bin/bash
+wget https://zenodo.org/record/4257032/files/UniProtSubsetTestDb.fasta
+wget https://zenodo.org/record/4257032/files/Task1-SearchTaskconfig.toml
+wget https://zenodo.org/record/4257032/files/pb_to_gene.tsv
+wget https://zenodo.org/record/4257032/files/MockPacBio_ProteinGroups.tsv
+wget https://zenodo.org/record/4257032/files/MockGENCODE_ProteinGroups.tsv
+wget https://zenodo.org/record/4257032/files/kallist_table_rdeplete_jurkat.tsv
+wget https://zenodo.org/record/4257032/files/jurkat_mass_spec_frac16.raw
+wget https://zenodo.org/record/4257032/files/jurkat_corrected.gtf
+wget https://zenodo.org/record/4257032/files/jurkat_corrected.fasta
+wget https://zenodo.org/record/4257032/files/jurkat_classification.txt
+wget https://zenodo.org/record/4257032/files/jurkat.codethon_toy.ccs.bam
+wget https://zenodo.org/record/4257032/files/GenesForTestSet_Fraction16.txt
+wget https://zenodo.org/record/4257032/files/GENCODESubsetTestDb.fasta
+wget https://zenodo.org/record/4257032/files/gencode.v35.pc_translations.fa.gz
+wget https://zenodo.org/record/4257032/files/gencode.v35.pc_transcripts.fa.gz
+wget https://zenodo.org/record/4257032/files/gencode.v35.annotation.gtf.gz
+wget https://zenodo.org/record/4257032/files/file_descriptions.tsv
+wget https://zenodo.org/record/4257032/files/enst_isoname.tsv
+wget https://zenodo.org/record/4257032/files/ensg_gene.tsv
+wget https://zenodo.org/record/4257032/files/AccessionKey.tsv
