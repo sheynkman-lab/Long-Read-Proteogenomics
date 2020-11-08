@@ -397,7 +397,8 @@ namespace TaskLayer
             return returnParams;
         }
 
-        public MyTaskResults RunTask(string output_folder, List<DbForTask> currentProteinDbFilenameList, List<string> currentRawDataFilepathList, string displayName)
+        public MyTaskResults RunTask(string output_folder, List<DbForTask> currentProteinDbFilenameList, List<string> currentRawDataFilepathList, string displayName,
+            List<string> orfCallingTables = null)
         {
             this.OutputFolder = output_folder;
             DetermineAnalyteType(CommonParameters);
@@ -447,7 +448,14 @@ namespace TaskLayer
                     }
                 }
 
-                RunSpecific(output_folder, currentProteinDbFilenameList, currentRawDataFilepathList, displayName, fileSettingsList);
+                if (this is SearchTask s)
+                {
+                    s.RunSpecific(output_folder, currentProteinDbFilenameList, currentRawDataFilepathList, displayName, fileSettingsList, orfCallingTables);
+                }
+                else
+                {
+                    RunSpecific(output_folder, currentProteinDbFilenameList, currentRawDataFilepathList, displayName, fileSettingsList);
+                }
                 stopWatch.Stop();
                 MyTaskResults.Time = stopWatch.Elapsed;
                 var resultsFileName = Path.Combine(output_folder, "results.txt");
@@ -503,7 +511,7 @@ namespace TaskLayer
         }
 
         protected List<Protein> LoadProteins(string taskId, List<DbForTask> dbFilenameList, bool searchTarget, DecoyType decoyType, List<string> localizeableModificationTypes, CommonParameters commonParameters,
-            string pathToOrfCallingFile = null)
+            List<string> pathsToOrfCallingFiles = null)
         {
             Status("Loading proteins...", new List<string> { taskId });
             int emptyProteinEntries = 0;
@@ -523,7 +531,7 @@ namespace TaskLayer
                 Warn("Warning: " + emptyProteinEntries + " empty protein entries ignored");
             }
 
-            LoadProteogenomicsInfo(pathToOrfCallingFile, proteinList);
+            LoadProteogenomicsInfo(pathsToOrfCallingFiles, proteinList);
 
             return proteinList;
         }
@@ -589,7 +597,8 @@ namespace TaskLayer
             OutProgressHandler?.Invoke(this, v);
         }
 
-        protected abstract MyTaskResults RunSpecific(string OutputFolder, List<DbForTask> dbFilenameList, List<string> currentRawFileList, string taskId, FileSpecificParameters[] fileSettingsList);
+        protected abstract MyTaskResults RunSpecific(string OutputFolder, List<DbForTask> dbFilenameList, List<string> currentRawFileList, string taskId, FileSpecificParameters[] fileSettingsList,
+            List<string> orfCallingTables = null);
 
         protected void FinishedWritingFile(string path, List<string> nestedIDs)
         {
@@ -631,36 +640,70 @@ namespace TaskLayer
             NewCollectionHandler?.Invoke(this, new StringEventArgs(displayName, nestedIds));
         }
 
-        private static void LoadProteogenomicsInfo(string pathToOrfCallingFile, List<Protein> proteinList)
+        private static void LoadProteogenomicsInfo(List<string> pathsToOrfCallingFiles, List<Protein> proteinList)
         {
             GlobalVariables.ProteinToProteogenomicInfo = new Dictionary<Protein, LongReadInfo>();
 
-            if (pathToOrfCallingFile != null && File.Exists(pathToOrfCallingFile))
+            if (pathsToOrfCallingFiles != null)
             {
-                var fileLines = File.ReadAllLines(pathToOrfCallingFile);
-
-                var header = fileLines[0].Split(new char[] { '\t' }).Select(p => p.ToLowerInvariant()).ToArray();
-                int indexOfAccession = Array.IndexOf(header, "accession".ToLowerInvariant());//TODO: get right index of this info
-                int indexOfNumReads = Array.IndexOf(header, "reads".ToLowerInvariant());//TODO: get right index of this info
-
-                for (int i = 1; i < fileLines.Length; i++)
+                foreach (string file in pathsToOrfCallingFiles)
                 {
-                    string line = fileLines[i];
-                    string[] split = line.Split(new char[] { '\t' });
-                    string accession = split[indexOfAccession];
-                    int numReads = int.Parse(split[indexOfNumReads]);
-                    Protein protein = proteinList.FirstOrDefault(p => p.Accession == accession);
+                    string[] fileLines = File.ReadAllLines(file);
 
-                    if (protein == null)
+                    string[] header = fileLines[0].Split(new char[] { '\t' }).Select(p => p.ToLowerInvariant()).ToArray();
+
+                    int indexOfAccession = Array.IndexOf(header, "base_acc".ToLowerInvariant());
+                    //int indexOfAccession = Array.IndexOf(header, "pb_acc".ToLowerInvariant());
+                    //int indexOfFickett = Array.IndexOf(header, "fickett".ToLowerInvariant());
+                    //int indexOfHexamer = Array.IndexOf(header, "hexamer".ToLowerInvariant());
+                    //int indexOfCodingScore = Array.IndexOf(header, "coding_score".ToLowerInvariant());
+                    //int indexOfOrfRank = Array.IndexOf(header, "orf_rank".ToLowerInvariant());
+                    //int indexOfOrfCallingConfidence = Array.IndexOf(header, "orf_calling_confidence".ToLowerInvariant());
+                    //int indexOfAtgRank = Array.IndexOf(header, "atg_rank".ToLowerInvariant());
+                    //int indexOfAtgScore = Array.IndexOf(header, "atg_score".ToLowerInvariant());
+                    //int indexOfGencodeScore = Array.IndexOf(header, "gencode_score".ToLowerInvariant());
+                    //int indexOfOrfScore = Array.IndexOf(header, "orf_score".ToLowerInvariant());
+                    int indexOfCpm = Array.IndexOf(header, "CPM".ToLowerInvariant());
+
+                    for (int i = 1; i < fileLines.Length; i++)
                     {
-                        throw new MetaMorpheusException("The ORF calling file line w/ accession " + accession + " was not found in the protein database!");
-                    }
+                        string line = fileLines[i];
+                        string[] split = line.Split(new char[] { '\t' });
 
-                    LongReadInfo longReadInfo = new LongReadInfo(protein, numReads);
+                        string accession = split[indexOfAccession];
+                        //string fickett = split[indexOfFickett];
+                        //string hexamer = split[indexOfHexamer];
+                        //string codingScore = split[indexOfCodingScore];
+                        //string orfRank = split[indexOfOrfRank];
+                        //string orfCallingConfidence = split[indexOfOrfCallingConfidence];
+                        //string atgRank = split[indexOfAtgRank];
+                        //string atgScore = split[indexOfAtgScore];
+                        //string gencodeScore = split[indexOfGencodeScore];
+                        //string orfScore = split[indexOfOrfScore];
+                        string cpmString = split[indexOfCpm];
 
-                    if (!GlobalVariables.ProteinToProteogenomicInfo.TryAdd(protein, longReadInfo))
-                    {
-                        throw new MetaMorpheusException("The protein accession " + protein.Accession + " occurred twice in the protein database! This is not allowed when using ORF calling data");
+                        if (!double.TryParse(cpmString, out double cpm))
+                        {
+                            throw new MetaMorpheusException("Could not parse CPM: " + cpmString + " on line " + (i + 1));
+                        }
+
+                        Protein protein = proteinList.FirstOrDefault(p => p.Accession == accession);
+
+                        if (protein == null)
+                        {
+                            throw new MetaMorpheusException("The ORF calling file line w/ accession " + accession + " was not found in the protein database!");
+                        }
+
+                        LongReadInfo longReadInfo = new LongReadInfo(protein, cpm);
+
+                        if (!GlobalVariables.ProteinToProteogenomicInfo.TryAdd(protein, longReadInfo))
+                        {
+                            throw new MetaMorpheusException("The protein accession " + protein.Accession + " occurred twice in the protein database! This is not allowed when using ORF calling data");
+                        }
+
+                        // add decoy stuff...
+                        var decoyProtein = proteinList.FirstOrDefault(p => p.Accession == "DECOY_" + protein.Accession);
+                        GlobalVariables.ProteinToProteogenomicInfo.Add(decoyProtein, longReadInfo);
                     }
                 }
             }

@@ -25,9 +25,14 @@ namespace EngineLayer
         /// </summary>
         private readonly bool _treatModPeptidesAsDifferentPeptides;
 
-        public ProteinParsimonyEngine(List<PeptideSpectralMatch> allPsms, bool modPeptidesAreDifferent, CommonParameters commonParameters, List<(string fileName, CommonParameters fileSpecificParameters)> fileSpecificParameters, List<string> nestedIds) : base(commonParameters, fileSpecificParameters, nestedIds)
+        private readonly bool _useOrfInfoInProteinInference;
+
+        public ProteinParsimonyEngine(List<PeptideSpectralMatch> allPsms, bool modPeptidesAreDifferent, CommonParameters commonParameters,
+            List<(string fileName, CommonParameters fileSpecificParameters)> fileSpecificParameters, bool useOrfInfoInProteinInference, List<string> nestedIds)
+            : base(commonParameters, fileSpecificParameters, nestedIds)
         {
             _treatModPeptidesAsDifferentPeptides = modPeptidesAreDifferent;
+            _useOrfInfoInProteinInference = useOrfInfoInProteinInference;
 
             if (!allPsms.Any())
             {
@@ -348,13 +353,27 @@ namespace EngineLayer
                 int numNewSeqs = algDictionary.Max(p => p.Value.Count);
                 while (numNewSeqs != 0)
                 {
-                    // get the next best protein based on:
-                    // 1. the number of new peptide sequences and then (in case of a tie),
-                    // 2. the number of total peptides observed for the protein, regardless if they're unaccounted for or not
-                    Protein bestProtein = algDictionary
-                        .Where(p => p.Value.Count == numNewSeqs)
-                        .OrderByDescending(p => proteinToPepSeqMatch[p.Key].Count)
-                        .First().Key;
+                    Protein bestProtein;
+
+                    if (_useOrfInfoInProteinInference)
+                    {
+                        bestProtein = algDictionary
+                            .OrderByDescending(p => p.Value.Count // order by num new peptide sequences multiplied by transcript weight
+                            * (GlobalVariables.ProteinToProteogenomicInfo.ContainsKey(p.Key) ?
+                                GlobalVariables.ProteinToProteogenomicInfo[p.Key].ProteinInferenceWeight : LongReadInfo.ProteinInferenceWeightForNoTranscriptomicsData))
+                            .ThenByDescending(p => proteinToPepSeqMatch[p.Key].Count) // then order by num total sequences in protein
+                            .First().Key;
+                    }
+                    else
+                    {
+                        // get the next best protein based on:
+                        // 1. the number of new peptide sequences and then (in case of a tie),
+                        // 2. the number of total peptides observed for the protein, regardless if they're unaccounted for or not
+                        bestProtein = algDictionary
+                            .Where(p => p.Value.Count == numNewSeqs)
+                            .OrderByDescending(p => proteinToPepSeqMatch[p.Key].Count)
+                            .First().Key;
+                    }
 
                     parsimoniousProteinList.Add(bestProtein);
 
@@ -402,9 +421,26 @@ namespace EngineLayer
                                     foreach (var parsimonyProtein in parsimonyProteinsWithSameNumPeptides)
                                     {
                                         // if the two proteins have the same set of peptide sequences, they're indistinguishable
+                                        // ignoring proteins that have identical gene names
                                         if (parsimonyProtein != otherProtein && proteinToPepSeqMatch[parsimonyProtein].SetEquals(proteinToPepSeqMatch[otherProtein]))
                                         {
-                                            indistinguishableProteins.Add(otherProtein);
+                                            if (_useOrfInfoInProteinInference)
+                                            {
+                                                double otherProteinWeight = GlobalVariables.ProteinToProteogenomicInfo.ContainsKey(otherProtein) ?
+                                                    GlobalVariables.ProteinToProteogenomicInfo[otherProtein].ProteinInferenceWeight : LongReadInfo.ProteinInferenceWeightForNoTranscriptomicsData;
+
+                                                double parsimonyProteinWeight = GlobalVariables.ProteinToProteogenomicInfo.ContainsKey(parsimonyProtein) ?
+                                                    GlobalVariables.ProteinToProteogenomicInfo[parsimonyProtein].ProteinInferenceWeight : LongReadInfo.ProteinInferenceWeightForNoTranscriptomicsData;
+
+                                                //if (parsimonyProteinWeight - otherProteinWeight <= 0)
+                                                {
+                                                    indistinguishableProteins.Add(otherProtein);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                indistinguishableProteins.Add(otherProtein);
+                                            }
                                         }
                                     }
                                 }
