@@ -1,22 +1,32 @@
 # Long REad SMARTLinkCSS 
-*Description of the module*
+*Genomic data is compiled to provide a context for proteomics analysis*
 
 ## Input
-- A
-- B
+- gtf_file     # gencode gtf file 
+- squanti_out  # classification.txt file from SQUATI Output 
+- fa_file      # gencode fafsa file
+- tpm_file     #
+- yangpolyA    # file prepared manually
+- ribodep_tpm           # expects normalized data
+- pbacc_to_gene_file    # mapping file from Gloria
+- mm_out                # Metamorpheus outputs 
 
 ## Output
-- C
-- D
+- squanti isoform table
+- gene level table
+- gene level and proteomic comparison table 
 
 ## Soure Module(s)
-- None
+- Metamorpheus
+- SQUANTI3
 
 ## Target Module(s)
 - None
 
 ## Dependencies: 
-- None
+- numpy
+- pandas
+- pathlib from Path
 
 ## Threads
 - None
