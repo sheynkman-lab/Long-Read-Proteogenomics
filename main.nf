@@ -78,36 +78,32 @@ log.info "-\033[2m--------------------------------------------------\033[0m-"
  * STEP  - validate template
  */
 
-ch_raw_pacbio_bams_folder = params.raw_pacbio_bams_folder ? Channel.fromPath("${params.raw_pacbio_bams_folder}/*.{bam,bam.bai}") : null
-ch_design_reads_csv = params.input ? Channel.fromPath("${params.input}") : null
-
-// Fail early: Do not allow the user to provide input file and input folder simultaneously
-if (params.input && params.raw_pacbio_bams_folder ) {
-    exit 1, "You cannot provide an input file and input folder simultaneously. File: ${params.input}\n, Folder: ${params.raw_pacbio_bams_folder},\nSee --help for more information"
+// Fail early: Nothing to analyse if the user does not provide an input pb_bams_folder
+if (!params.pb_bams_folder ) {
+    exit 1, "Please provide an input folder with --pb_bams_folder to proceed, see --help for more information"
 }
 
-// Fail early: Do not allow the user to provide neither input file nor input folder
-if (!params.input && !params.raw_pacbio_bams_folder ) {
-    exit 1, "Malformed row in TSV file: ${row}, see --help for more information"
+if (params.pb_bams_folder && hasExtension(params.pb_bams_folder, "tar.gz")) {
+  ch_pb_bams_folder_tar_gz = Channel.fromPath(params.pb_bams_folder)
+}
+
+if (params.pb_bams_folder && !hasExtension(params.pb_bams_folder, "tar.gz")) {
+ch_pb_bams_folder = params.pb_bams_folder ? Channel.fromFilePairs("${params.pb_bams_folder}/*.{bam,${params.bai_suffix}}", flat: true) : null
 }
 
 // If the user has provided input folder
-if (!params.input && params.raw_pacbio_bams_folder ) {
-    ch_raw_pacbio_bams_folder
-        .map { it -> [ it ] }
-        .set { ch_raw_pacbio_subreads_bams }
+if (params.pb_bams_folder ) {
+    ch_pb_bams_folder
+       .set { ch_pb_subreads_bams }
 }
 
-// // If the user has provided input design file
-// if (params.input && !params.raw_pacbio_bams_folder ) {
-//     ch_design_reads_csv
-//         .splitCsv(header:true, sep:',')
-//         .map { row -> [ file(row).simpleName, bam, bai ] }
-//         .into { ch_raw_pacbio_subreads_bams }
-// }
+(ch_pb_subreads_bams_for_pbi,
+ch_pb_subreads_bams_to_display) = ch_pb_subreads_bams.into(2)
 
-ch_raw_pacbio_subreads_bams.view()
+ch_pb_subreads_bams_to_display.view()
 
+ch_ccs_chunks = Channel.from(1.."${params.number_of_ccs_chunks}".toInteger())
+(ch_ccs_chunks, ch_ccs_chunks_to_display) = ch_ccs_chunks.into(2)
 
 /*
  * STEP  - validate template
@@ -129,41 +125,69 @@ process validate {
  *  Module 1: SMARTLink - CCS
  */
 
+// Generate pbi index required for using the ccs --chunk parallelisation
+process generate_pbi {
+    tag "${pb_subreads_bam.simpleName}"
+    cpus 1
+    echo true
+
+    input:
+    set val(sample), file(pb_subreads_bam), file(pb_subreads_bai) from ch_pb_subreads_bams_for_pbi
+
+    output:
+    set val("${pb_subreads_bam.simpleName}"),
+        file("${pb_subreads_bam.baseName}.bam"), 
+        file("${pb_subreads_bam.baseName}.bam.bai"),
+        file("${pb_subreads_bam.baseName}.bam.pbi") into ch_pb_subreads_bams_for_ccs
+
+    script:
+    """
+    pbindex ${pb_subreads_bam}
+    """
+}
+
+ch_ccs_chucked_bams = ch_ccs_chunks.combine(ch_pb_subreads_bams_for_ccs)
+
 process smartlink_ccs {
-    tag "${sample}"
+    tag "sample:${sample},chunk:${ith_chunk}"
     publishDir "${params.outdir}/smartlink_ccs/", mode: params.publish_dir_mode
+    cpus 1
 
     input:
-    set val(sample), file(raw_pacbio_subreads_bam), file(raw_pacbio_subreads_bai) from ch_raw_pacbio_subreads_bams
+    set val(ith_chunk), val(sample), file(pb_subreads_bam), file(pb_subreads_bai), file(pb_subreads_bai) from ch_ccs_chucked_bams
 
     output:
-    set val("${sample}"), file("${sample}*bam"), file("${sample}*bai") into ch_ccs_pacbio_bams
+    set val("${sample}"), 
+        file("${sample}.ccs.${ith_chunk}.bam"), 
+        file("${sample}.ccs.${ith_chunk}.bam.bai"),
+        file("${sample}.ccs.${ith_chunk}.bam.pbi") into ch_ccs_pacbio_bams
 
     script:
+    // Hardcoded example from docs:
+    // ccs movie.subreads.bam movie.ccs.1.bam --chunk 1/10 -j <THREADS>
     """
-    echo "when in pairs:"
-    echo "simpleName:${sample}\nbam:${raw_pacbio_subreads_bam}\nbai:${raw_pacbio_subreads_bai}"
-    echo "simpleName:${sample}\nbam:${raw_pacbio_subreads_bam}\nbai:${raw_pacbio_subreads_bai}" > "${sample}_fake_input.txt"
+    # ccs ${pb_subreads_bam} ${sample}.ccs.${ith_chunk}.bam --chunk ${ith_chunk}/${params.number_of_ccs_chunks} -j ${task.cpus}
+    touch ${sample}.ccs.${ith_chunk}.bam ${sample}.ccs.${ith_chunk}.bam.bai ${sample}.ccs.${ith_chunk}.bam.pbi
     """
 }
 
-process isoseq3 {
-    tag "${sample}"
-    publishDir "${params.outdir}/isoseq3/", mode: params.publish_dir_mode
+// process isoseq3 {
+//     tag "${sample}"
+//     publishDir "${params.outdir}/isoseq3/", mode: params.publish_dir_mode
 
-    input:
-    set val("${sample}"), file("${sample}*bam"), file(bai) from ch_ccs_pacbio_bams
+//     input:
+//     set val("${sample}"), file("${sample}*bam"), file(bai) from ch_ccs_pacbio_bams
 
-    output:
-    file("*completed.bam")
+//     output:
+//     file("*completed.bam")
 
-    script:
-    """
-    echo "when in pairs:"
-    echo "simpleName:${sample}\nbam:${raw_pacbio_subreads_bam}\nbai:${raw_pacbio_subreads_bai}"
-    echo "simpleName:${sample}\nbam:${raw_pacbio_subreads_bam}\nbai:${raw_pacbio_subreads_bai}" > "${sample}_fake_input.txt"
-    """
-}
+//     script:
+//     """
+//     echo "when in pairs:"
+//     echo "simpleName:${sample}\nbam:${pb_subreads_bam}\nbai:${pb_subreads_bai}"
+//     echo "simpleName:${sample}\nbam:${pb_subreads_bam}\nbai:${pb_subreads_bai}" > "${sample}_fake_input.txt"
+//     """
+// }
 
 
 
@@ -210,3 +234,10 @@ def logHeader() {
     """.stripIndent()
 }
 
+// Functions
+// Credits for most of the functions to https://github.com/nf-core/sarek developers
+
+// Check file extension
+def hasExtension(it, extension) {
+    it.toString().toLowerCase().endsWith(extension.toLowerCase())
+}
