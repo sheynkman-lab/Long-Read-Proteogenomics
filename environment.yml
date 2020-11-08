@@ -15,6 +15,7 @@ dependencies:
   - biopython
   # Module 1: SMARTLink - CCS
   - pbccs
+  - pbbam
   # Module 2: Iso-Seq 3
   - isoseq3
   - lima
