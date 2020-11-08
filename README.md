@@ -15,3 +15,8 @@ Protein Isoform Inference - [Protein inference](https://www.sciencedirect.com/sc
 Pipeline overview - A pipeline is provided here that can talk raw Pac-Bio data and assembly an accurate list of protein isoforms with high probability of existing in the sample. This database is then used in [MetaMorpheus](https://github.com/smith-chem-wisc/MetaMorpheus) to search raw mass spectrometry data against the Pac-Bio reference. MetaMorpheus will use protein isoform read counts during protein inference. Two other protein databases are employed for the purposes of comparison. One is from [UniProt](https://www.uniprot.org/) and the other is from [GENCODE](https://www.gencodegenes.org/). A Jupyter notebook performs all final comparisons and data analysis. 
 
 ![pipeline](https://user-images.githubusercontent.com/16841846/98399434-fa4b8a00-2027-11eb-953b-edb440c7ff8e.png)
+
+## Authors
+
+Michael Shortreed
+Simran Kaur

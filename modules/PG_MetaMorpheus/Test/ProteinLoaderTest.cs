@@ -47,7 +47,8 @@ namespace Test
                 RunSpecific("", new List<DbForTask> { new DbForTask(dbPath, false) }, null, "", null);
             }
 
-            protected override MyTaskResults RunSpecific(string OutputFolder, List<DbForTask> dbFilenameList, List<string> currentRawFileList, string taskId, FileSpecificParameters[] fileSettingsList)
+            protected override MyTaskResults RunSpecific(string OutputFolder, List<DbForTask> dbFilenameList, List<string> currentRawFileList, string taskId, FileSpecificParameters[] fileSettingsList,
+                List<string> orfFiles = null)
             {
                 LoadProteins("", dbFilenameList, true, DecoyType.None, new List<string>(), new CommonParameters());
                 return null;
