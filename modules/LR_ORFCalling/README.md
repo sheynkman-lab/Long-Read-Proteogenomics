@@ -1,25 +1,27 @@
-# Long REad SMARTLinkCSS 
-*Description of the module*
+# ORF calling from CPAT
+For each PB transcript and the set of candidate ORFs as determined by CPAT, select the most biologically plausible ORF based on several paramters. These paramters include the coding score and properties of the start ATG.
 
 ## Input
-- A
-- B
+- CPAT ORFs (TSV)
+- Gencode annotation (GTF)
+- SQANTI PB isoform classification
+- PB to gene map
 
 ## Output
-- C
-- D
+- table of best ORF with annotations
 
 ## Soure Module(s)
-- None
+- CPAT
+- SQANTI3
 
 ## Target Module(s)
-- None
+- RefinedDatabase
 
 ## Dependencies: 
-- None
+- pandas
 
 ## Threads
-- None
+- 1-2 cpus
 
 ## Original Source
 - None
