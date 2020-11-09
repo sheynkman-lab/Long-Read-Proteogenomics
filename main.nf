@@ -88,7 +88,8 @@ if (params.pb_bams_folder && hasExtension(params.pb_bams_folder, "tar.gz")) {
 }
 
 if (params.pb_bams_folder && !hasExtension(params.pb_bams_folder, "tar.gz")) {
-ch_pb_bams_folder = params.pb_bams_folder ? Channel.fromFilePairs("${params.pb_bams_folder}/*.{bam,${params.bai_suffix}}", flat: true) : null
+// ch_pb_bams_folder = params.pb_bams_folder ? Channel.fromFilePairs("${params.pb_bams_folder}/*.{bam,${params.bai_suffix}}", flat: true) : null
+ch_pb_bams_folder = params.pb_bams_folder ? Channel.fromPath("${params.pb_bams_folder}/*.bam") : null
 }
 
 // If the user has provided input folder
@@ -132,12 +133,11 @@ process generate_pbi {
     echo true
 
     input:
-    set val(sample), file(pb_subreads_bam), file(pb_subreads_bai) from ch_pb_subreads_bams_for_pbi
+    file(pb_subreads_bam) from ch_pb_subreads_bams_for_pbi
 
     output:
     set val("${pb_subreads_bam.simpleName}"),
         file("${pb_subreads_bam.baseName}.bam"), 
-        file("${pb_subreads_bam.baseName}.bam.bai"),
         file("${pb_subreads_bam.baseName}.bam.pbi") into ch_pb_subreads_bams_for_ccs
 
     script:
@@ -154,12 +154,11 @@ process smartlink_ccs {
     cpus 1
 
     input:
-    set val(ith_chunk), val(sample), file(pb_subreads_bam), file(pb_subreads_bai), file(pb_subreads_bai) from ch_ccs_chucked_bams
+    set val(ith_chunk), val(sample), file(pb_subreads_bam), file(pb_subreads_bai) from ch_ccs_chucked_bams
 
     output:
     set val("${sample}"), 
         file("${sample}.ccs.${ith_chunk}.bam"), 
-        file("${sample}.ccs.${ith_chunk}.bam.bai"),
         file("${sample}.ccs.${ith_chunk}.bam.pbi") into ch_ccs_pacbio_bams
 
     script:
