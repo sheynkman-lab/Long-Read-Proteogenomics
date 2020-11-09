@@ -148,26 +148,51 @@ process generate_pbi {
 
 ch_ccs_chucked_bams = ch_ccs_chunks.combine(ch_pb_subreads_bams_for_ccs)
 
-process smartlink_ccs {
-    tag "sample:${sample},chunk:${ith_chunk}"
-    publishDir "${params.outdir}/smartlink_ccs/", mode: params.publish_dir_mode
-    cpus 1
+if (!params.mock_ccs) {
+  process smartlink_ccs {
+      tag "sample:${sample},chunk:${ith_chunk}"
+      publishDir "${params.outdir}/smartlink_ccs/", mode: params.publish_dir_mode
+      cpus 1
 
-    input:
-    set val(ith_chunk), val(sample), file(pb_subreads_bam), file(pb_subreads_bai) from ch_ccs_chucked_bams
+      input:
+      set val(ith_chunk), val(sample), file(pb_subreads_bam), file(pb_subreads_bai) from ch_ccs_chucked_bams
 
-    output:
-    set val("${sample}"), 
-        file("${sample}.ccs.${ith_chunk}.bam"), 
-        file("${sample}.ccs.${ith_chunk}.bam.pbi") into ch_ccs_pacbio_bams
+      output:
+      set val("${sample}"), 
+          file("${sample}.ccs.${ith_chunk}.bam"), 
+          file("${sample}.ccs.${ith_chunk}.bam.pbi") into ch_ccs_pacbio_bams
 
-    script:
-    // Hardcoded example from docs:
-    // ccs movie.subreads.bam movie.ccs.1.bam --chunk 1/10 -j <THREADS>
-    """
-    # ccs ${pb_subreads_bam} ${sample}.ccs.${ith_chunk}.bam --chunk ${ith_chunk}/${params.number_of_ccs_chunks} -j ${task.cpus}
-    touch ${sample}.ccs.${ith_chunk}.bam ${sample}.ccs.${ith_chunk}.bam.bai ${sample}.ccs.${ith_chunk}.bam.pbi
-    """
+      script:
+      // Hardcoded example from docs:
+      // ccs movie.subreads.bam movie.ccs.1.bam --chunk 1/10 -j <THREADS>
+      """
+      ccs ${pb_subreads_bam} ${sample}.ccs.${ith_chunk}.bam --chunk ${ith_chunk}/${params.number_of_ccs_chunks} -j ${task.cpus}
+      """
+  }
+}
+
+if (params.mock_ccs) {
+  process smartlink_ccs_mock {
+      tag "sample:${sample},chunk:${ith_chunk}"
+      publishDir "${params.outdir}/smartlink_ccs/", mode: params.publish_dir_mode
+      cpus 1
+
+      input:
+      set val(ith_chunk), val(sample), file(pb_subreads_bam), file(pb_subreads_bai) from ch_ccs_chucked_bams
+
+      output:
+      set val("${sample}"), 
+          file("${sample}.ccs.${ith_chunk}.bam"), 
+          file("${sample}.ccs.${ith_chunk}.bam.pbi") into ch_ccs_pacbio_bams
+
+      script:
+      // Hardcoded example from docs:
+      // ccs movie.subreads.bam movie.ccs.1.bam --chunk 1/10 -j <THREADS>
+      """
+      # ccs ${pb_subreads_bam} ${sample}.ccs.${ith_chunk}.bam --chunk ${ith_chunk}/${params.number_of_ccs_chunks} -j ${task.cpus}
+      touch ${sample}.ccs.${ith_chunk}.bam ${sample}.ccs.${ith_chunk}.bam.bai ${sample}.ccs.${ith_chunk}.bam.pbi
+      """
+  }
 }
 
 // process isoseq3 {
