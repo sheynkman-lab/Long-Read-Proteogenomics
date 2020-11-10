@@ -1,6 +1,7 @@
-import pandas as import pd
+import pandas as pd
 import gtfparse
 from collections import defaultdict
+import sys
 
 def orf_mapping(orf_coord, gencode, sample_gtf, orf_seq):
     exons = sample_gtf[sample_gtf['feature'] == 'exon']
@@ -145,8 +146,8 @@ def orf_calling(orf):
     
     
 def main(**kwargs):
-    input_directory = kwards['-i']
-    output_directory = kwrargs['-o']
+    input_directory = kwargs['-i']
+    output_directory = kwargs['-o']
     orf_coord = read_orf(f'{input_directory}/jurkat_cpat.ORF_prob.tsv')
     gencode = read_gtf(f"{input_directory}/gencode.v35.annotation.gtf")
     sample_gtf = read_gtf(f"{input_directory}/jurkat_corrected.gtf")
@@ -172,4 +173,5 @@ def main(**kwargs):
 
 
 if __name__ == "__main__":
+    print(sys.argv)
     main(**dict(arg.split('=') for arg in sys.argv[1:]))
