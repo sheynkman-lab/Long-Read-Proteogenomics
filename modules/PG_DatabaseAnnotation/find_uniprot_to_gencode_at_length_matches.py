@@ -28,7 +28,7 @@ for line in open('../1_uniprot_to_gencode_blast/run_UN_to_GC_blast_result.tsv').
 # uniprot with no at-length match
 un_id_no_match = list(un_id_all - un_id_w_at_len_match)
 
-# write out best alignment for uniprot acc without an at-lenght match with gencode
+# write out best alignment for uniprot acc without an at-length match with gencode
 with open('uniprot_no_at_len_match_to_gencode.tsv', 'w') as ofile:
     ofile.write('uniprot_gene\tuniprot_acc\tuniprot_len\tgencode_gene\tgencode_acc\tgencode_len\tmatch_len\tpercent_identity\tnum_gaps\n')
     for line in open('../1_uniprot_to_gencode_blast/run_UN_to_GC_blast_result.tsv').readlines():
