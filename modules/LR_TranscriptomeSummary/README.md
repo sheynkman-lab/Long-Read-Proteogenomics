@@ -1,4 +1,4 @@
-# Long REad Transcriptome Summary
+# Long Read Transcriptome Summary
 *Genomic data is compiled to provide a context for proteomics analysis*
 
 ## Input
