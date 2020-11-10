@@ -59,7 +59,7 @@ Bottom-up mass spectrometry is the premier method for protein identification. Ma
 - [Michael R. Shortreed](https://orcid.org/0000-0003-4626-0863)
 - [Isabella Whitworth](https://orcid.org/0000-0001-9753-5666)
 
-This is a joint project between the [Sheynkman Lab](https://med.virginia.edu/sheynkman-lab/), the [Smith Lab](https://smith.chem.wisc.edu/), [Lifebit](https://lifebit.ai/) and [The Jackson Laboratory](https://www.jax.org) .
+This is a joint project between the [Sheynkman Lab](https://med.virginia.edu/sheynkman-lab/), the [Smith Lab](https://smith.chem.wisc.edu/), [Lifebit](https://lifebit.ai/) and Science and Technology Consulting, LLC.
 
 
 ## Repository template
