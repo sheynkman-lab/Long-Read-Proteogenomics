@@ -5,10 +5,13 @@ For each PB transcript and the set of candidate ORFs as determined by CPAT, sele
 - CPAT ORFs (TSV)
 - Gencode annotation (GTF)
 - SQANTI PB isoform classification
+- SQANTI PB annotation (GTF)
+- SQANTI PB sequence (FASTA)
 - PB to gene map
 
+
 ## Output
-- table of best ORF with annotations
+- table of best ORF with annotations (TSV)
 
 ## Soure Module(s)
 - CPAT
