@@ -366,3 +366,6 @@ _Pvt_Extensions
 
 # FAKE - F# Make
 .fake/
+
+# local data files (gloria started)
+output
