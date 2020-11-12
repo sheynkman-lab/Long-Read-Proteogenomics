@@ -1,5 +1,12 @@
-# Long REad SMARTLinkCSS 
+# Long ORFCalling 
 *Description of the module*
+
+This module calls the Open Reading Frames (ORF) with two different ORF calling routines.
+TransDecoder and CPAT.
+
+The output of these runs are then filtered by a third program lr_orfcalling.py which cleans up and removes ORFS that are not meaningful.
+
+## Testing locally
 
 To test this part of the pipeline locally install nextflow
 
@@ -13,12 +20,9 @@ To run this pipeline with nextflow - run the test first with displaying the help
 nextflow run lr_orfcalling.nr --help -profile lr_orfcalling_nextflow.config
 ```
 
-Then to run a test run on a specific fasta file ALWAYS USE ABSOLUTE PATHS
+Then to run a test run on a specific fasta file **ALWAYS USE ABSOLUTE PATHS**
 ```bash
-nextflow run lr_orfcalling.nr --fasta /mnt/shared/ubuntu/session_data/Long-Read-Proteogenomics/obs
-clear
-
-data/jurkat_corrected.fasta -profile lr_orfcalling_nextflow.confg
+nextflow run lr_orfcalling.nr --fasta /mnt/shared/ubuntu/session_data/Long-Read-Proteogenomics/data/jurkat_corrected.fasta -profile lr_orfcalling_nextflow.confg
 ```
 
 ## process runTransDecoder
@@ -36,11 +40,9 @@ All that is required for input is a fasta file.
 
 ## Output
 - [outputs explained here](https://github.com/TransDecoder/TransDecoder/wiki)
-- D
 
 ## Dependencies: 
 - None
 
 ## Threads
 - None
-
