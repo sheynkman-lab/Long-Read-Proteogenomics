@@ -35,14 +35,14 @@ and second step is predict the best with Transdecoder.Predict -t ${params.fasta}
 
 All that is required for input is a fasta file.
 
-## Input
+### Input
 - jurkat_corrected.fasta 
 
-## Output
+### Output
 - [outputs explained here](https://github.com/TransDecoder/TransDecoder/wiki)
 
-## Dependencies: 
+### Dependencies: 
 - None
 
-## Threads
+### Threads
 - None
