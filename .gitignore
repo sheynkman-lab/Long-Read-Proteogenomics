@@ -1,5 +1,9 @@
 .DS_Store
 .vscode
+#nextflow related files
+.nextflow*
+work
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -34,6 +38,8 @@ MANIFEST
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
+!*app1.manifest
+!*app.manifest
 *.spec
 
 # Installer logs
@@ -364,3 +370,6 @@ _Pvt_Extensions
 
 # FAKE - F# Make
 .fake/
+
+# local data files (gloria started)
+output
