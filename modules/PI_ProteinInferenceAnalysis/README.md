@@ -1,5 +1,5 @@
 # ProteinInferenceAnalysis 
-This custom module compares the protein group results from MetaMorpheus searches using different refernce databases. The comparison of protein groups can elicudate differences, strengths and weaknesses of the reference databases used.
+This custom module compares the protein group results from MetaMorpheus searches using different reference databases. The comparison of protein groups can elucidate differences, strengths and weaknesses of the reference databases used.
 
 ## Input
 - 2 x AllProteinGroups.tsv
