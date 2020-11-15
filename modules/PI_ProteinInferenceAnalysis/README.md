@@ -16,7 +16,7 @@ This custom module compares the protein group results from MetaMorpheus searches
 - None
 
 ## Dependencies: 
-- Python Packages (pandas, numpoy and default dict)
+- Python Packages (pandas, numpy and default dict from collections)
 
 ## Threads
 - Any
