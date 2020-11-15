@@ -1,28 +1,26 @@
-# Long REad SMARTLinkCSS 
-*Description of the module*
+# Run CPAT on PacBio transcript file
+CPAT finds the most likely ORF from a full-length transcript.
 
 ## Input
-- A
-- B
+- transcript fasta file (e.g., pb transcript fasta)
 
 ## Output
-- C
-- D
+- table of call orf calls and their scores 
 
 ## Soure Module(s)
-- None
+- isoseq3
 
 ## Target Module(s)
-- None
+- refineddatabase
 
 ## Dependencies: 
-- None
+- CPAT
 
 ## Threads
-- None
+- 1-2 cores
 
 ## Original Source
-- None
+- https://cpat.readthedocs.io/en/latest/
 
 ## Shell
 - None

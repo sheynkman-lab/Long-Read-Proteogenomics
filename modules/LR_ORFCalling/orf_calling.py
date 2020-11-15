@@ -1,4 +1,9 @@
-def orf_mapping(orf_coord, gencode, sample_gtf, seq_seq):
+import pandas as pd
+from gtfparse read_gtf
+from collections import defaultdict
+import argparse
+
+def orf_mapping(orf_coord, gencode, sample_gtf, orf_seq):
     exons = sample_gtf[sample_gtf['feature'] == 'exon']
     exons['exon_length'] = abs(exons['end'] - exons['start']) + 1
 
@@ -16,13 +21,13 @@ def orf_mapping(orf_coord, gencode, sample_gtf, seq_seq):
     def get_num_upstream_atgs(row):
         orf_start = int(row['orf_start'])
         acc = row['pb_acc']
-        seq = orfs[acc] # get orf seq
+        seq = orf_seq[acc] # get orf seq
         upstream_seq = seq[0:orf_start-1] # sequence up to the predicted ATG
         num_atgs = upstream_seq.count('ATG')
         return num_atgs
 
     all_cds['upstream_atgs'] = all_cds.apply(get_num_upstream_atgs, axis=1)
-
+    return all_cds
 
 def plus_mapping(exons,orf_coord, start_codons):
     """
@@ -140,3 +145,40 @@ def orf_calling(orf):
     return called_orf
     
     
+def main():
+    parser = argparse.ArgumentParser(description='Proccess ORF related file locations')
+    parser.add_argument('--orf_coord', '-oc',action='store', dest= 'orf_coord',help='ORF coordinate input file location')
+    parser.add_argument('--gencode','-g',action='store', dest= 'gencode',help='gencode coordinate input file location')
+    parser.add_argument('--sample_gtf','-sg',action='store', dest= 'sample_gtf',help='Sample GTF input file location')
+    parser.add_argument('--pb_gene','-pg',action='store', dest= 'pb_gene',help='PB Accession/Gencode id mapping input file location')
+    parser.add_argument('--classification','-c',action='store', dest= 'classification',help='sample classification input file location')
+    parser.add_argument('--sample_fasta','-sf',action='store', dest= 'sample_fasta',help='Sample FASTA input file location')
+    parser.add_argument('--output','-o',action='store', dest= 'output',help='Output file location')
+    results = parser.parse_args()
+
+    orf_coord = read_orf(results.orf_coord)
+    gencode = read_gtf(results.gencode)
+    sample_gtf = read_gtf(results.sample_gtf)
+    pb_gene = pd.read_csv(results.pb_gene, sep = '\t')
+    classification = pd.read_csv(results.classification, sep = '\t')
+
+    orf_seq= defaultdict() # pb_acc -> orf_seq
+    for rec in SeqIO.parse(results.sample_fasta, 'fasta'):
+        orf_seq[rec.id] = str(rec.seq)
+
+
+    all_orfs = orf_mapping(orf_coord, gencode, sample_gtf, orf_seq)
+    orfs = orf_calling(all_orfs)
+
+    classification = classification[['isoform', 'FL']]
+    total = classification['FL'].sum()
+    classification['CPM'] = classification['FL'] / total * 1000000
+
+    orfs = pd.merge(orfs, pb_gene, left_on = 'pb_acc', right_on='isoform', how = 'left')
+    orfs = pd.merge(orfs, classification, on = 'isoform', how = 'left')
+    orfs = orfs.drop(columns = ['isoform'])
+    orfs.to_csv(results.output, index = False, sep = "\t")
+
+
+if __name__ == "__main__":
+    main()
