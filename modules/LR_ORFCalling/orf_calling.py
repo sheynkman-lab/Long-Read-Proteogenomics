@@ -1,7 +1,7 @@
 import pandas as pd
-import gtfparse
+from gtfparse read_gtf
 from collections import defaultdict
-import sys
+import argparse
 
 def orf_mapping(orf_coord, gencode, sample_gtf, orf_seq):
     exons = sample_gtf[sample_gtf['feature'] == 'exon']
@@ -145,17 +145,26 @@ def orf_calling(orf):
     return called_orf
     
     
-def main(**kwargs):
-    input_directory = kwargs['-i']
-    output_directory = kwargs['-o']
-    orf_coord = read_orf(f'{input_directory}/jurkat_cpat.ORF_prob.tsv')
-    gencode = read_gtf(f"{input_directory}/gencode.v35.annotation.gtf")
-    sample_gtf = read_gtf(f"{input_directory}/jurkat_corrected.gtf")
-    pb_gene = pd.read_csv(f"{input_directory}/pb_to_gene.tsv", sep = '\t')
-    classification = pd.read_csv(f"{input_directory}/jurkat_classification.txt", sep = '\t')
+def main():
+    parser = argparse.ArgumentParser(description='Proccess ORF related file locations')
+    parser.add_argument('--orf_coord', '-oc',action='store', dest= 'orf_coord',help='ORF coordinate input file location')
+    parser.add_argument('--gencode','-g',action='store', dest= 'gencode',help='gencode coordinate input file location')
+    parser.add_argument('--sample_gtf','-sg',action='store', dest= 'sample_gtf',help='Sample GTF input file location')
+    parser.add_argument('--pb_gene','-pg',action='store', dest= 'pb_gene',help='PB Accession/Gencode id mapping input file location')
+    parser.add_argument('--classification','-c',action='store', dest= 'classification',help='sample classification input file location')
+    parser.add_argument('--sample_fasta','-sf',action='store', dest= 'sample_fasta',help='Sample FASTA input file location')
+    parser.add_argument('--output','-o',action='store', dest= 'output',help='Output file location')
+    results = parser.parse_args()
+
+    orf_coord = read_orf(results.orf_coord)
+    gencode = read_gtf(results.gencode)
+    sample_gtf = read_gtf(results.sample_gtf)
+    pb_gene = pd.read_csv(results.pb_gene, sep = '\t')
+    classification = pd.read_csv(results.classification, sep = '\t')
+
     
     orf_seq= defaultdict() # pb_acc -> orf_seq
-    for rec in SeqIO.parse(f'{input_directory}/jurkat_corrected.fasta', 'fasta'):
+    for rec in SeqIO.parse(results.sample_fasta, 'fasta'):
         orf_seq[rec.id] = str(rec.seq)
 
 
@@ -167,11 +176,10 @@ def main(**kwargs):
     classification['CPM'] = classification['FL'] / total * 1000000
 
     orfs = pd.merge(orfs, pb_gene, left_on = 'pb_acc', right_on='isoform', how = 'left')
-    orfs = pd.merge(orfs, classification, left_on='pb_acc', right_on = 'isoform', how = 'left')
-    orfs = orfs.drop(columns = ['isoform_x', 'isoform_y'])
-    orfs.to_csv(f"{output_directory}/orf_calling_results.csv", index = False)
+    orfs = pd.merge(orfs, classification, on = 'isoform', how = 'left')
+    orfs = orfs.drop(columns = ['isoform'])
+    orfs.to_csv(results.output, index = False, sep = "\t")
 
 
 if __name__ == "__main__":
-    print(sys.argv)
-    main(**dict(arg.split('=') for arg in sys.argv[1:]))
+    main()

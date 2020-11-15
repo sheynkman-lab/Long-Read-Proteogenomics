@@ -1,5 +1,9 @@
 .DS_Store
 .vscode
+#nextflow related files
+.nextflow*
+work
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
