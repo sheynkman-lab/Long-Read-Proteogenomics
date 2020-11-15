@@ -1,25 +1,25 @@
-# Long REad SMARTLinkCSS 
-*Description of the module*
+# ProteinInferenceAnalysis 
+This custom module compares the protein group results from MetaMorpheus searches using different refernce databases. The comparison of protein groups can elicudate differences, strengths and weaknesses of the reference databases used.
 
 ## Input
-- A
-- B
+- 2 x AllProteinGroups.tsv
+- accession mapping file
 
 ## Output
-- C
-- D
+- excel file containing categories of protein group comparisons (matching, simpler for one model db, partially overlapping or distinct)
 
 ## Soure Module(s)
-- None
+- 2x MetaMorpheus
+- AccessionMapping
 
 ## Target Module(s)
 - None
 
 ## Dependencies: 
-- None
+- Python Packages (pandas, numpoy and default dict)
 
 ## Threads
-- None
+- Any
 
 ## Original Source
 - None
