@@ -162,7 +162,6 @@ def main():
     pb_gene = pd.read_csv(results.pb_gene, sep = '\t')
     classification = pd.read_csv(results.classification, sep = '\t')
 
-    
     orf_seq= defaultdict() # pb_acc -> orf_seq
     for rec in SeqIO.parse(results.sample_fasta, 'fasta'):
         orf_seq[rec.id] = str(rec.seq)
