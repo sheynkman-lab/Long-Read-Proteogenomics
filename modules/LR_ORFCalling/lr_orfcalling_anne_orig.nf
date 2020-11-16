@@ -98,8 +98,8 @@ if (params.fasta) {
 
     script:
     """
-    ORFtransdecoder.LongOrfs -t ${params.fasta}
-    ORFtransdecoder.Predict -t ${params.fasta}    
+    TransDecoder.LongOrfs -t ${params.fasta}
+    TransDecoder.Predict -t ${params.fasta}    
     """
   }
 

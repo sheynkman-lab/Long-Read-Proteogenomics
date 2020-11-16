@@ -17,12 +17,12 @@ sudo conda install -c bioconda nextflow
 
 To run this pipeline with nextflow - run the test first with displaying the help message
 ```bash
-nextflow run lr_orfcalling.nr --help -profile lr_orfcalling_nextflow.config
+nextflow run lr_orfcalling.nf --help -profile lr_orfcalling_nextflow.config
 ```
 
 Then to run a test run on a specific fasta file **ALWAYS USE ABSOLUTE PATHS**
 ```bash
-nextflow run lr_orfcalling.nr --fasta /mnt/shared/ubuntu/session_data/Long-Read-Proteogenomics/data/jurkat_corrected.fasta -profile lr_orfcalling_nextflow.confg
+nextflow run lr_orfcalling.nf --fasta /mnt/shared/ubuntu/session_data/Long-Read-Proteogenomics/data/jurkat_corrected.fasta -profile lr_orfcalling_nextflow.confg
 ```
 
 ## process runTransDecoder
