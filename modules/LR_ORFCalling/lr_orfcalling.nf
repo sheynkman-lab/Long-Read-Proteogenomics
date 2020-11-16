@@ -18,10 +18,11 @@ def helpMessage() {
     log.info """
     Usage:
     The typical command for running the pipeline is as follows:
-    nextflow run main.nf --fasta my.fasta --gtf genome.gtf -profile base
+    nextflow run lr_orfcalling.nf --fasta ../../data/jurkat_corrected.fasta -profile lr_orfcalling_nextflow.config
     
     Input files:
       --fasta                       path to the fasta file
+      --run_name                    name for the run
  
     Transdecoder:                   no additional arguments required
 
@@ -57,13 +58,12 @@ if (params.help) {
 }
 
 // main.nf
-params.reads = false
-
 
 // get run name and date prefix for counts matrix and multiqc
 run_name = params.run_name ? params.run_name + "_" : ""
 date = new Date().format("MM-dd-yy")
 run_prefix = run_name + date
+outdir = run_name
 
 log.info "lr_orfcalling - N F  ~  version 0.1"
 log.info "====================================="
@@ -71,29 +71,30 @@ log.info "Run name                    : ${params.run_name}"
 log.info "Date                        : ${date}"
 log.info "Final prefix                : ${run_prefix}"
 log.info "Fasta                       : ${params.fasta}"
-log.info "Outdir                      : ${params.outdir}"
-log.info "Max CPUs                    : ${params.max_cpus}"
-log.info "Max memory                  : ${params.max_memory}"
-log.info "Max time                    : ${params.max_time}"
-log.info "Mega time                   : ${params.mega_time}"
-log.info "Google Cloud disk-space     : ${params.gc_disk_size}"
 
 if (params.fasta) {
   /*--------------------------------------------------
     TransDecoder for calling ORF on fasta file
   ---------------------------------------------------*/
-  println "My reads: ${params.reads}"
+  println "My fasta file is: ${params.fasta}"
+  Channel
+     .value(file(params.fasta))
+     .ifEmpty { error "Cannot find any fasta file for parameter --fasta: ${params.fasta}" }
+     .set { fasta }    
 
   process runTransDecoder {
-    tag "$name"
+    tag "runTransDecoder"
 
     publishDir "${params.outdir}", mode: 'copy'
 
     input:
-    file(fasta) from ${params.fasta}
+    file(fasta)
 
     output:
-    file ${params.fasta}".{longest_orfs.pep,longest.gff3,longest_orfs.cds,longest_orfs.cds.top_500_longest}" into transdecoder_results 
+    file ("*.bed") into bed_channel
+    file ("*.cds") into cds_channel
+    file ("*.gff3") into gff3_channel
+    file ("*.pep") into pep_channel
 
     script:
     """
