@@ -1,5 +1,5 @@
 import pandas as pd
-from gtfparse read_gtf
+from gtfparse import read_gtf
 from collections import defaultdict
 import argparse
 
