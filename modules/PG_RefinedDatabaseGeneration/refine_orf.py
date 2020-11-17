@@ -24,6 +24,7 @@ def get_accession_seqs(seqs):
     
     
 def combine_by_sequence(orfs, pb_seqs):
+    orfs = orfs[['pb_acc', 'orf_start', 'orf_end', 'orf_len']]
     # extract, translate, and aggregate protein sequences
     pb_pseqs = defaultdict(lambda: list()) # protein_seq -> list of pb acc
     for index, row in orfs.iterrows():
@@ -71,8 +72,8 @@ def aggregate_results(pacbio, orfs):
     pacbio['accessions'] = pacbio['pb_accs'].str.split('|')
     pacbio['base_acc'] = pacbio['accessions'].apply(lambda x : x[0])
     
-    fl_dict = pd.Series(orfs.FL.values,index=orf.pb_acc).to_dict()
-    cpm_dict = pd.Series(orfs.CPM.values,index=orf.pb_acc).to_dict()
+    fl_dict = pd.Series(orfs.FL.values,index=orfs.pb_acc).to_dict()
+    cpm_dict = pd.Series(orfs.CPM.values,index=orfs.pb_acc).to_dict()
     
     pacbio['FL'] = pacbio['accessions'].apply(lambda accs : get_total(accs, fl_dict))
     pacbio['CPM'] = pacbio['accessions'].apply(lambda accs : get_total(accs, cpm_dict))
@@ -84,12 +85,12 @@ def main():
     seqs = SeqIO.parse(open(results.seq), 'fasta')
     orfs = pd.read_csv(results.orfs, sep = '\t')               
     pb_seqs,redundant_accs = get_accession_seqs(seqs)
-    pb_pseqs = aggregate_by_sequence(orfs, pb_seqs)
+    pb_pseqs = combine_by_sequence(orfs, pb_seqs)
     
     
     with open(results.red, 'w') as f:
-    for acc in redundant_accs:
-        f.write(f"{acc}\n")
+        for acc in redundant_accs:
+            f.write(f"{acc}\n")
         
     with open(results.combined_tsv, 'w') as ofile, open(results.combined_fasta, 'w') as ofile2:
         ofile.write('protein_sequence\tpb_accs\n')
