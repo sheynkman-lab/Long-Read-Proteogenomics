@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # temp scripts for different parts of the pipline
 
 import pandas as pd
@@ -53,7 +55,7 @@ def process_args():
     parser = argparse.ArgumentParser(description='Proccess ORF related file locations')
     parser.add_argument('-io', '--orfs',action='store', dest= 'orfs',help='ORF coordinate input file location')
     parser.add_argument('-is', '--seq', action = 'store', dest='seq', help='PacBio fasta sequence input file location')
-    parser.add_argument('-or', '--redundent', action='store', dest='red', help = 'Output redundant accession file location')
+    parser.add_argument('-or', '--redundant', action='store', dest='red', help = 'Output redundant accession file location')
     parser.add_argument('-oct', '--ctsv', action='store', dest='combined_tsv', help = 'Output combined tsv file location')
     parser.add_argument('-ocf', '--cfasta', action='store', dest='combined_fasta', help = 'Output combined fasta file location')
     parser.add_argument('-ot', '--aggtsv', action='store', dest='agg_tsv', help = 'Output aggregated tsv file location')
@@ -83,7 +85,7 @@ def aggregate_results(pacbio, orfs):
 def main():
     results = process_args()
     seqs = SeqIO.parse(open(results.seq), 'fasta')
-    orfs = pd.read_csv(results.orfs, sep = '\t')               
+    orfs = pd.read_csv(results.orfs, sep = ',')               
     pb_seqs,redundant_accs = get_accession_seqs(seqs)
     pb_pseqs = combine_by_sequence(orfs, pb_seqs)
     
