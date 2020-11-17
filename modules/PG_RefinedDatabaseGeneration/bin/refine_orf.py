@@ -85,7 +85,7 @@ def aggregate_results(pacbio, orfs):
 def main():
     results = process_args()
     seqs = SeqIO.parse(open(results.seq), 'fasta')
-    orfs = pd.read_csv(results.orfs, sep = ',')               
+    orfs = pd.read_csv(results.orfs, sep = '\t')
     pb_seqs,redundant_accs = get_accession_seqs(seqs)
     pb_pseqs = combine_by_sequence(orfs, pb_seqs)
     
