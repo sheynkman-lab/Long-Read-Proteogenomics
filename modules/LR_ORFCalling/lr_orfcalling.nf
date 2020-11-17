@@ -22,30 +22,15 @@ def helpMessage() {
     
     Input files:
       --fasta                       path to the fasta file
-      --run_name                    name for the run
- 
+      --trans_decoder               Boolean, defaults to true to execute the TransDecoder process
+      
     Transdecoder:                   no additional arguments required
 
-    CPAT:                           
-      --hexamer                     species specific hexamer file (cpat can also generate a new one)
-      --gtf
-
     Other:
-                                    (default: false)
+
       --max_cpus                    Maximum number of CPUs (int)
-                                    (default: ?)  
       --max_memory                  Maximum memory (memory unit)
-                                    (default: 80)
       --max_time                    Maximum time (time unit)
-                                    (default: ?)
-      --skipMultiQC                 Skip MultiQC (bool)
-                                    (default: false)
-      --outdir                      The output directory where the results will be saved (string)
-                                    (default: directory where you submit the job)
-      --mega_time                   Sets time limit for processes withLabel 'mega_memory' in the main.nf using the base.config (time unit)     
-                                    (default: 20.h)
-      --gc_disk_size                Only specific to google-cloud executor. Adds disk-space for few aggregative processes.
-                                    (default: "200 GB" based on 100 samples. Simply add 2 x Number of Samples)
 
     See here for more info: https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/master/docs/usage.md
     """.stripIndent()
@@ -57,22 +42,13 @@ if (params.help) {
   exit 0
 }
 
-// main.nf
-
-// get run name and date prefix for counts matrix and multiqc
-run_name = params.run_name ? params.run_name + "_" : ""
-date = new Date().format("MM-dd-yy")
-run_prefix = run_name + date
-outdir = run_name
-
 log.info "lr_orfcalling - N F  ~  version 0.1"
 log.info "====================================="
-log.info "Run name                    : ${params.run_name}"
-log.info "Date                        : ${date}"
-log.info "Final prefix                : ${run_prefix}"
 log.info "Fasta                       : ${params.fasta}"
 
-if (params.fasta) {
+
+
+if (params.fasta && params.trans_decoder) {
   /*--------------------------------------------------
     TransDecoder for calling ORF on fasta file
   ---------------------------------------------------*/
@@ -80,27 +56,39 @@ if (params.fasta) {
   Channel
      .value(file(params.fasta))
      .ifEmpty { error "Cannot find any fasta file for parameter --fasta: ${params.fasta}" }
-     .set { fasta }    
+     .set { ch_fasta }    
 
-  process runTransDecoder {
-    tag "runTransDecoder"
+  process run_transdecoder {
+    tag "${fasta}"
 
     publishDir "${params.outdir}", mode: 'copy'
 
     input:
-    file(fasta)
+    file(fasta) from ch_fasta
 
     output:
-    file ("*.bed") into bed_channel
-    file ("*.cds") into cds_channel
-    file ("*.gff3") into gff3_channel
-    file ("*.pep") into pep_channel
+    // alternative syntax to save all files in one channel:
+    set file("*.bed"), file("*.cds"),  file("*.gff3"), file ("*.pep") into ch_print_to_check
 
     script:
     """
-    TransDecoder.LongOrfs -t ${params.fasta}
-    TransDecoder.Predict -t ${params.fasta}    
+    TransDecoder.LongOrfs -t $fasta
+    TransDecoder.Predict -t $fasta    
     """
   }
-
 }
+
+
+  process ch_print_to_check {
+    echo true
+
+    publishDir "${params.outdir}", mode: 'copy'
+
+    input:
+    set file(bed), file(cds),  file(gff3), file(pep) from ch_print_to_check
+
+    script:
+    """
+    ls -l 
+    """
+  }
