@@ -373,3 +373,4 @@ _Pvt_Extensions
 
 # local data files (gloria started)
 output
+trans_to_gene.tsv
