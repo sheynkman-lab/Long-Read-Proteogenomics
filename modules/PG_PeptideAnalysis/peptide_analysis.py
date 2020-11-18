@@ -14,7 +14,7 @@ from gen_maps import GenMap
 
 # TODO: #
 # Ask Gloria to put the Trans_to_Gene file on Zenodo #
-# Figure out how to make optional command line arguemnts
+# Figure out how to make optional command line arguments
 
 
 # %%
