@@ -1,6 +1,8 @@
 
-import pandas as import pd
 import argparse
+
+import pandas as pd
+
 
 def process_metamorpheus_file(filename):
     """
@@ -42,7 +44,7 @@ def find_best_protein(remaining, original, protein_column):
         subset = original[original[protein_column].isin(best_proteins)]
         subsizes = subset.groupby(protein_column).size().reset_index().rename(columns = {0:'size'})
         max_subsize = subsizes['size'].max()
-        best_proteins = list(subsizes[subsizes['size'] == max_subsize])
+        best_proteins = list(subsizes[subsizes['size'] == max_subsize][protein_column])
     return best_proteins[0]
 
 
@@ -121,14 +123,14 @@ def greedy_inference(original, protein_column = 'Protein Accession', peptide_col
 
 def main():
     parser = argparse.ArgumentParser(description='Parse Greedy Protein Inference Arguments')
-    parser.add_argument('-ifile', action='store',dest='ifile', help = 'input peptide-protein file')
-    parser.add_argument('-odir', action = 'store', dest='odir', help = 'output directory for results')
+    parser.add_argument('-i','--ifile', action='store',dest='ifile', help = 'input peptide-protein file')
+    parser.add_argument('-o','--odir', action = 'store', dest='odir', help = 'output directory for results')
     results = parser.parse_args()
 
     original = process_metamorpheus_file(results.ifile)
     inferred, dropped = greedy_inference(original)
-    inferred.to_csv('inferred_proteins.tsv', sep = '\t', index = False)
-    dropped.to_csv('dropped_proteins.tsv', sep = '\t', index=False)
+    inferred.to_csv(f'{results.odir}/inferred_proteins.tsv', sep = '\t', index = False)
+    dropped.to_csv(f'{results.odir}/dropped_proteins.tsv', sep = '\t', index=False)
 
 if __name__ == "__main__":
     main()
