@@ -17,20 +17,12 @@
 def helpMessage() {
     log.info """
     Usage:
-    The typical command for running the pipeline is as follows:
-    nextflow run lr_orfcalling.nf --fasta ../../data/jurkat_corrected.fasta -profile lr_orfcalling_nextflow.config
+    The typical command for running the orf module is as follows:
+    nextflow run lr_orfcalling.nf --fasta https://zenodo.org/record/4278034/files/toy_for_christina.fasta.txt
     
     Input files:
-      --fasta                       path to the fasta file
-      --trans_decoder               Boolean, defaults to true to execute the TransDecoder process
-      
-    Transdecoder:                   no additional arguments required
-
-    Other:
-
-      --max_cpus                    Maximum number of CPUs (int)
-      --max_memory                  Maximum memory (memory unit)
-      --max_time                    Maximum time (time unit)
+      --fasta                [file] Path to the fasta file required for TransDecoder
+      --trans_decoder        [bool] Boolean, defaults to true to execute the TransDecoder process
 
     See here for more info: https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/master/docs/usage.md
     """.stripIndent()
@@ -42,21 +34,31 @@ if (params.help) {
   exit 0
 }
 
-log.info "lr_orfcalling - N F  ~  version 0.1"
-log.info "====================================="
-log.info "Fasta                       : ${params.fasta}"
+log.info "--------------------------------------------------------------------------------"
+
+def summary = [:]
+if (params.fasta) summary['Fasta'] = "${params.fasta}"
 
 
+log.info summary.collect { k,v -> "${k.padRight(10)}: $v" }.join("\n")
+log.info "--------------------------------------------------------------------------------"
 
+// Initialize channels based on parameters
+
+// Stop early if the trans_decoder parameter is set to false
+if (!params.trans_decoder) { exit 0, "Nothing to execute, set the --trans_decoder parameter to true if you wish to run this module."}
+
+// Stop early if the fasta file (required for this process) is not provided
+if (!params.fasta) { exit 1, "No fasta file found at the location ${params.fasta}. Please make sure the path to the file exists."}
+
+// Create the channel for the fasta file if provided
+if (params.fasta)  {ch_fasta = Channel.value(file(params.fasta)) }
+
+// Execute TransDecoder only when a --fasta file has been provided and --trans_decoder true
 if (params.fasta && params.trans_decoder) {
   /*--------------------------------------------------
     TransDecoder for calling ORF on fasta file
   ---------------------------------------------------*/
-  println "My fasta file is: ${params.fasta}"
-  Channel
-     .value(file(params.fasta))
-     .ifEmpty { error "Cannot find any fasta file for parameter --fasta: ${params.fasta}" }
-     .set { ch_fasta }    
 
   process run_transdecoder {
     tag "${fasta}"
