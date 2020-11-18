@@ -47,7 +47,7 @@ Output Files:
 #parser.add_argument('--pbsix_fram', '-sf', action='store', dest='six_fr_file', help='Pacbio Six Frame Translation file location')
 
 ## Input Files ##
-trans_to_gene_file = './trans_to_gene.tsv'
+trans_to_gene_file = '../../data/trans_to_gene.tsv'
 gtf_file = '../../data/gencode.v35.annotation.gtf' # only need this if trans_to_gene file does not exist
 pbacc_to_gene_file = '../../data/uniprot_acc_to_gencode_gene.tsv'
 
@@ -282,9 +282,9 @@ df2 = pd.DataFrame(data_sf)
 
 data = pd.merge(df1, df2, how='outer', on='gene').drop(columns=['test_GC'])
 
-gen_tab = pd.read_csv('gene_based_info.tsv', sep='\t')
-tab = pd.merge(gen_tab, data, how='inner', on='gene')
-tab.to_csv('gencode_pb_comparison_tab.tsv', sep='\t', index=None)
+#gen_tab = pd.read_csv('gene_based_info.tsv', sep='\t')
+#tab = pd.merge(gen_tab, data, how='inner', on='gene')
+#tab.to_csv('gencode_pb_comparison_tab.tsv', sep='\t', index=None)
 
 
 # %%
