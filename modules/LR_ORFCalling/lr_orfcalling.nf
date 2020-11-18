@@ -34,15 +34,15 @@ if (params.help) {
   exit 0
 }
 
-log.info "--------------------------------------------------------------------------------"
+log.info "--------------------------------------------------------------------------------------------"
 
 def summary = [:]
 if (params.fasta) summary['Fasta'] = "${params.fasta}"
 summary['TransDecoder'] = "${params.trans_decoder}"
 
 
-log.info summary.collect { k,v -> "${k.padRight(10)}: $v" }.join("\n")
-log.info "--------------------------------------------------------------------------------"
+log.info summary.collect { k,v -> "${k.padRight( 18)}: $v" }.join("\n")
+log.info "--------------------------------------------------------------------------------------------"
 
 // Initialize channels based on parameters
 
@@ -53,7 +53,7 @@ if (!params.trans_decoder) { exit 0, "Nothing to execute, set the --trans_decode
 if (!params.fasta) { exit 1, "No fasta file found at the location ${params.fasta}. Please make sure the path to the file exists."}
 
 // Create the channel for the fasta file if provided
-if (params.fasta)  {ch_fasta = Channel.value(file(params.fasta)) }
+if (params.fasta)  {ch_fasta = Channel.value(file(params.fasta, checkIfExists: true)) }
 
 // Execute TransDecoder only when a --fasta file has been provided and --trans_decoder true
 if (params.fasta && params.trans_decoder) {
@@ -64,7 +64,7 @@ if (params.fasta && params.trans_decoder) {
   process run_transdecoder {
     tag "${fasta}"
 
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${params.outdir}/transdecoder/", mode: 'copy'
 
     input:
     file(fasta) from ch_fasta
@@ -82,7 +82,7 @@ if (params.fasta && params.trans_decoder) {
 }
 
 
-  process ch_print_to_check {
+  process print_to_check {
     echo true
 
     publishDir "${params.outdir}", mode: 'copy'
@@ -92,6 +92,7 @@ if (params.fasta && params.trans_decoder) {
 
     script:
     """
-    ls -l 
+    echo "process 'print_to_check' staged input files, generated as outputs of process run_transdecoder:"
+    ls -L
     """
   }
