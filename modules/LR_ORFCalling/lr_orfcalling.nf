@@ -38,6 +38,7 @@ log.info "----------------------------------------------------------------------
 
 def summary = [:]
 if (params.fasta) summary['Fasta'] = "${params.fasta}"
+summary['TransDecoder'] = "${params.trans_decoder}"
 
 
 log.info summary.collect { k,v -> "${k.padRight(10)}: $v" }.join("\n")
