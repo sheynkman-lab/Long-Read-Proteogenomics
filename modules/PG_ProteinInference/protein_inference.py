@@ -99,7 +99,7 @@ def greedy_inference(original, protein_column = 'Protein Accession', peptide_col
     peptide_sizes = original.groupby(peptide_column).size().reset_index().rename(columns = {0:'size'})
     single_peptides = list(peptide_sizes[peptide_sizes['size'] == 1][peptide_column])
     inferred_proteins = list(original[original[peptide_column].isin(single_peptides)][protein_column])
-    attached_peptides = list(original[original[protein_column].isin(inferred_proteins)][peptide_column])
+    attached_peptides = set(original[original[protein_column].isin(inferred_proteins)][peptide_column])
     remaining = original[~original[peptide_column].isin(attached_peptides)]
 
     while len(remaining) > 0:
@@ -107,7 +107,7 @@ def greedy_inference(original, protein_column = 'Protein Accession', peptide_col
         best_protein = find_best_protein(remaining, original, protein_column)
         inferred_proteins.append(best_protein)
         # Remove peptides that connect to protein from remaining
-        attached_peptides = list(remaining[remaining[protein_column] == best_protein][peptide_column])
+        attached_peptides = set(remaining[remaining[protein_column] == best_protein][peptide_column])
         is_matched_peptide = remaining[peptide_column].isin(attached_peptides)
         remaining = remaining[~is_matched_peptide]
     
