@@ -93,44 +93,65 @@ def greedy_inference(original, protein_column = 'Protein Accession', peptide_col
 
     """
 
-    dropped = pd.DataFrame(columns = original.columns)
+    # Find peptides that attach to only one protein
+    # Add those proteins to inferred proteins bag
+    # Remove any peptides that connect to inferred proteins
     peptide_sizes = original.groupby(peptide_column).size().reset_index().rename(columns = {0:'size'})
-    single = peptide_sizes[peptide_sizes['size'] == 1]
-    inferred = original[original[peptide_column].isin(single[peptide_column])]
-    inferred = original[original[protein_column].isin(inferred[protein_column])]
-    remaining = original[~original[protein_column].isin(inferred[protein_column])]
-    inferred = [ inferred ]
+    single_peptides = list(peptide_sizes[peptide_sizes['size'] == 1][peptide_column])
+    inferred_proteins = list(original[original[peptide_column].isin(single_peptides)][protein_column])
+    attached_peptides = list(original[original[protein_column].isin(inferred_proteins)][peptide_column])
+    remaining = original[~original[peptide_column].isin(attached_peptides)]
 
     while len(remaining) > 0:
+        # Greedy select best protein
         best_protein = find_best_protein(remaining, original, protein_column)
-        matches = remaining[remaining[protein_column] == best_protein]
-        tmp_peptides = list(matches[peptide_column])
-        inferred.append(matches)
-
-        is_matched_peptide = remaining[peptide_column].isin(tmp_peptides)
-        is_best_protein = remaining[protein_column] == best_protein
-        
+        inferred_proteins.append(best_protein)
+        # Remove peptides that connect to protein from remaining
+        attached_peptides = list(remaining[remaining[protein_column] == best_protein][peptide_column])
+        is_matched_peptide = remaining[peptide_column].isin(attached_peptides)
         remaining = remaining[~is_matched_peptide]
-        
-    inferred = pd.concat(inferred)
-
-    inferred_proteins = inferred[protein_column].unique()
+    
     inferred = original[original[protein_column].isin(inferred_proteins)]
     dropped = original[~original[protein_column].isin(inferred_proteins)]
     
-    return inferred, dropped
+    # Rescue proteins
+    inferred, dropped, rescued = rescue_matched_proteins(inferred, dropped)
+    return inferred, dropped, rescued
  
+def rescue_matched_proteins(inferred, dropped, protein_column = 'Protein Accession', peptide_column = 'Base Sequence'):
+    """
+    Rescue proteins from the dropped grph where there exists a protein in the inferred graph that
+    shares an exact set of peptides
+    """
+    inferred_set = inferred.groupby(protein_column)[peptide_column].apply(set)
+    dropped_set = dropped.groupby(protein_column)[peptide_column].apply(set)
+
+    rescued_proteins = set()
+    for d_acc, d_set in dropped_set.iteritems():
+        for i_acc, i_set in inferred_set.iteritems():
+            if d_set == i_set:
+                rescued_proteins = share_peptides.union([d_acc])
+                break
+    
+    rescued = dropped[dropped[protein_column].isin(rescued_proteins)]
+    inferred = pd.concat([inferred, rescued])
+    dropped = dropped[~dropped[protein_column].isin(rescued_proteins)]
+
+    return inferred, dropped, rescued
 
 def main():
     parser = argparse.ArgumentParser(description='Parse Greedy Protein Inference Arguments')
-    parser.add_argument('-i','--ifile', action='store',dest='ifile', help = 'input peptide-protein file')
-    parser.add_argument('-o','--odir', action = 'store', dest='odir', help = 'output directory for results')
+    parser.add_argument('-i','--ifile', action='store',dest='ifile', help = 'input peptide-protein file', required=True)
+    parser.add_argument('-o','--odir', action = 'store', dest='odir', help = 'output directory for results', required=True)
+    parser.add_argument('-n','--name', action='store',dest='name', help = 'name of experiment', default = 'exp')
     results = parser.parse_args()
 
     original = process_metamorpheus_file(results.ifile)
-    inferred, dropped = greedy_inference(original)
-    inferred.to_csv(f'{results.odir}/inferred_proteins.tsv', sep = '\t', index = False)
-    dropped.to_csv(f'{results.odir}/dropped_proteins.tsv', sep = '\t', index=False)
+    inferred, dropped, rescued = greedy_inference(original)
+    
+    inferred.to_csv(f'{results.odir}/{results.name}inferred.tsv', sep = '\t', index = False)
+    dropped.to_csv(f'{results.odir}/{results.name}_dropped.tsv', sep = '\t', index=False)
+    rescued.to_csv(f'{results.odir}/{results.name}_dropped.tsv', sep = '\t', index=False)
 
 if __name__ == "__main__":
     main()
