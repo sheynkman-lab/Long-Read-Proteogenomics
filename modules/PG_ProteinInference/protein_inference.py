@@ -130,7 +130,7 @@ def rescue_matched_proteins(inferred, dropped, protein_column = 'Protein Accessi
     for d_acc, d_set in dropped_set.iteritems():
         for i_acc, i_set in inferred_set.iteritems():
             if d_set == i_set:
-                rescued_proteins = share_peptides.union([d_acc])
+                rescued_proteins = rescued_proteins.union([d_acc])
                 break
     
     rescued = dropped[dropped[protein_column].isin(rescued_proteins)]
