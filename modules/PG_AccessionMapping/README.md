@@ -1,25 +1,26 @@
-# Long REad SMARTLinkCSS 
-*Description of the module*
+# AccessionMapping
+Given several protein databases, map the related isoforms between the databases. Includes the associated genes.
 
 ## Input
-- A
-- B
+- Uniprot fasta
+- Gencode fasta
+- PacBio fasta (from the RefinedDatabase module)
 
 ## Output
-- C
-- D
+- an accession mapping file
 
 ## Soure Module(s)
-- None
+- RefinedDatabase
 
 ## Target Module(s)
-- None
+- ProteinInference
 
 ## Dependencies: 
-- None
+- blast
+- python package (pandas, numpy, etc.)
 
 ## Threads
-- None
+- 40+ cpus needed for blasting
 
 ## Original Source
 - None

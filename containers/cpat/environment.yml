@@ -1,0 +1,12 @@
+# You can use this file to create a conda environment for this pipeline:
+#   conda env create -f environment.yml
+name: cpat
+channels:
+  - conda-forge
+dependencies:
+  - conda-forge::python=3.7.3
+  - conda-forge::pip
+  - pip:
+    # works for regular pip packages
+    - cpat
+  
