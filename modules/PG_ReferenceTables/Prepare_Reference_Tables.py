@@ -3,17 +3,17 @@ This module prepares reference tables for other modules
  
   Inputs:
   --------------------------------------------------------------
-   1. Genecode gtf file 
+   1. Genecode gtf file
+   2. Gencode fasta file 
   --------------------------------------------------------------
   
    Output Tables:
   -------------------------------------------------------------
    1. ensg -> gene 
-   2. pb_acc -> gene
-   3. isoname (transcript name) -> gene 
-   4. ensp -> gene 
-   5. isoform, gene, length table 
-   6. gene -> min, max, average
+   2. isoname (transcript name) -> gene 
+   3. ensp -> gene 
+   4. isoform, gene, length table 
+   5. gene -> min, max, average
  -------------------------------------------------------------- 
 
 """
