@@ -1,3 +1,4 @@
+# %%
 """ 
 This module prepares reference tables for other modules 
  
@@ -72,7 +73,7 @@ def GenMap(gtf_file):
                 ofile.write(gen + '\t' + ensp + '\n')
     
     
-    with open('isoname_to_gene.tsv', 'w') as ofile:
+    with open('../../results/PG_ReferenceTables/isoname_to_gene.tsv', 'w') as ofile:
         for gene, transcript_set in isonames.items():
             for transcript in transcript_set:
                 ofile.write(gene + '\t' + transcript + '\n')
@@ -97,7 +98,7 @@ def IsoLenTab(fa_file):
             lens.append(line.split('|')[6].split('""')[0])
 
     # Export Data as a DataFrame and a tsv file
-    data = {'isoform': isos, 'gene': genes, 'length': lens}
+    data = {'isoform': isos, 'gene': genes, 'length': [int(x_len) for x_len in lens]}
     df = pd.DataFrame(data)
     df.to_csv('../../results/PG_ReferenceTables/isoform_len.tsv', sep='\t', index=False)
     print("The isoform length table has been prepared.")
@@ -111,13 +112,13 @@ def GeneLenTab(IsolenFile):
     cut = IsolenFile[['gene', 'length']]
 
     # Map genes to lengths and calc average, min and max. Round mean to nearest tenth. Reset indices. 
-    len= cut.groupby(['gene']).length.agg(['mean', 'min', 'max'])
-    len['mean'] = len['mean'].round(decimals = 1)
-    len = len.reset_index(level=['gene'])
+    length= cut.groupby(['gene']).length.agg(['mean', 'min', 'max'])
+    length['mean'] = length['mean'].round(decimals = 1)
+    length = length.reset_index(level=['gene'])
 
     # Change column names and save the table 
-    len.columns =['gene', 'avg_len', 'min_len', 'max_len']
-    len.to_csv('../../results/PG_ReferenceTables/gene_len_stats.tsv', sep="\t", index=False)
+    length.columns =['gene', 'avg_len', 'min_len', 'max_len']
+    length.to_csv('../../results/PG_ReferenceTables/gene_len_stats.tsv', sep="\t", index=False)
     print('Prepared the gene length statistics table')
 
 
@@ -147,6 +148,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 
