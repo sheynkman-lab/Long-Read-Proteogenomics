@@ -67,13 +67,13 @@ def GenMap(gtf_file):
         for enst, isoname in isos.items():
             ofile.write(enst + '\t' + isoname + '\n')
     
-    with open('../../results/PG_ReferenceTables/ensp_to_gene.tsv', 'w') as ofile:
+    with open('../../results/PG_ReferenceTables/gene_to_ensp.tsv', 'w') as ofile:
         for gen, ensp_set in ensps.items():
             for ensp in ensp_set:
                 ofile.write(gen + '\t' + ensp + '\n')
     
     
-    with open('../../results/PG_ReferenceTables/isoname_to_gene.tsv', 'w') as ofile:
+    with open('../../results/PG_ReferenceTables/gene_to_isoname.tsv', 'w') as ofile:
         for gene, transcript_set in isonames.items():
             for transcript in transcript_set:
                 ofile.write(gene + '\t' + transcript + '\n')
@@ -100,7 +100,7 @@ def IsoLenTab(fa_file):
     # Export Data as a DataFrame and a tsv file
     data = {'isoform': isos, 'gene': genes, 'length': [int(x_len) for x_len in lens]}
     df = pd.DataFrame(data)
-    df.to_csv('../../results/PG_ReferenceTables/isoform_len.tsv', sep='\t', index=False)
+    df.to_csv('../../results/PG_ReferenceTables/isoname_gene_len.tsv', sep='\t', index=False)
     print("The isoform length table has been prepared.")
     return df
 
@@ -133,8 +133,8 @@ def main():
 
     # Command line arguments
     parser = argparse.ArgumentParser(description='Proccess ORF related file locations')
-    parser.add_argument('--gtf_file','-g',action='store', dest= 'gtf_file',help='Gencode GTF input file location')
-    parser.add_argument('--fa_file','-fa',action='store', dest= 'fa_file',help='Gencode Fafsa input file location')
+    parser.add_argument('--gtf','-g',action='store', dest= 'gtf_file',help='Gencode GTF input file location')
+    parser.add_argument('--fa','-fa',action='store', dest= 'fa_file',help='Gencode Fafsa input file location')
     results = parser.parse_args()
 
     # Make ensg -> gene, enst -> isoname, ensp -> gene and isoname -> gene mapping files 
