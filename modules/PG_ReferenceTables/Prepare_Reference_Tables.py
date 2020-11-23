@@ -22,6 +22,7 @@ This module prepares reference tables for other modules
 import pandas as pd 
 import argparse
 import csv
+import os
 from collections import defaultdict
 
 # Define Functions
@@ -122,6 +123,13 @@ def GeneLenTab(IsolenFile):
 
 
 def main():
+    
+    # If results folder does not exist, make it 
+    rdir = '../../results/PG_ReferenceTables'
+    if not os.path.exists(rdir):
+        os.mkdir(rdir)
+
+
     # Command line arguments
     parser = argparse.ArgumentParser(description='Proccess ORF related file locations')
     parser.add_argument('--gtf_file','-g',action='store', dest= 'gtf_file',help='Gencode GTF input file location')
