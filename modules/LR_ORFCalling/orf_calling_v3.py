@@ -1,3 +1,4 @@
+# %%
 import pandas as pd
 from gtfparse import read_gtf
 from collections import defaultdict
@@ -75,9 +76,10 @@ def minus_mapping(exons, orf_coord, start_codons):
 
     minus_comb['start_diff'] = minus_comb['orf_start'] - minus_comb['prior_size']
     minus_comb['cds_start'] = minus_comb['exon_end'] - minus_comb['start_diff'] + 1
-    minus_comb.drop(columns=['exon_length', 'current_size', 'prior_size', 'start_diff'], inplace = True)
 
     minus_comb['gencode_atg'] = minus_comb.apply(lambda row : compare_start_minus(row, start_codons), axis = 1)
+    minus_comb.drop(columns=['exon_length', 'current_size', 'prior_size', 'start_diff'], inplace = True)
+    return minus_comb
 
 def read_orf(filename):
     """
@@ -142,7 +144,6 @@ def orf_calling(orf):
     called_orf = orf.groupby('pb_acc').apply(call_orf).reset_index(drop=True)
     return called_orf
     
-    
 # parser = argparse.ArgumentParser(description='Proccess ORF related file locations')
 # parser.add_argument('--orf_coord', '-oc',action='store', dest= 'orf_coord',help='ORF coordinate input file location')
 # parser.add_argument('--gencode','-g',action='store', dest= 'gencode',help='gencode coordinate input file location')
@@ -162,7 +163,6 @@ def orf_calling(orf):
 # orf_seq= defaultdict() # pb_acc -> orf_seq
 # for rec in SeqIO.parse(results.sample_fasta, 'fasta'):
 #     orf_seq[rec.id] = str(rec.seq)
-
 orf_coord = read_orf('../../data/jurkat_cpat.ORF_prob.tsv')
 gencode = read_gtf('../../data/gencode.v35.annotation.gtf')
 sample_gtf = read_gtf('../../data/jurkat_corrected.gtf')
@@ -173,18 +173,38 @@ orf_seq= defaultdict() # pb_acc -> orf_seq
 for rec in SeqIO.parse('../../data/jurkat_corrected.fasta', 'fasta'):
     orf_seq[rec.id] = str(rec.seq)
 
-print('test')
-# %%
 all_orfs = orf_mapping(orf_coord, gencode, sample_gtf, orf_seq)
+
+# %%
+# add genome strand mapping info
+pb_strand = sample_gtf[['transcript_id', 'strand']].drop_duplicates()
+pb_strand = pd.Series(pb_strand.strand.values, index=pb_strand.transcript_id).to_dict()
+orf_coord_toy['hg38_strand'] = orf_coord_toy['pb_acc'].map(pb_strand)
+
+# %%
+
+# orf_coord_toy = orf_coord.head(1000)
+# all_orfs_toy = orf_mapping(orf_coord_toy, gencode, sample_gtf, orf_seq)
+
+# add in gene, write out file
+pb_gene = pd.Series(pb_gene.gene.values, index=pb_gene.isoform).to_dict()
+all_orfs['gene'] = all_orfs['transcript_id'].map(pb_gene)
+all_orfs.to_csv('cpat_orfs_w_atg_gencode_scores.tsv', sep='\t', index=None)
+
+
+# %%
 orfs = orf_calling(all_orfs)
 
 classification = classification[['isoform', 'FL']]
 total = classification['FL'].sum()
 classification['CPM'] = classification['FL'] / total * 1000000
 
+# %%
+pb_gene = pd.read_csv('../../data/pb_to_gene.tsv', sep = '\t')
+# pb_gene = pd.Series(pb_gene.gene.values, index=pb_gene.isoform).to_dict()
 orfs = pd.merge(orfs, pb_gene, left_on = 'pb_acc', right_on='isoform', how = 'left')
 orfs = pd.merge(orfs, classification, on = 'isoform', how = 'left')
 orfs = orfs.drop(columns = ['isoform'])
-orfs.to_csv(results.output, index = False, sep = "\t")
+orfs.to_csv('jurkat_refine_orf_calls.tsv', index = False, sep = "\t")
 
 

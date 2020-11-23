@@ -8,8 +8,36 @@ from collections import defaultdict
 from builtins import any  
 from Bio import SeqIO
 
+## Import Files ## 
+""" 
+Input Files:
+-----------
+- transcript to gene file: map transcript name to gene name
+OR
+- gtf file: contains jurkat genomic information 
+- pbacc_to_gene file: map uniprot gene names to gencode gene names
+
+Input Files from MM Outputs:
+----------------------------
+- Gencode Peptides File: AllPeptides file from genecode search 
+- Pacbio Peptides File: AllPeptides file from pacbio search
+- Pacbio Six Frame Translation: File listing all peptides that pacbio should be able to find 
+
+Output Files:
+-------------
+- Table comparing pacbio coverage of gencode results
+- TBD
+"""
+#parser = argparse.ArgumentParser(description='Process peptide related input file locations')
+#parser.add_argument('--transcript_to_gene_file', '-tg', action='store', dest='trans_to_gene_file', help = 'File mapping transcript names to gene names location')
+#parser.add_argument('--gtf_file', '-g', action='store', dest='gtf_file',help='GTF file location')
+#parser.add_argument('--pbacc_to_gene', '-pbg', action='store', dest='pbacc_to_gene_file')
+#parser.add_argument('--gen_pep', '-gp', action='store', dest='gen_pep_file', help='Genecode AllPeptides file location')
+#parser.add_argument('--pb_pep', '-pp', action='store', dest='pb_pep_file', help='Pacbio AllPeptides file location')
+#parser.add_argument('--pbsix_fram', '-sf', action='store', dest='six_fr_file', help='Pacbio Six Frame Translation file location')
 
 ## input filepaths 
+isoname_gene = '../../results/PG_ReferenceTables/isoname_to_gene.tsv'
 gtf_file = '../../data/gencode.v35.annotation.gtf'
 gc_pep_file = '../../data/AllPeptides_Gencode.psmtsv'
 pb_6frm_file = '../../data/pacbio_6frm_database_gene_grouped.fasta'
@@ -17,6 +45,8 @@ pb_refined_file = '../../data/jurkat_orf_refined.fasta'
 
 
 ## loading gencode peptide data, initiate a dataframe
+df = pd.read_table(isoname_gene_file, header=None)
+isoname_gene = pd.Series(df[1].values, index=df[0]).to_dict()
 
 # isoname to gene map
 def get_isoname_to_gene_mapping_from_gtf(gtf_file):
@@ -158,5 +188,4 @@ gc_gene.to_csv('gc_pb_overlap_peptides.tsv', sep='\t', index=None)
 # cpat.to_csv('cpat_all_w_gene.tsv', sep='\t', index=None)
 
 # %%
-
 
