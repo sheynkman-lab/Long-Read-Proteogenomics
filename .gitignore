@@ -371,6 +371,9 @@ _Pvt_Extensions
 # FAKE - F# Make
 .fake/
 
-# local data files (gloria started)
+# local data files
 output
-trans_to_gene.tsv
+results
+# ignore large output files saved to local
+*fasta
+*tsv
