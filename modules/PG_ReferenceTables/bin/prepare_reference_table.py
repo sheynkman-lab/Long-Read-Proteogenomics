@@ -1,4 +1,5 @@
-# %%
+
+
 """ 
 This module prepares reference tables for other modules 
  
@@ -27,7 +28,7 @@ import os
 from collections import defaultdict
 
 # Define Functions
-def GenMap(gtf_file):
+def GenMap(gtf_file, results):
     """
     This function prepares a series of tables that map gene, transcript and protein level information. 
     """
@@ -59,28 +60,27 @@ def GenMap(gtf_file):
                         ensps[gen].add(ensp)
     
     # Save Tables in results/PG_ReferenceTables 
-    with open('../../results/PG_ReferenceTables/ensg_to_gene.tsv', 'w') as ofile:
+    with open(results.ensg_gene, 'w') as ofile:
         for ensg, gene in genes.items():
             ofile.write(ensg + '\t' + gene + '\n')
     
-    with open('../../results/PG_ReferenceTables/enst_to_isoname.tsv', 'w') as ofile:
+    with open(results.enst_isoname, 'w') as ofile:
         for enst, isoname in isos.items():
             ofile.write(enst + '\t' + isoname + '\n')
     
-    with open('../../results/PG_ReferenceTables/gene_to_ensp.tsv', 'w') as ofile:
+    with open(results.gene_ensp, 'w') as ofile:
         for gen, ensp_set in ensps.items():
             for ensp in ensp_set:
                 ofile.write(gen + '\t' + ensp + '\n')
     
-    
-    with open('../../results/PG_ReferenceTables/gene_to_isoname.tsv', 'w') as ofile:
+    with open(results.gene_isoname, 'w') as ofile:
         for gene, transcript_set in isonames.items():
             for transcript in transcript_set:
                 ofile.write(gene + '\t' + transcript + '\n')
     
     print("The ensg_to_gene, enst_to_isoname, ensp_to_gene and isoname_to_gene files have been prepared")
 
-def IsoLenTab(fa_file):
+def IsoLenTab(fa_file, results):
     """
     Prepare a table that provides gene and length information for each isoform
     """
@@ -100,11 +100,11 @@ def IsoLenTab(fa_file):
     # Export Data as a DataFrame and a tsv file
     data = {'isoform': isos, 'gene': genes, 'length': [int(x_len) for x_len in lens]}
     df = pd.DataFrame(data)
-    df.to_csv('../../results/PG_ReferenceTables/isoname_gene_len.tsv', sep='\t', index=False)
+    df.to_csv(results.isoname_lens, sep='\t', index=False)
     print("The isoform length table has been prepared.")
     return df
 
-def GeneLenTab(IsolenFile):
+def GeneLenTab(IsolenFile, results):
     """ 
     Prepare a table that provides the min, max and average length of a gene 
     """
@@ -118,7 +118,7 @@ def GeneLenTab(IsolenFile):
 
     # Change column names and save the table 
     length.columns =['gene', 'avg_len', 'min_len', 'max_len']
-    length.to_csv('../../results/PG_ReferenceTables/gene_len_stats.tsv', sep="\t", index=False)
+    length.to_csv(results.gene_lens, sep="\t", index=False)
     print('Prepared the gene length statistics table')
 
 
@@ -126,7 +126,8 @@ def GeneLenTab(IsolenFile):
 def main():
     
     # If results folder does not exist, make it 
-    rdir = '../../results/PG_ReferenceTables'
+    # TODO - maybe remove
+    rdir = './dump'
     if not os.path.exists(rdir):
         os.mkdir(rdir)
 
@@ -135,16 +136,22 @@ def main():
     parser = argparse.ArgumentParser(description='Proccess ORF related file locations')
     parser.add_argument('--gtf','-g',action='store', dest= 'gtf_file',help='Gencode GTF input file location')
     parser.add_argument('--fa','-fa',action='store', dest= 'fa_file',help='Gencode Fafsa input file location')
+    parser.add_argument('--ensg_gene', '-oeg', action='store', dest='ensg_gene', help='ensg to gene output file location') 
+    parser.add_argument('--enst_isoname', '-oei', action='store', dest='enst_isoname', help='enst to isoname output file location')
+    parser.add_argument('--gene_ensp', '-oge', action='store', dest='gene_ensp', help='Gene to ensp output file location')
+    parser.add_argument('--gene_isoname', '-ogi', action='store', dest='gene_isoname', help="Gene to isoname output file location") 
+    parser.add_argument('--isoname_lens', '-oigl', action='store', dest='isoname_lens', help='Isoname length table output location')
+    parser.add_argument('--gen_lens', '-ogls', action='store', dest='gene_lens', help='Gene Length statistics output location')
     results = parser.parse_args()
 
     # Make ensg -> gene, enst -> isoname, ensp -> gene and isoname -> gene mapping files 
-    GenMap(results.gtf_file)
+    GenMap(results.gtf_file, results)
 
     # Prepare Gene Isoform Length table 
-    df = IsoLenTab(results.fa_file)
+    df = IsoLenTab(results.fa_file, results)
 
     # Prepare Gene Length Table 
-    GeneLenTab(df)
+    GeneLenTab(df, results)
 
 if __name__ == "__main__":
     main()
