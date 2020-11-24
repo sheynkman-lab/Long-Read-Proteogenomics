@@ -37,7 +37,7 @@ Output Files:
 #parser.add_argument('--pbsix_fram', '-sf', action='store', dest='six_fr_file', help='Pacbio Six Frame Translation file location')
 
 ## input filepaths 
-isoname_gene = '../../results/PG_ReferenceTables/isoname_to_gene.tsv'
+gene_isoname_file = '../../results/PG_ReferenceTables/gene_to_isoname.tsv'
 gtf_file = '../../data/gencode.v35.annotation.gtf'
 gc_pep_file = '../../data/AllPeptides_Gencode.psmtsv'
 pb_6frm_file = '../../data/pacbio_6frm_database_gene_grouped.fasta'
@@ -45,21 +45,9 @@ pb_refined_file = '../../data/jurkat_orf_refined.fasta'
 
 
 ## loading gencode peptide data, initiate a dataframe
-df = pd.read_table(isoname_gene_file, header=None)
-isoname_gene = pd.Series(df[1].values, index=df[0]).to_dict()
+df = pd.read_table(gene_isoname_file, header=None)
+isoname_gene = pd.Series(df[0].values, index=df[1]).to_dict()
 
-# isoname to gene map
-def get_isoname_to_gene_mapping_from_gtf(gtf_file):
-    isoname_gene = defaultdict()
-    for line in open(gtf_file):
-        if line.startswith('#'): continue
-        wds = line.split('\t')
-        if wds[2] == 'transcript':
-            isoname = line.split('transcript_name "')[1].split('"')[0].replace('-', '_')
-            gene = line.split('gene_name "')[1].split('"')[0].replace('-', '_')
-            isoname_gene[isoname] = gene
-    return isoname_gene
-isoname_gene = get_isoname_to_gene_mapping_from_gtf(gtf_file)
 
 # import gencode metamorpheus peptide data, filter to 1%FDR
 g_cols = ['Base Sequence', 'Protein Accession', 'Decoy/Contaminant/Target', 'QValue']
@@ -68,11 +56,14 @@ g_data.columns = ['pep_seq', 'acc', 'dct', 'qval']
 g_tdata = g_data[(g_data['qval'] <= 0.01) & (g_data['dct']=='T')].reset_index(drop=True)
 gc = g_tdata
 
+gc[gc.duplicated(keep=False)]
+
 # replace each isoname with its gene name, explode distinct genes
 def get_gene_name(row):
-    isonames = re.split('\||\.', row['acc'])
+    isonames = re.split('\||\.(?=\D)', row['acc'])
     genes = set()
     for isoname in isonames:
+        # TODO - fix the issue of unparsed isoanmes
         if isoname not in isoname_gene: continue # issues with lowercase parsing, Rob working on it 201122
         gene = isoname_gene[isoname]
         genes.add(gene)
@@ -82,20 +73,27 @@ def get_gene_name(row):
     return genes
 gc['genes'] = gc.apply(get_gene_name, axis=1)
 
+
+
+# TODO - debug, see TODO above
 # print out isonames without a gene match
 # found 282 peptides with no matched gene, Rob troubleshooting issue (with parsing of lowercase chars)
 gc[(gc['genes'] == 'no_match')]
 
 gc = gc.explode('genes')
+
+# ~5K peptides duplicated in the allpeptides file, due to peptides with diff. mods identified
+# gc[gc.duplicated(keep=False)]
+
 gc = gc.drop_duplicates()
+
 gc = gc[['genes', 'pep_seq']]
 gc.columns = ['gene', 'pep_seq']
 gc_gene = gc.groupby('gene')['pep_seq'].apply(list).reset_index(name='gc_peps')
 gc_gene['peps_in_gc'] = gc_gene['gc_peps'].apply(len)
 
-# 77122 unique peptide-to-gene pairs
-# 7931 unique genes
-
+# ~77K unique peptide-to-gene pairs
+# 8018 unique genes
 
 # presence of gc peptides in pb databse (generic function)
 def get_pb_pep_coverage_stats(row, pb_dict):
@@ -181,11 +179,6 @@ gc_gene[['in_{}'.format(db[0]),
 gc_gene.to_csv('gc_pb_overlap_peptides.tsv', sep='\t', index=None)
 
 
-# write out cpat with gene, for manual checking
-# cpat = pd.read_table('../../data/jurkat_cpat.ORF_prob.tsv')
-# cpat['pb_acc'] = cpat['ID'].str.split('_').str[0]
-# cpat['gene'] = cpat['pb_acc'].map(pb_gene)
-# cpat.to_csv('cpat_all_w_gene.tsv', sep='\t', index=None)
 
 # %%
-
+gc_gene

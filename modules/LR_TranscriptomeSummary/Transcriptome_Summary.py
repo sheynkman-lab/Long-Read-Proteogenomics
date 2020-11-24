@@ -1,3 +1,5 @@
+# %%
+
 ## Compile Key Transcriptomic Information ##
 # Prepare two tables:
 # 1. Sqanti Isoform Table 
@@ -29,9 +31,9 @@ def sqtab(sqanti_out, ensg_to_gene, enst_to_isoname):
     """
 
     # Import Sqanti Output File
-    cols = ['isoform', 'length', 'structural_category','associated_gene','associated_transcript','subcategory', 'FL', 'coding','ORF_length', 'CDS_start', 'CDS_end', 'predicted_NMD']
+    cols = ['isoform', 'length', 'structural_category','associated_gene','associated_transcript','subcategory', 'FL'] 
     data = pd.read_csv(sqanti_out, delimiter="\t", usecols = cols)
-    data.columns = ['pb_acc', 'len', 'cat', 'gene','transcript', 'cat2', 'fl_cts','coding', 'orf_len', 'cds_st','cds_end', 'nmd']
+    data.columns = ['pb_acc', 'len', 'cat', 'gene','transcript', 'cat2', 'fl_cts']
 
     # Convert Structural Categories to Acronyms
     data.replace({"novel_not_in_catalog":"NNC","novel_in_catalog":"NIC","incomplete-splice_match":"ISM","full-splice_match":"FSM"}, inplace = True)
@@ -43,14 +45,6 @@ def sqtab(sqanti_out, ensg_to_gene, enst_to_isoname):
     # Normalize fl_cts to cpm 
     sum = fdata['fl_cts'].sum(skipna=True)
     fdata['cpm'] = 1000000*fdata['fl_cts']/sum
-
-    # Define 5'UTR and 3'UTR
-    UTR5_len = fdata['cds_st'] - 1
-    UTR3_len = fdata['len'] - fdata['cds_end'] + 1
-
-    # Add 5'UTR and 3'UTR Information to Table
-    fdata.insert(loc=len(fdata.columns), column = "5utr_len", value = UTR5_len)
-    fdata.insert(loc=len(fdata.columns), column = "3utr_len", value = UTR3_len)
 
     ## Finding and Replacing Gene Information ##
     # Import Human Readable Gene Info and rename columns
@@ -74,9 +68,6 @@ def sqtab(sqanti_out, ensg_to_gene, enst_to_isoname):
     tdict = pd.Series(trans.B.values, index=trans.A).to_dict()
     fdata['transcript'] = fdata['transcript'].map(tdict).fillna(fdata['transcript'])
 
-    # Write Dataframe as TSV File
-
-    fdata.to_csv("../../results/LR_TranscriptomeSummary/sqanti_isoform_tab.tsv", sep="\t", index= False, na_rep='0')
     return fdata
 
     print("Isoform Table from sqanti output has been prepared")
@@ -91,7 +82,7 @@ def abund(sq_isotab, tpm_file):
     cpm_data = sq_isotab[['gene', 'cpm']]
     cpm_by_gene = cpm_data.groupby(['gene']).agg(cpm = ('cpm', 'sum')).reset_index(level=['gene'])
 
-    # Sort Illumina Data
+    # Sort Kallisto TPM Data
     tpm_by_gene = pd.read_csv(tpm_file, delimiter='\t')
     tpm_by_gene['gene'] = tpm_by_gene['gene'].str.replace('-', '_')
 
@@ -110,6 +101,9 @@ if not os.path.exists(rdir):
 # Make Sqanti Table 
 sq_isotab = sqtab(sqanti_out, ensg_to_gene, enst_to_isoname)
 
+# Write Sqanti Dataframe as TSV File
+sq_isotab.to_csv("../../results/LR_TranscriptomeSummary/sqanti_isoform_info.tsv", sep="\t", index= False, na_rep='0')
+
 # Make Abundance Table and Merge with Gene_Length_Stats Table 
 ab_tab = abund(sq_isotab, tpm_file)
 gene_len_stats = pd.read_csv(gene_len_stats_tab, sep = '\t')
@@ -118,8 +112,11 @@ gen_lenab = pd.merge(gene_len_stats, ab_tab, how="right", on='gene')
 # Make and Merge with PolyA Table 
 ribo = pd.read_csv(ribodep_tpm, sep='\t')
 rgen = ribo.groupby(['gene']).agg(rtpm=('tpm', 'sum')).reset_index()
+
+# option to output log ratio for the ribosomal data
 #rgen['log(rtpm+1)'] = np.log10(rgen['rtpm'] + 1)
 #ab_tab['log(tpm+1)'] = np.log10(ab_tab['tpm'] + 1)
+
 ratio = pd.merge(rgen, ab_tab, how = 'left', on='gene')
 ratio['rtpm/tpm'] = ratio['rtpm']/ratio['tpm']
 ratio_tab = ratio[['gene', 'rtpm/tpm']]
@@ -128,3 +125,4 @@ gen_tab = pd.merge(gen_lenab, ratio_tab, how='left', on='gene')
 # Output Table 
 gen_tab.to_csv("../../results/LR_TranscriptomeSummary/gene_level_tab.tsv", sep="\t", index= False, na_rep='0')
 
+# %%
