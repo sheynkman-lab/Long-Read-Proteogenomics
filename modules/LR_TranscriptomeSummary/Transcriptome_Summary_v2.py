@@ -21,81 +21,55 @@ Outputs:
 
 # Import Modules 
 import numpy as np 
-import pandas as pd 
+import pandas as pd
+import argparse
 import os 
 
-
-
-#### Input Files ####
-sqanti_out = '../../data/jurkat_classification.txt'
-tpm_file =  '../../data/jurkat_gene_kallisto.tsv'
-ribodep_tpm = '../../data/kallist_table_rdeplete_jurkat.tsv' # expects normalized data
-ensg_to_gene = "../../results/PG_ReferenceTables/ensg_to_gene.tsv"
-enst_to_isoname = "../../results/PG_ReferenceTables/enst_to_isoname.tsv"
-gene_len_stats_tab =  '../../results/PG_ReferenceTables/gene_len_stats.tsv'
-
-#### Outputs ###
-# 1. Sqanti_isoform_table
-# 2. Gene_level_info_table
-
-#### Part 1 : Prepare Isoform Information Table from sqanti Output ####
-
+# Define Functions
 def sqtab(sqanti_out, ensg_to_gene, enst_to_isoname):
     """
     Sorts data from Sqanti output 
+
+    Note: We are not considering genes from sqanti output like ENSG00000242861.1_ENSG00000196187.12
     """
 
-    # Import Sqanti Output File
+    # Import Data
     cols = ['isoform', 'length', 'structural_category','associated_gene','associated_transcript','subcategory', 'FL'] 
     data = pd.read_csv(sqanti_out, delimiter="\t", usecols = cols)
     data.columns = ['pb_acc', 'len', 'cat', 'gene','transcript', 'cat2', 'fl_cts']
 
-    # Convert Structural Categories to Acronyms
+    # Map categories to acronyms and filter out anything that is not FSM, ISM, NNC or NIC
     data.replace({"novel_not_in_catalog":"NNC","novel_in_catalog":"NIC","incomplete-splice_match":"ISM","full-splice_match":"FSM"}, inplace = True)
+    fdata = data[data.cat.isin(['FSM', 'ISM', 'NNC', "NIC"])]
 
-    # Filter out any cat that is not FSM, ISM, NNC or NIC
-    f= ['FSM', 'ISM', 'NNC', "NIC"]
-    fdata = data[data.cat.isin(f)]
+    # Normalize fl_cts to cpm
+    fdata['cpm'] = 1000000*fdata['fl_cts']/fdata['fl_cts'].sum(skipna=True)
 
-    # Normalize fl_cts to cpm 
-    sum = fdata['fl_cts'].sum(skipna=True)
-    fdata['cpm'] = 1000000*fdata['fl_cts']/sum
-
-    ## Finding and Replacing Gene Information ##
-    # Import Human Readable Gene Info and rename columns
+    # Map gene -> gene_name
     gen_name = pd.read_csv(ensg_to_gene, delimiter="\t", header=None)
-    gen_name.columns = ['A', 'B']
-
-    # Make a Dictionary with Columns A and B
-    gdict = pd.Series(gen_name.B.values,index=gen_name.A).to_dict()
-
-    # Use Dictionary to Find Gene Names and Replace them with Human Readable Genes
+    gdict = pd.Series(gen_name.loc[:,1].values,index=gen_name.loc[:,0]).to_dict()
     df = fdata[['gene']]
-    fdata['gene'] = fdata['gene'].map(gdict).fillna(fdata['gene'])
-    fdata.drop(fdata[fdata['gene'] == df['gene']].index, inplace=True)
-  
-    ## Finding and Replacing Transcript Information ##
-    # Import Human Readable Transcript Info and rename columns
-    trans = pd.read_csv(enst_to_isoname, delimiter="\t", header=None)
-    trans.columns = ['A', 'B']
+    fdata['gene'] = fdata['gene'].map(gdict).fillna(df['gene'])
 
-    # Make a Dictionary and Replace Transcript Names
-    tdict = pd.Series(trans.B.values, index=trans.A).to_dict()
-    fdata['transcript'] = fdata['transcript'].map(tdict).fillna(fdata['transcript'])
+    # Drop cases like ENSG00000242861.1_ENSG00000196187.12 
+    fdata.drop(fdata[fdata['gene'] == df['gene']].index, inplace=True)
+
+    # Map enst -> isoname
+    trans = pd.read_csv(enst_to_isoname, delimiter="\t", header=None)
+    tdict = pd.Series(trans.loc[:,1].values, index=trans.loc[:,0]).to_dict()
+    df2 = fdata[['transcript']]
+    fdata['transcript'] = fdata['transcript'].map(tdict).fillna(df2['transcript'])
 
     return fdata
-
     print("Isoform Table from sqanti output has been prepared")
-
 
 def abund(sq_isotab, tpm_file):
     """
     Prepare a gene, cpm, tpm table from sqanti and kallisto output
-    """
-
+    """ 
     # Sort CPM Data
     cpm_data = sq_isotab[['gene', 'cpm']]
-    cpm_by_gene = cpm_data.groupby(['gene']).agg(cpm = ('cpm', 'sum')).reset_index(level=['gene'])
+    cpm_by_gene = cpm_data.groupby(['gene']).agg(cpm = ('cpm', 'sum')).reset_index(level=['gene']) 
 
     # Sort Kallisto TPM Data
     tpm_by_gene = pd.read_csv(tpm_file, delimiter='\t')
@@ -105,27 +79,32 @@ def abund(sq_isotab, tpm_file):
     ab = pd.merge(cpm_by_gene, tpm_by_gene, how='right', on='gene')
     return ab
 
-#-------------------------------------------------------------------------------------------------------
-# Main 
+# Main Code 
+parser = argparse.ArgumentParser(description='Process transcriptome related input file locations')
+parser.add_argument('--sq_out', '-s', action='store', dest='sqanti_out', help = 'Sqanti Classification output location')
+parser.add_argument('--tpm', '-t', action='store', dest='tpm_file',help='Kallisto TPM file location')
+parser.add_argument('--ribo', '-r', action='store', dest='ribodep_tpm', help='Normalized Kallisto Ribodepletion TPM file location')
+parser.add_argument('--ensg_to_gene', '-gmap', action='store', dest='ensg_to_gene', help='ENSG -> Gene Map file location')
+parser.add_argument('--enst_to_isoname', '-imap', action='store', dest='enst_to_isoname', help='ENST -> Isoname Map file location')
+parser.add_argument('--len_stats', '-l', action='store', dest='gene_len_stats_tab', help='Gene Length Statistics table location')
+results = parser.parse_args()
 
 # If results folder does not exist, make it
 rdir = '../../results/LR_TranscriptomeSummary'
 if not os.path.exists(rdir):
     os.mkdir(rdir)
 
-# Make Sqanti Table 
-sq_isotab = sqtab(sqanti_out, ensg_to_gene, enst_to_isoname)
-
-# Write Sqanti Dataframe as TSV File
-sq_isotab.to_csv("../../results/LR_TranscriptomeSummary/sqanti_isoform_info.tsv", sep="\t", index= False, na_rep='0')
+# Make Sqanti Isoform Table and output to a TSV
+sq_isotab = sqtab(results.sqanti_out, results.ensg_to_gene, results.enst_to_isoname)
+sq_isotab.to_csv(os.path.join(rdir, 'sqanti_isoform_info.tsv'), sep="\t", index= False, na_rep='0')
 
 # Make Abundance Table and Merge with Gene_Length_Stats Table 
-ab_tab = abund(sq_isotab, tpm_file)
-gene_len_stats = pd.read_csv(gene_len_stats_tab, sep = '\t')
+ab_tab = abund(sq_isotab, results.tpm_file)
+gene_len_stats = pd.read_csv(results.gene_len_stats_tab, sep = '\t')
 gen_lenab = pd.merge(gene_len_stats, ab_tab, how="right", on='gene')
 
 # Make and Merge with PolyA Table 
-ribo = pd.read_csv(ribodep_tpm, sep='\t')
+ribo = pd.read_csv(results.ribodep_tpm, sep='\t')
 rgen = ribo.groupby(['gene']).agg(rtpm=('tpm', 'sum')).reset_index()
 
 # option to output log ratio for the ribosomal data
@@ -138,6 +117,4 @@ ratio_tab = ratio[['gene', 'rtpm/tpm']]
 gen_tab = pd.merge(gen_lenab, ratio_tab, how='left', on='gene')
 
 # Output Table 
-gen_tab.to_csv("../../results/LR_TranscriptomeSummary/gene_level_tab.tsv", sep="\t", index= False, na_rep='0')
-
-# %%
+gen_tab.to_csv(os.path.join(rdir, 'gene_level_tab.tsv'), sep="\t", index= False, na_rep='0')
