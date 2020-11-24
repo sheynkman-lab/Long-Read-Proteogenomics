@@ -27,7 +27,7 @@ import pandas as pd
 def sqtab(sqanti_out, ensg_to_gene, enst_to_trans, tabpath = "./sqanti_isoform_tab.tsv"):
     # Import Jurkat sqanti Output Text File
     cols = ['isoform', 'length', 'structural_category','associated_gene','associated_transcript','subcategory', 'FL', 'coding','ORF_length', 'CDS_start','CDS_end', 'predicted_NMD']
-    data = pd.read_csv(sqanti_out, delimiter=r"\s+", usecols = cols)
+    data = pd.read_csv(sqanti_out, delimiter="\t", usecols = cols)
     data.columns = ['pb_acc', 'len', 'cat', 'gene','transcript', 'cat2', 'fl_cts','coding', 'orf_len', 'cds_st','cds_end', 'nmd']
 
     # Convert Structural Categories to Acronyms
