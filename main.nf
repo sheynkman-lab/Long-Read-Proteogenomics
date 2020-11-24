@@ -78,7 +78,7 @@ log.info "-\033[2m--------------------------------------------------\033[0m-"
  * STEP  - validate template
  */
 
-// Fail early: Nothing to analyse if the user does not provide an input pb_bams_folder
+// Fail early: Nothing to analyze if the user does not provide an input pb_bams_folder
 if (!params.pb_bams_folder ) {
     exit 1, "Please provide an input folder with --pb_bams_folder to proceed, see --help for more information"
 }
