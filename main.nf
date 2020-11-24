@@ -195,23 +195,6 @@ if (params.mock_ccs) {
   }
 }
 
-// process isoseq3 {
-//     tag "${sample}"
-//     publishDir "${params.outdir}/isoseq3/", mode: params.publish_dir_mode
-
-//     input:
-//     set val("${sample}"), file("${sample}*bam"), file(bai) from ch_ccs_pacbio_bams
-
-//     output:
-//     file("*completed.bam")
-
-//     script:
-//     """
-//     echo "when in pairs:"
-//     echo "simpleName:${sample}\nbam:${pb_subreads_bam}\nbai:${pb_subreads_bai}"
-//     echo "simpleName:${sample}\nbam:${pb_subreads_bam}\nbai:${pb_subreads_bai}" > "${sample}_fake_input.txt"
-//     """
-// }
 
 
 
