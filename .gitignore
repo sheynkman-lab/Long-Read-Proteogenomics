@@ -1,5 +1,9 @@
 .DS_Store
 .vscode
+#nextflow related files
+.nextflow*
+work
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -366,3 +370,10 @@ _Pvt_Extensions
 
 # FAKE - F# Make
 .fake/
+
+# local data files
+output
+results
+# ignore large output files saved to local
+*fasta
+*tsv
