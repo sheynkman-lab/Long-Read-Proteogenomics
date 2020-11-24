@@ -1,50 +1,51 @@
-# %%
+""" 
+This module prepares a table comparing mass spec MM peptide results using different databases
 
+    Inputs:
+    ------------------------------------------------------------------------------------------
+    1. gene isoname file: map transcript name to gene name 
+    2. Gencode peptides file: AllPeptides file from mass spec search using Gencode 
+    3. Pacbio peptides file: Pacbio refined database fasta file 
+    4. Pacbio six frame translation: file listing all possible peptides that can be detected per gene in Pacbio Database
+    ------------------------------------------------------------------------------------------
+
+    Output Tables:
+    ------------------------------------------------------------------------------------------
+    - table comparing pacbio coverage of Gencode peptide results from MM
+    ------------------------------------------------------------------------------------------
+"""
+
+# Import Modules
 import pandas as pd 
 import re
 import argparse
+import os
 from pathlib import Path 
 from collections import defaultdict
 from builtins import any  
 from Bio import SeqIO
 
-## Import Files ## 
-""" 
-Input Files:
------------
-- transcript to gene file: map transcript name to gene name
-OR
-- gtf file: contains jurkat genomic information 
-- pbacc_to_gene file: map uniprot gene names to gencode gene names
+# Import Files
+parser = argparse.ArgumentParser(description='Process peptide related input file locations')
+parser.add_argument('--gene_to_isoname', '-gmap', action='store', dest='gene_isoname_file', help = 'Gene names to transcript names file location')
+parser.add_argument('--gc_pep', '-gc', action='store', dest='gc_pep_file', help='Genecode AllPeptides file location')
+parser.add_argument('--pb_pep', '-pb', action='store', dest='pb_ref_file', help='Pacbio AllPeptides file location')
+parser.add_argument('--pb_6frm', '-sft', action='store', dest='pb_6frm_file', help='Pacbio Six Frame Translation file location')
+results = parser.parse_args()
 
-Input Files from MM Outputs:
-----------------------------
-- Gencode Peptides File: AllPeptides file from genecode search 
-- Pacbio Peptides File: AllPeptides file from pacbio search
-- Pacbio Six Frame Translation: File listing all peptides that pacbio should be able to find 
-
-Output Files:
--------------
-- Table comparing pacbio coverage of gencode results
-- TBD
-"""
-#parser = argparse.ArgumentParser(description='Process peptide related input file locations')
-#parser.add_argument('--transcript_to_gene_file', '-tg', action='store', dest='trans_to_gene_file', help = 'File mapping transcript names to gene names location')
-#parser.add_argument('--gtf_file', '-g', action='store', dest='gtf_file',help='GTF file location')
-#parser.add_argument('--pbacc_to_gene', '-pbg', action='store', dest='pbacc_to_gene_file')
-#parser.add_argument('--gen_pep', '-gp', action='store', dest='gen_pep_file', help='Genecode AllPeptides file location')
-#parser.add_argument('--pb_pep', '-pp', action='store', dest='pb_pep_file', help='Pacbio AllPeptides file location')
-#parser.add_argument('--pbsix_fram', '-sf', action='store', dest='six_fr_file', help='Pacbio Six Frame Translation file location')
-
-## input filepaths 
-gene_isoname_file = '../../results/PG_ReferenceTables/gene_to_isoname.tsv'
-gtf_file = '../../data/gencode.v35.annotation.gtf'
+# Input Filepaths 
+"""gene_isoname_file = '../../results/PG_ReferenceTables/gene_to_isoname.tsv'
 gc_pep_file = '../../data/AllPeptides_Gencode.psmtsv'
 pb_6frm_file = '../../data/pacbio_6frm_database_gene_grouped.fasta'
-pb_refined_file = '../../data/jurkat_orf_refined.fasta'
+pb_refined_file = '../../data/jurkat_orf_refined.fasta'"""
+
+gene_isoname_file = results.gene_isoname_file
+gc_pep_file = results.gc_pep_file
+pb_refined_file = results.pb_ref_file 
+pb_6frm_file = results.pb_6frm_file
 
 
-## loading gencode peptide data, initiate a dataframe
+# loading gencode peptide data, initiate a dataframe
 df = pd.read_table(gene_isoname_file, header=None)
 isoname_gene = pd.Series(df[0].values, index=df[1]).to_dict()
 
@@ -55,8 +56,6 @@ g_data = pd.read_table(gc_pep_file, usecols = g_cols)
 g_data.columns = ['pep_seq', 'acc', 'dct', 'qval']
 g_tdata = g_data[(g_data['qval'] <= 0.01) & (g_data['dct']=='T')].reset_index(drop=True)
 gc = g_tdata
-
-gc[gc.duplicated(keep=False)]
 
 # replace each isoname with its gene name, explode distinct genes
 def get_gene_name(row):
@@ -78,7 +77,7 @@ gc['genes'] = gc.apply(get_gene_name, axis=1)
 # TODO - debug, see TODO above
 # print out isonames without a gene match
 # found 282 peptides with no matched gene, Rob troubleshooting issue (with parsing of lowercase chars)
-gc[(gc['genes'] == 'no_match')]
+#gc[(gc['genes'] == 'no_match')]
 
 gc = gc.explode('genes')
 
@@ -174,11 +173,10 @@ gc_gene[['in_{}'.format(db[0]),
          'frac_peps_in_{}'.format(db[0])]] \
          = gc_gene.apply(lambda x: get_pb_pep_coverage_stats(x, db[1]), axis=1, result_type='expand')
 
+# If output directory DNE, make it
+rdir = '../../results/PG_PeptideAnalysis'
+if not os.path.exists(rdir):
+    os.mkdir(rdir)
 
 ## write out file
-gc_gene.to_csv('gc_pb_overlap_peptides.tsv', sep='\t', index=None)
-
-
-
-# %%
-gc_gene
+gc_gene.to_csv(os.path.join(rdir, 'gc_pb_overlap_peptides.tsv'), sep='\t', index=None)
