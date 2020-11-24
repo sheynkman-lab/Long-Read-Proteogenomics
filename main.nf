@@ -75,7 +75,7 @@ log.info summary.collect { k,v -> "${k.padRight(18)}: $v" }.join("\n")
 log.info "-\033[2m--------------------------------------------------\033[0m-"
 
 /*
- * STEP  - validate template
+ * Configuring channels based on input parameters
  */
 
 // Fail early: Nothing to analyze if the user does not provide an input pb_bams_folder
