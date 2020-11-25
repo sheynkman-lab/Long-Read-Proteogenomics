@@ -168,7 +168,8 @@ namespace EngineLayer
             sb.Append("Protein Cumulative Decoy" + '\t');
             sb.Append("Protein QValue" + '\t');
             sb.Append("Best Peptide Score" + '\t');
-            sb.Append("Best Peptide Notch QValue");
+            sb.Append("Best Peptide Notch QValue" + '\t');
+            sb.Append("ORF CPM");
             return sb.ToString();
         }
 
@@ -181,7 +182,14 @@ namespace EngineLayer
             sb.Append("\t");
 
             // genes
-            sb.Append(GlobalVariables.CheckLengthOfOutput(string.Join("|", ListOfProteinsOrderedByAccession.Select(p => p.GeneNames.Select(x => x.Item2).FirstOrDefault()))));
+            if (ListOfProteinsOrderedByAccession.SelectMany(p => p.GeneNames.Select(v => v.Item2)).Distinct().Count() == 1)
+            {
+                sb.Append(ListOfProteinsOrderedByAccession.First().GeneNames.Select(x => x.Item2).FirstOrDefault());
+            }
+            else
+            {
+                sb.Append(GlobalVariables.CheckLengthOfOutput(string.Join("|", ListOfProteinsOrderedByAccession.Select(p => p.GeneNames.Select(x => x.Item2).FirstOrDefault()))));
+            }
             sb.Append("\t");
 
             // organisms
@@ -325,6 +333,28 @@ namespace EngineLayer
             // best peptide q value
             sb.Append(BestPeptideQValue);
             sb.Append("\t");
+
+            if (GlobalVariables.ProteinToProteogenomicInfo.Any())
+            {
+                for (int i = 0; i < ListOfProteinsOrderedByAccession.Count; i++)
+                {
+                    Protein protein = ListOfProteinsOrderedByAccession[i];
+
+                    if (GlobalVariables.ProteinToProteogenomicInfo.TryGetValue(protein, out LongReadInfo proteogenomicInfo))
+                    {
+                        sb.Append(proteogenomicInfo.ToString());
+                    }
+                    else
+                    {
+                        sb.Append("No ORF info");
+                    }
+
+                    if (i != ListOfProteinsOrderedByAccession.Count - 1)
+                    {
+                        sb.Append("|");
+                    }
+                }
+            }
 
             return sb.ToString();
         }

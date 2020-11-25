@@ -1,0 +1,11 @@
+# cpat commands to run
+cpat.py \
+   -x Human_Hexamer.tsv \
+   -d Human_logitModel.RData \
+   -g jurkat_corrected.fasta \
+   --min-orf=50 \
+   --top-orf=50 \
+   -o cpat_out_dir \
+   2> jurkat_cpat.error
+
+
