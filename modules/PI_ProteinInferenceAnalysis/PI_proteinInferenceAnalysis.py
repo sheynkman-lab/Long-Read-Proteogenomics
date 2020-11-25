@@ -7,7 +7,7 @@ import argparse
 #function to remove decoy protein groups and those above the 1% FDR cutoff, as well as remove columns we do not need to carry forward
 def tsv_filter(tsv, col_to_keep=['Protein Accession', 'Gene', 'Unique Peptides','Shared Peptides','Sequence Coverage Fraction','Number of PSMs','Protein QValue']):
     """
-    Filters the dataframe for FDR, target proteins and removes columsn which are not pertainant
+    Filters the dataframe for FDR, target proteins and removes columns which are not pertainant
     
     Parameters
     -----------
@@ -32,7 +32,7 @@ def tsv_filter(tsv, col_to_keep=['Protein Accession', 'Gene', 'Unique Peptides',
 def read_filter_proteinGroups(filePath):
     """
     Reads the AllProteinGroups.tsv file in, filters the data and columns.
-    Keep only the Target protein groups below 1% FDR, and only columns that contain valuble information to carry forward
+    Keep only the Target protein groups below 1% FDR, and only columns that contain valuable information to carry forward
 
     Parameters
     ------------
@@ -87,7 +87,7 @@ def return_list_with_nans_filtered_out(input_list):
 
 def accession_mapping_setup (filePath):
     """
-    Reads in the accession mapping key from .tsv and creates conversion dictionarys for a PacBio and UniProt starting point
+    Reads in the accession mapping key from .tsv and creates conversion dictionaries for a PacBio and UniProt starting point
 
     Parameters
     ------------
