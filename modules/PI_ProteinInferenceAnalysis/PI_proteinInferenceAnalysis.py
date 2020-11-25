@@ -2,27 +2,24 @@
 import pandas as pd
 import numpy as np
 from collections import defaultdict
-
-
-# All files for input into the module (3 total files)
-#these would be output from the MetaMorpheus Module (2x AllProteins.tsv files)
-proteinGroups_db1 = pd.read_table('F:/Projects/IsoformInference_Gloria/InferenceModule/NewTestFiles/GENCODE_AllProteinGroups_compat.tsv', index_col=False)
-proteinGroups_db2 = pd.read_table('F:/Projects/IsoformInference_Gloria/InferenceModule/NewTestFiles/PacBio_AllProteinGroups_compat.tsv', index_col=False)
-#Input from the accession mapping module
-accession_conversion_key = pd.read_table('F:/Projects/IsoformInference_Gloria/InferenceModule/NewTestFiles/d_isoform_and_gene_table_pb_genes.tsv')
-
+import argparse
 
 #function to remove decoy protein groups and those above the 1% FDR cutoff, as well as remove columns we do not need to carry forward
 def tsv_filter(tsv, col_to_keep=['Protein Accession', 'Gene', 'Unique Peptides','Shared Peptides','Sequence Coverage Fraction','Number of PSMs','Protein QValue']):
-    '''
-    tsv_filter - function which filters dataframes for FDR, target proteins, and removes columns which are not pertainant
-    Inputs:
-    tsv - pandas dataframe - a dataframe object containing at a 'Protein QValue' and 'Protein Decoy/Contaminant/Target' to be filtered
-    col_to_keep - list - columns which will remain in the dataframe (automatically set to ['Protein Accession', 'Gene', 'Protein Decoy/Contaminant/Target', 'Unique Peptides','Shared Peptides','Sequence Coverage Fraction','Number of PSMs','Protein QValue'])
-    #Returns:
-    tsvfilter - pandas dataframe - the tsv dataframe with only rows with below 1% FDR, target proteins, and columns of interest
-    '''
-    #filter for 1% FDR and target proteins - also only continue with cols of interest
+    """
+    Filters the dataframe for FDR, target proteins and removes columsn which are not pertainant
+    
+    Parameters
+    -----------
+    tsv : pandas DataFrame
+        loaded AllProteinGroups.tsv file from MetaMorpheus
+    col_to_keep: list of str
+        columns which will remain in the dataframe
+
+    Returns
+    -----------
+    tsvfilter: pandas DataFrame    
+    """   
     tsvfilter = tsv
     tsvfilter = tsvfilter.loc[(tsvfilter['Protein QValue'] <= 0.01)] #filter for 1%FDR
     tsvfilter = tsvfilter.loc[(tsvfilter['Protein Decoy/Contaminant/Target'] == "T")]
@@ -32,9 +29,95 @@ def tsv_filter(tsv, col_to_keep=['Protein Accession', 'Gene', 'Unique Peptides',
 
     return tsvfilter
 
-#filter tsvs
-proteinGroups_db1_filtered = tsv_filter(proteinGroups_db1)
-proteinGroups_db2_filtered = tsv_filter(proteinGroups_db2)
+def read_filter_proteinGroups(filePath):
+    """
+    Reads the AllProteinGroups.tsv file in, filters the data and columns.
+    Keep only the Target protein groups below 1% FDR, and only columns that contain valuble information to carry forward
+
+    Parameters
+    ------------
+    filePath: str
+        location of the AllProteinGroups.tsv file
+
+    Returns
+    -----------
+    proteinGroups_filtered : pandas DataFrame
+    """
+    proteinGroups = pd.read_table(filePath, index_col=False)
+    proteinGroups_filtered = tsv_filter(proteinGroups)
+    return proteinGroups_filtered
+
+
+def format_accession_mapping_table(conversionKey):
+    """
+    Reformats the accession mapping file to be manipulated going forward
+
+    Parameters
+    -----------
+    conversionKey: pandas DataFrame
+        loaded accession mapping file
+
+    Return
+    -----------
+    imap: pandas DataFrame 
+    """
+    isomap = conversionKey
+    isomap['un'] = isomap['uniprot_acc'].str.split('|').str[1]
+    isomap['pb'] = isomap['pacbio_acc']
+    isomap['gc'] = isomap['gencode_acc_y'].str.split('|').str[0]
+    imap = isomap[['pb', 'un', 'gc']].dropna(how="all")
+    imap['idx'] = np.arange(len(imap))
+
+    return imap
+
+
+def return_list_with_nans_filtered_out(input_list):
+    '''
+    return_list_with_nans_filtered_out - function to remove NAs from a list
+    #Input:
+    input_list - list - list to remove NAs from
+    #Returns:
+    filtered_list - list - list without NAs
+    '''
+    filtered_list = []
+    for item in input_list:
+        if pd.isnull(item): continue
+        filtered_list.append(item)
+    return filtered_list
+
+def accession_mapping_setup (filePath):
+    """
+    Reads in the accession mapping key from .tsv and creates conversion dictionarys for a PacBio and UniProt starting point
+
+    Parameters
+    ------------
+    filePath: str
+        location of the accession mapping file
+
+    Returns
+    ------------
+    conversionDics = list of dictionaries
+    """
+    accession_conversion_key = pd.read_table(filePath)
+    #format conversion key
+    
+    imap = format_accession_mapping_table (accession_conversion_key)
+
+    # create pb to ref accession map
+    pb_ref = defaultdict() # pb_acc -> [pb, un, gc] (no entry if no accession)
+    un_ref = defaultdict() # un_acc -> [pb, un, gc] (no entry if no accession)
+
+    for i, row in imap.iterrows():
+        pb, un, gc, idx = row
+        acc_list = return_list_with_nans_filtered_out([pb, un, gc])
+        pb_ref[pb] = acc_list[-1]
+        un_ref[un] = acc_list[-1]
+
+    dictionaryList = []
+    dictionaryList.append(pb_ref)
+    dictionaryList.append(un_ref)
+
+    return dictionaryList
 
 #identify databases as pacbio (PacBio), uniprot (UniProt), or gencode (GENCODE)
 def grp_is_derived_from_pacbio(grp):
@@ -102,47 +185,10 @@ def most_frequent(search_list):
     '''
     return max(set(search_list), key = search_list.count)
 
-#Determine the database of origin for the  forst 5 protein groups, and pick the most common (prevents issues with potential overlap between UniProt and GENCODE criteria)
-db1_id = most_frequent(determine_source_database_for_grps(proteinGroups_db1_filtered.head(5)['Protein Accession']))
-db2_id = most_frequent(determine_source_database_for_grps(proteinGroups_db2_filtered.head(5)['Protein Accession']))
-
-#format conversion key
-isomap = accession_conversion_key
-isomap['un'] = isomap['uniprot_acc'].str.split('|').str[1]
-isomap['pb'] = isomap['pacbio_acc']
-isomap['gc'] = isomap['gencode_acc_y'].str.split('|').str[0]
-imap = isomap[['pb', 'un', 'gc']].dropna(how="all")
-imap['idx'] = np.arange(len(imap))
-
-# create pb to ref accession map
-pb_ref = defaultdict() # pb_acc -> [pb, un, gc] (no entry if no accession)
-un_ref = defaultdict() # un_acc -> [pb, un, gc] (no entry if no accession)
-
-def return_list_with_nans_filtered_out(input_list):
-    '''
-    return_list_with_nans_filtered_out - function to remove NAs from a list
-    #Input:
-    input_list - list - list to remove NAs from
-    #Returns:
-    filtered_list - list - list without NAs
-    '''
-    filtered_list = []
-    for item in input_list:
-        if pd.isnull(item): continue
-        filtered_list.append(item)
-    return filtered_list
-
-proteinGroups_db1_filtered = proteinGroups_db1_filtered.dropna(how= "all")
-proteinGroups_db2_filtered = proteinGroups_db2_filtered.dropna(how="all")
-
-for i, row in imap.iterrows():
-    pb, un, gc, idx = row
-    acc_list = return_list_with_nans_filtered_out([pb, un, gc])
-    pb_ref[pb] = acc_list[-1]
-    un_ref[un] = acc_list[-1]
-
 #add accession number conversion column 
-def translate_Accessions (pg, db_id):
+def translate_Accessions (pg, db_id, conversionDictionaries):
+    pb_ref = conversionDictionaries[0]
+    un_ref = conversionDictionaries[1]
     all_trans = []
     for proteinGroup in pg['Protein Accession']:
         groupTrans = set()
@@ -178,12 +224,10 @@ def translate_Accessions (pg, db_id):
         all_trans.append(groupTrans)
     pg['Protein Accession Translation'] = all_trans
 
-#Adds column to protein group DataFrame containing a set of translated protein groups for each grouping
-translate_Accessions(proteinGroups_db1_filtered, db1_id)
-translate_Accessions(proteinGroups_db2_filtered, db2_id)
+
 
 #compare the protein groups for the two different analyses
-def accession_compare(df1,df2,db1_id, db2_id):
+def accession_compare(df1,df2,db1_id, db2_id, output):
     #columns for the cumulative dataframes that will be exported (basic info for each protein group with the database of origin appended)
     cols = ['Protein Accession {}'.format(db1_id), 'Gene {}'.format(db1_id), 'Unique Peptides {}'.format(db1_id),'Shared Peptides {}'.format(db1_id),'Sequence Coverage Fraction {}'.format(db1_id),'Number of PSMs {}'.format(db1_id), 'Protein QValue {}'.format(db1_id), 'Protein Accession Translation {}'.format(db1_id), 'Protein Accession {}'.format(db2_id), 'Gene {}'.format(db2_id), 'Unique Peptides {}'.format(db2_id),'Shared Peptides {}'.format(db2_id),'Sequence Coverage Fraction {}'.format(db2_id),'Number of PSMs {}'.format(db2_id), 'Protein QValue {}'.format(db2_id), 'Protein Accession Translation {}'.format(db2_id)]
     #columns for the dataframes that are for protein groups unique to a single database
@@ -259,14 +303,46 @@ def accession_compare(df1,df2,db1_id, db2_id):
         data = df2.loc[df2['Protein Accession Translation {}'.format(db2_id)] == group]
         No_shared_accessions_db2=No_shared_accessions_db2.append([data])
 
-    #this is the one output file of the whole module (will not be used as input for any other module)        
-    writer = pd.ExcelWriter('F:/Projects/IsoformInference_Gloria/InferenceModule/NewTestFiles/ProteinInference_{}_{}_comparisons.xlsx'.format(db1_id, db2_id), engine='xlsxwriter')
+    #this is the one output file of the whole module (will not be used as input for any other module) 
+    fileName = '/ProteinInference_{}_{}_comparisons.xlsx'.format(db1_id, db2_id)
+    outputPath = output + fileName  
+    writer = pd.ExcelWriter(outputPath, engine='xlsxwriter')
     Exactly_one_match.to_excel(writer, sheet_name='ProteinGroup_ExactMatches',index = False)
     Simpler_in_one.to_excel(writer, sheet_name='ProteinGroup_SimplerIn_{}'.format(db1_id),index = False)
     Simpler_in_two.to_excel(writer, sheet_name='ProteinGroup_SimplerIn_{}'.format(db2_id),index = False)
     Partially_overlapping.to_excel(writer, sheet_name='ProteinGroup_PartiallyOverlap',index = False)
     No_shared_accessions_db1.to_excel(writer, sheet_name='ProteinGroup_DistinctTo_{}'.format(db1_id),index = False)
     No_shared_accessions_db2.to_excel(writer, sheet_name='ProteinGroup_DistinctTo_{}'.format(db2_id),index = False)
-    writer.save()                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
-    
-accession_compare(proteinGroups_db1_filtered, proteinGroups_db2_filtered, db1_id, db2_id) 
+    writer.save()      
+
+def main():
+    parser= argparse.ArgumentParser(description ='Compare Protein Inference Results from 2 different MetaMorpheus Searches')
+    parser.add_argument('--pg_fileOne', '-pg_1', action = 'store', dest ='proteinGroups_db1', help = 'File location of the AllProteinGroups.tsv file from the first MetaMorpheus search')
+    parser.add_argument('--pg_fileTwo', '-pg_2', action = 'store', dest = 'proteinGroups_db2', help = 'File location of the AllProteinGroups.tsv file from the second MetaMorpheus search')
+    parser.add_argument('--mapping', '-m', action = 'store', dest = 'accession_conversion_key', help = 'File location of the Accession mapping file for the converting accessions for comparison purposes')
+    parser.add_argument('--output', '-o', action = 'store', dest = 'output', help = 'Output file location')
+    scriptInput = parser.parse_args()
+
+    proteinGroups_db1_filtered = read_filter_proteinGroups(scriptInput.proteinGroups_db1)
+    proteinGroups_db2_filtered = read_filter_proteinGroups(scriptInput.proteinGroups_db2)
+
+    conversionDictionaries = accession_mapping_setup(scriptInput.accession_conversion_key)
+   
+    #Determine the database of origin for the  forst 5 protein groups, and pick the most common (prevents issues with potential overlap between UniProt and GENCODE criteria)
+    db1_id = most_frequent(determine_source_database_for_grps(proteinGroups_db1_filtered.head(5)['Protein Accession']))
+    db2_id = most_frequent(determine_source_database_for_grps(proteinGroups_db2_filtered.head(5)['Protein Accession']))
+
+    proteinGroups_db1_filtered = proteinGroups_db1_filtered.dropna(how = "all")
+    proteinGroups_db2_filtered = proteinGroups_db2_filtered.dropna(how ="all")
+
+    #Adds column to protein group DataFrame containing a set of translated protein groups for each grouping
+    translate_Accessions(proteinGroups_db1_filtered, db1_id, conversionDictionaries)
+    translate_Accessions(proteinGroups_db2_filtered, db2_id, conversionDictionaries)
+
+    accession_compare(proteinGroups_db1_filtered, proteinGroups_db2_filtered, db1_id, db2_id, scriptInput.output)
+ 
+if __name__ == "__main__":
+    main()
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                            
