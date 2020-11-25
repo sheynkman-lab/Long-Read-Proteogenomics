@@ -32,6 +32,8 @@ def MMproc(mm_out, db, trans_to_gene_file='./trans_to_gene.tsv', pbacc_to_gene_f
     pfile = Path(mm_out)
     if pfile.is_file()==False:
             print('The MM output does not exist. Please check your file path.')
+    # TODO - add raise warning
+    # TODO - ask Christina how nextflow handles missing files
     
     # Import MM output #
     if db == 'genecode':
