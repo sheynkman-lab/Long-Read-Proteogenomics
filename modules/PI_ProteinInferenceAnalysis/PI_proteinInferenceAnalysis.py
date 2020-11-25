@@ -19,7 +19,8 @@ def tsv_filter(tsv, col_to_keep=['Protein Accession', 'Gene', 'Unique Peptides',
     Returns
     -----------
     tsvfilter: pandas DataFrame    
-    """   
+    """ 
+
     tsvfilter = tsv
     tsvfilter = tsvfilter.loc[(tsvfilter['Protein QValue'] <= 0.01)] #filter for 1%FDR
     tsvfilter = tsvfilter.loc[(tsvfilter['Protein Decoy/Contaminant/Target'] == "T")]
@@ -224,8 +225,6 @@ def translate_Accessions (pg, db_id, conversionDictionaries):
         all_trans.append(groupTrans)
     pg['Protein Accession Translation'] = all_trans
 
-
-
 #compare the protein groups for the two different analyses
 def accession_compare(df1,df2,db1_id, db2_id, output):
     #columns for the cumulative dataframes that will be exported (basic info for each protein group with the database of origin appended)
@@ -343,6 +342,3 @@ def main():
  
 if __name__ == "__main__":
     main()
-
-
-                                                                                                                                                                                                                                                                                                                                                                                                            
