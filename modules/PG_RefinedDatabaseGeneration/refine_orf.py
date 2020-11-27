@@ -112,8 +112,7 @@ def main():
             pb_acc = entry.id
             pb_row = pacbio[pacbio['pb_accs'] == pb_acc].iloc[0]
             base_acc = pb_row['base_acc']
-            # TODO - revert below from gene_x to gene
-            gene = orfs[orfs['pb_acc'] == base_acc].iloc[0]['gene_x']
+            gene = orfs[orfs['pb_acc'] == base_acc].iloc[0]['gene']
             ofile.write(f">pb|{base_acc}|fullname GN={gene}\n{seq}\n")
     
     pacbio = pacbio[['pb_accs', 'base_acc', 'FL', 'CPM']]
