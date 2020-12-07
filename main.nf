@@ -75,6 +75,38 @@ log.info summary.collect { k,v -> "${k.padRight(18)}: $v" }.join("\n")
 log.info "-\033[2m--------------------------------------------------\033[0m-"
 
 /*
+ * Configuring channels based on input parameters
+ */
+
+// Fail early: Nothing to analyze if the user does not provide an input pb_bams_folder
+if (!params.pb_bams_folder ) {
+    exit 1, "Please provide an input folder with --pb_bams_folder to proceed, see --help for more information"
+}
+
+if (params.pb_bams_folder && hasExtension(params.pb_bams_folder, "tar.gz")) {
+  ch_pb_bams_folder_tar_gz = Channel.fromPath(params.pb_bams_folder)
+}
+
+if (params.pb_bams_folder && !hasExtension(params.pb_bams_folder, "tar.gz")) {
+// ch_pb_bams_folder = params.pb_bams_folder ? Channel.fromFilePairs("${params.pb_bams_folder}/*.{bam,${params.bai_suffix}}", flat: true) : null
+ch_pb_bams_folder = params.pb_bams_folder ? Channel.fromPath("${params.pb_bams_folder}/*.bam") : null
+}
+
+// If the user has provided input folder
+if (params.pb_bams_folder ) {
+    ch_pb_bams_folder
+       .set { ch_pb_subreads_bams }
+}
+
+(ch_pb_subreads_bams_for_pbi,
+ch_pb_subreads_bams_to_display) = ch_pb_subreads_bams.into(2)
+
+ch_pb_subreads_bams_to_display.view()
+
+ch_ccs_chunks = Channel.from(1.."${params.number_of_ccs_chunks}".toInteger())
+(ch_ccs_chunks, ch_ccs_chunks_to_display) = ch_ccs_chunks.into(2)
+
+/*
  * STEP  - validate template
  */
 
@@ -89,6 +121,86 @@ process validate {
     touch validated.txt
     """
 }
+
+/*
+ *  Module 1: SMARTLink - CCS
+ */
+
+// Generate pbi index required for using the ccs --chunk parallelisation
+process generate_pbi {
+    tag "${pb_subreads_bam.simpleName}"
+    cpus 1
+    echo true
+
+    input:
+    file(pb_subreads_bam) from ch_pb_subreads_bams_for_pbi
+
+    output:
+    set val("${pb_subreads_bam.simpleName}"),
+        file("${pb_subreads_bam.baseName}.bam"), 
+        file("${pb_subreads_bam.baseName}.bam.pbi") into ch_pb_subreads_bams_for_ccs
+
+    script:
+    """
+    pbindex ${pb_subreads_bam}
+    """
+}
+
+ch_ccs_chucked_bams = ch_ccs_chunks.combine(ch_pb_subreads_bams_for_ccs)
+
+if (!params.mock_ccs) {
+  process smartlink_ccs {
+      tag "sample:${sample},chunk:${ith_chunk}"
+      publishDir "${params.outdir}/smartlink_ccs/", mode: params.publish_dir_mode
+      cpus 1
+
+      input:
+      set val(ith_chunk), val(sample), file(pb_subreads_bam), file(pb_subreads_bai) from ch_ccs_chucked_bams
+
+      output:
+      set val("${sample}"), 
+          file("${sample}.ccs.${ith_chunk}.bam"), 
+          file("${sample}.ccs.${ith_chunk}.bam.pbi") into ch_ccs_pacbio_bams
+
+      script:
+      // Hardcoded example from docs:
+      // ccs movie.subreads.bam movie.ccs.1.bam --chunk 1/10 -j <THREADS>
+      """
+      ccs ${pb_subreads_bam} ${sample}.ccs.${ith_chunk}.bam --chunk ${ith_chunk}/${params.number_of_ccs_chunks} -j ${task.cpus}
+      """
+  }
+}
+
+if (params.mock_ccs) {
+  process smartlink_ccs_mock {
+      tag "sample:${sample},chunk:${ith_chunk}"
+      publishDir "${params.outdir}/smartlink_ccs/", mode: params.publish_dir_mode
+      cpus 1
+
+      input:
+      set val(ith_chunk), val(sample), file(pb_subreads_bam), file(pb_subreads_bai) from ch_ccs_chucked_bams
+
+      output:
+      set val("${sample}"), 
+          file("${sample}.ccs.${ith_chunk}.bam"), 
+          file("${sample}.ccs.${ith_chunk}.bam.pbi") into ch_ccs_pacbio_bams
+
+      script:
+      // Hardcoded example from docs:
+      // ccs movie.subreads.bam movie.ccs.1.bam --chunk 1/10 -j <THREADS>
+      """
+      # ccs ${pb_subreads_bam} ${sample}.ccs.${ith_chunk}.bam --chunk ${ith_chunk}/${params.number_of_ccs_chunks} -j ${task.cpus}
+      touch ${sample}.ccs.${ith_chunk}.bam ${sample}.ccs.${ith_chunk}.bam.bai ${sample}.ccs.${ith_chunk}.bam.pbi
+      """
+  }
+}
+
+
+
+
+
+
+
 
 def logHeader() {
     // Log colors ANSI codes
@@ -127,4 +239,12 @@ def logHeader() {
     ${c_cyan}                                                                                                                                       
     -${c_dim}--------------------------------------------------${c_reset}-
     """.stripIndent()
+}
+
+// Functions
+// Credits for most of the functions to https://github.com/nf-core/sarek developers
+
+// Check file extension
+def hasExtension(it, extension) {
+    it.toString().toLowerCase().endsWith(extension.toLowerCase())
 }

@@ -1,3 +1,4 @@
+
 # Long ORFCalling 
 *Description of the module*
 
@@ -40,6 +41,35 @@ All that is required for input is a fasta file.
 
 ### Output
 - [outputs explained here](https://github.com/TransDecoder/TransDecoder/wiki)
+
+# ORF calling from CPAT
+For each PB transcript and the set of candidate ORFs as determined by CPAT, select the most biologically plausible ORF based on several paramters. These paramters include the coding score and properties of the start ATG.
+
+## Input
+- CPAT ORFs (TSV)
+- Gencode annotation (GTF)
+- SQANTI PB isoform classification
+- SQANTI PB annotation (GTF)
+- SQANTI PB sequence (FASTA)
+- PB to gene map
+
+
+## Output
+- table of best ORF with annotations (TSV)
+
+## Soure Module(s)
+- CPAT
+- SQANTI3
+
+## Target Module(s)
+- RefinedDatabase
+
+## Dependencies: 
+- pandas
+
+## Threads
+- 1-2 cpus
+
 
 ### Dependencies: 
 - None

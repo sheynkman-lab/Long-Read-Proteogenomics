@@ -17,12 +17,14 @@
 def helpMessage() {
     log.info """
     Usage:
+
     The typical command for running the orf module is as follows:
     nextflow run lr_orfcalling.nf --fasta https://zenodo.org/record/4278034/files/toy_for_christina.fasta.txt
     
     Input files:
       --fasta                [file] Path to the fasta file required for TransDecoder
       --trans_decoder        [bool] Boolean, defaults to true to execute the TransDecoder process
+
 
     See here for more info: https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/master/docs/usage.md
     """.stripIndent()
@@ -96,3 +98,4 @@ if (params.fasta && params.trans_decoder) {
     ls -L
     """
   }
+

@@ -370,3 +370,10 @@ _Pvt_Extensions
 
 # FAKE - F# Make
 .fake/
+
+# local data files
+output
+results
+# ignore large output files saved to local
+*fasta
+*tsv

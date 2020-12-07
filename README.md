@@ -1,6 +1,6 @@
 # sheynkman-lab/Long-Read-Proteogenomics
 
-**A workflow for delineating the Human Proteome at Isoform Resolution Through Long-read Proteog**.
+**A workflow for Delineating the Human Proteome at Isoform Resolution by Integration of Long-read Proteogenomics and Mass Spectrometry**.
 
 [Cold Spring Harbor Laboratory Biological Data Science Codeathon](https://datascience.nih.gov/news/cold-spring-harbor-laboratory-biological-data-science-codeathon)
 
@@ -27,7 +27,6 @@ The pipeline accepts as input raw Pac-Bio data and performs the assembly of an a
 
 ![pipeline](https://user-images.githubusercontent.com/16841846/98399434-fa4b8a00-2027-11eb-953b-edb440c7ff8e.png)
 
-
 ## Background
 
 Protein isoforms are the direct translational product of fully spliced mRNA molecules. Protein isoforms can be modified during or subsequent to translation with additional chemical moities (e.g. phosphorylation or acetylation) or they can be cleaved resulting in a [proteoform](https://www.nature.com/articles/nmeth.2369), which is the ultimate biological actor in many important biological processes. At a high level, protein isoforms can be predicted from genomic sequencing data and then observed by mass spectrometry. Despite impressive technological achievements in both realms (sequencing and mass spectrometry), many gaps exist in our ability to comprehensively identify all protein isoforms even for a single sample. Scientists ability to accomplish this goal depends on having detailed an accurate knowledge of all protein coding mRNA isoforms, comprehensive mass spectrometry data covering at least one unique region of each protein isoform, and a protein inference algorithm that can faithfully and accurately attribute observed peptides to the proper parent isoform. We provide below an overiew of the key remaining challenges and then provide for the first time a pipeline that solves these challenges.
@@ -46,13 +45,21 @@ Bottom-up mass spectrometry is the premier method for protein identification. Ma
 
 ## Contributors
 
-- Gloria Sheynkman
-- Michael Shortreed
-- Rachel M. Miller
-- Simran Kaur
-- [Anne Deslattes Mays](https://orcid.org/0000-0001-7951-3439)
-- Christina Chatzipantsiou
+- [Christina Chatzipantsiou](https://orcid.org/0000-0002-4257-7241)
 - [Benjamin Jordan](https://orcid.org/0000-0003-2268-5226)
+- [Simran Kaur](https://orcid.org/0000-0003-1536-5996)
+- [Raymond Leclair](https://orcid.org/0000-0002-7233-6588)
+- [Anne Deslattes Mays](https://orcid.org/0000-0001-7951-3439)
+- Madison Mehlferber
+- [Rachel M. Miller](http://orcid.org/0000-0003-1461-6386)
+- [Robert J. Millikin](https://orcid.org/0000-0001-7440-3695)
+- [Kyndalanne Pike](https://orcid.org/0000-0002-5906-2340)
+- [Gloria M. Sheynkman](https://orcid.org/0000-0002-4223-9947)
+- [Michael R. Shortreed](https://orcid.org/0000-0003-4626-0863)
+- [Isabella Whitworth](https://orcid.org/0000-0001-9753-5666)
+
+This is a joint project between the [Sheynkman Lab](https://med.virginia.edu/sheynkman-lab/), the [Smith Lab](https://smith.chem.wisc.edu/), [Lifebit](https://lifebit.ai/) and Science and Technology Consulting, LLC.
+
 
 ## Repository template
 

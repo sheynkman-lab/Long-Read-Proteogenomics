@@ -8,6 +8,7 @@ from collections import defaultdict
 
 
 # extract protein sequence from pb transcript and given cpat orf ranges
+
 data_directory = '/mnt/shared/ubuntu/session_data/data'
 # read in the transcript sequences
 pb_seqs = defaultdict() # pb_acc -> transcript_se
@@ -23,12 +24,14 @@ with open(f'{data_directory}/redundant_pb_entries.txt', 'w') as ofile:
         pb_seqs[pb_acc] = seq
 
 # read in cpat-predicted orf ranges
+
 # df = pd.read_table('../0_cpat_analysis_output_all_orfs/jurkat_cpat.ORF_prob.best.tsv')
 # df = df[['seq_ID', 'ORF_ID', 'ORF_frame', 'ORF_start', 'ORF_end']]
 # df.columns = ['pb_acc', 'orf_acc', 'start', 'end', 'len']
 
 df = pd.read_csv(f"{data_directory}/orf-testset-fraction16.csv")
 df = df[['pb_acc', 'orf_start', 'orf_end', 'orf_len']]
+
 
 # extract, translate, and cluster protein sequences
 pb_pseqs = defaultdict(lambda: list()) # protein_seq -> list of pb acc

@@ -1,20 +1,21 @@
-import pandas as import pd
-import gtfparse
+import pandas as pd
+from gtfparse import read_gtf
 from collections import defaultdict
+import argparse
+from Bio import SeqIO
 
 def orf_mapping(orf_coord, gencode, sample_gtf, orf_seq):
-    exons = sample_gtf[sample_gtf['feature'] == 'exon']
+    exons = sample_gtf[sample_gtf['feature'] == 'exon'].copy()
     exons['exon_length'] = abs(exons['end'] - exons['start']) + 1
-
-    exons = exons[['transcript_id', 'exon_id', 'exon_number', 'start', 'end', 'strand']]
+    
     exons.rename(columns = {'start' : 'exon_start', 'end': 'exon_end'}, inplace = True)
 
     start_codons = gencode[gencode['feature'] == 'start_codon']
-    start_codons = start_codons[['seqname','transcript_id','strand',  'start', 'end']]
+    start_codons = start_codons[['seqname','transcript_id','strand',  'start', 'end']].copy()
     start_codons.rename(columns = {'start' : 'start_codon_start', 'end': 'start_codon_end'}, inplace = True)
 
-    plus = plus_mapping(eons, orf_coord)
-    minus = minus_mapping(exons, orf_coord)
+    plus = plus_mapping(exons, orf_coord, start_codons)
+    minus = minus_mapping(exons, orf_coord, start_codons)
     all_cds = pd.concat([plus, minus])
 
     def get_num_upstream_atgs(row):
@@ -40,7 +41,7 @@ def plus_mapping(exons,orf_coord, start_codons):
             return list(match['transcript_id'])
         return None
 
-    plus_exons = exons[exons['strand'] == '+']
+    plus_exons = exons[exons['strand'] == '+'].copy()
     plus_exons['current_size'] = plus_exons.sort_values(by = ['transcript_id', 'exon_start']).groupby('transcript_id')['exon_length'].cumsum()
     plus_exons['prior_size'] = plus_exons['current_size'] - plus_exons['exon_length']
 
@@ -64,7 +65,7 @@ def minus_mapping(exons, orf_coord, start_codons):
             return list(match['transcript_id'])
         return None
     
-    minus_exons = exons[exons['strand'] == '-']
+    minus_exons = exons[exons['strand'] == '-'].copy()
     minus_exons['current_size'] = minus_exons.sort_values(by = ['transcript_id', 'exon_start'], ascending=[True,False]).groupby('transcript_id')['exon_length'].cumsum()
     minus_exons['prior_size'] = minus_exons['current_size'] - minus_exons['exon_length']
 
@@ -134,27 +135,33 @@ def orf_calling(orf):
         group = group.sort_values(by='atg_rank').reset_index(drop=True)
         if group.loc[0,'atg_rank'] == group.loc[0,'score_rank']:
             return group.head(1)
-            
-
         
         group = group.sort_values(by='orf_score', ascending=False).reset_index(drop=True)
         return group.head(1)
         
-    called_orf = orf.groupby('pb_acc').apply(newbest_filter).reset_index(drop=True)
+    called_orf = orf.groupby('pb_acc').apply(call_orf).reset_index(drop=True)
     return called_orf
     
     
-def main(**kwargs):
-    input_directory = kwards['-i']
-    output_directory = kwrargs['-o']
-    orf_coord = read_orf(f'{input_directory}/jurkat_cpat.ORF_prob.tsv')
-    gencode = read_gtf(f"{input_directory}/gencode.v35.annotation.gtf")
-    sample_gtf = read_gtf(f"{input_directory}/jurkat_corrected.gtf")
-    pb_gene = pd.read_csv(f"{input_directory}/pb_to_gene.tsv", sep = '\t')
-    classification = pd.read_csv(f"{input_directory}/jurkat_classification.txt", sep = '\t')
-    
+def main():
+    parser = argparse.ArgumentParser(description='Proccess ORF related file locations')
+    parser.add_argument('--orf_coord', '-oc',action='store', dest= 'orf_coord',help='ORF coordinate input file location')
+    parser.add_argument('--gencode','-g',action='store', dest= 'gencode',help='gencode coordinate input file location')
+    parser.add_argument('--sample_gtf','-sg',action='store', dest= 'sample_gtf',help='Sample GTF input file location')
+    parser.add_argument('--pb_gene','-pg',action='store', dest= 'pb_gene',help='PB Accession/Gencode id mapping input file location')
+    parser.add_argument('--classification','-c',action='store', dest= 'classification',help='sample classification input file location')
+    parser.add_argument('--sample_fasta','-sf',action='store', dest= 'sample_fasta',help='Sample FASTA input file location')
+    parser.add_argument('--output','-o',action='store', dest= 'output',help='Output file location')
+    results = parser.parse_args()
+
+    orf_coord = read_orf(results.orf_coord)
+    gencode = read_gtf(results.gencode)
+    sample_gtf = read_gtf(results.sample_gtf)
+    pb_gene = pd.read_csv(results.pb_gene, sep = '\t')
+    classification = pd.read_csv(results.classification, sep = '\t')
+
     orf_seq= defaultdict() # pb_acc -> orf_seq
-    for rec in SeqIO.parse(f'{input_directory}/jurkat_corrected.fasta', 'fasta'):
+    for rec in SeqIO.parse(results.sample_fasta, 'fasta'):
         orf_seq[rec.id] = str(rec.seq)
 
 
@@ -166,10 +173,10 @@ def main(**kwargs):
     classification['CPM'] = classification['FL'] / total * 1000000
 
     orfs = pd.merge(orfs, pb_gene, left_on = 'pb_acc', right_on='isoform', how = 'left')
-    orfs = pd.merge(orfs, classification, left_on='pb_acc', right_on = 'isoform', how = 'left')
-    orfs = orfs.drop(columns = ['isoform_x', 'isoform_y'])
-    orfs.to_csv(f"{output_directory}/orf_calling_results.csv", index = False)
+    orfs = pd.merge(orfs, classification, on = 'isoform', how = 'left')
+    orfs = orfs.drop(columns = ['isoform'])
+    orfs.to_csv(results.output, index = False, sep = "\t")
 
 
 if __name__ == "__main__":
-    main(**dict(arg.split('=') for arg in sys.argv[1:]))
+    main()
