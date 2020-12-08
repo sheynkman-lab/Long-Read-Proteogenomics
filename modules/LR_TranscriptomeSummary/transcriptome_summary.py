@@ -59,9 +59,9 @@ def sqtab(sqanti_out, ensg_to_gene, enst_to_isoname):
     tdict = pd.Series(trans.loc[:,1].values, index=trans.loc[:,0]).to_dict()
     df2 = fdata[['transcript']]
     fdata['transcript'] = fdata['transcript'].map(tdict).fillna(df2['transcript'])
-
-    return fdata
     print("Isoform Table from sqanti output has been prepared")
+    return fdata
+    
 
 def abund(sq_isotab, tpm_file):
     """
@@ -79,42 +79,48 @@ def abund(sq_isotab, tpm_file):
     ab = pd.merge(cpm_by_gene, tpm_by_gene, how='right', on='gene')
     return ab
 
-# Main Code 
-parser = argparse.ArgumentParser(description='Process transcriptome related input file locations')
-parser.add_argument('--sq_out', '-s', action='store', dest='sqanti_out', help = 'Sqanti Classification output location')
-parser.add_argument('--tpm', '-t', action='store', dest='tpm_file',help='Kallisto TPM file location')
-parser.add_argument('--ribo', '-r', action='store', dest='ribodep_tpm', help='Normalized Kallisto Ribodepletion TPM file location')
-parser.add_argument('--ensg_to_gene', '-gmap', action='store', dest='ensg_to_gene', help='ENSG -> Gene Map file location')
-parser.add_argument('--enst_to_isoname', '-imap', action='store', dest='enst_to_isoname', help='ENST -> Isoname Map file location')
-parser.add_argument('--len_stats', '-l', action='store', dest='gene_len_stats_tab', help='Gene Length Statistics table location')
-results = parser.parse_args()
+def main():
 
-# If results folder does not exist, make it
-rdir = '../../results/LR_TranscriptomeSummary'
-if not os.path.exists(rdir):
-    os.mkdir(rdir)
+    # Main Code 
+    parser = argparse.ArgumentParser(description='Process transcriptome related input file locations')
+    parser.add_argument('--sq_out', '-s', action='store', dest='sqanti_out', help = 'input : Sqanti Classification output location')
+    parser.add_argument('--tpm', '-t', action='store', dest='tpm_file',help='Kallisto TPM file location')
+    parser.add_argument('--ribo', '-r', action='store', dest='ribodep_tpm', help='Normalized Kallisto Ribodepletion TPM file location')
+    parser.add_argument('--ensg_to_gene', '-gmap', action='store', dest='ensg_to_gene', help='ENSG -> Gene Map file location')
+    parser.add_argument('--enst_to_isoname', '-imap', action='store', dest='enst_to_isoname', help='ENST -> Isoname Map file location')
+    parser.add_argument('--len_stats', '-l', action='store', dest='gene_len_stats_tab', help='Gene Length Statistics table location')
+    parser.add_argument('--odir', '-o', action='store', dest='odir', help='Output Directory')
+    results = parser.parse_args()
 
-# Make Sqanti Isoform Table and output to a TSV
-sq_isotab = sqtab(results.sqanti_out, results.ensg_to_gene, results.enst_to_isoname)
-sq_isotab.to_csv(os.path.join(rdir, 'sqanti_isoform_info.tsv'), sep="\t", index= False, na_rep='0')
+    # If results folder does not exist, make it
+    odir = results.odir
+    if not os.path.exists(odir):
+        os.mkdir(odir)
 
-# Make Abundance Table and Merge with Gene_Length_Stats Table 
-ab_tab = abund(sq_isotab, results.tpm_file)
-gene_len_stats = pd.read_csv(results.gene_len_stats_tab, sep = '\t')
-gen_lenab = pd.merge(gene_len_stats, ab_tab, how="right", on='gene')
+    # Make Sqanti Isoform Table and output to a TSV
+    sq_isotab = sqtab(results.sqanti_out, results.ensg_to_gene, results.enst_to_isoname)
+    sq_isotab.to_csv(os.path.join(odir, 'sqanti_isoform_info.tsv'), sep="\t", index= False, na_rep='0')
 
-# Make and Merge with PolyA Table 
-ribo = pd.read_csv(results.ribodep_tpm, sep='\t')
-rgen = ribo.groupby(['gene']).agg(rtpm=('tpm', 'sum')).reset_index()
+    # Make Abundance Table and Merge with Gene_Length_Stats Table 
+    ab_tab = abund(sq_isotab, results.tpm_file)
+    gene_len_stats = pd.read_csv(results.gene_len_stats_tab, sep = '\t')
+    gen_lenab = pd.merge(gene_len_stats, ab_tab, how="right", on='gene')
 
-# option to output log ratio for the ribosomal data
-#rgen['log(rtpm+1)'] = np.log10(rgen['rtpm'] + 1)
-#ab_tab['log(tpm+1)'] = np.log10(ab_tab['tpm'] + 1)
+    # Make and Merge with PolyA Table 
+    ribo = pd.read_csv(results.ribodep_tpm, sep='\t')
+    rgen = ribo.groupby(['gene']).agg(rtpm=('tpm', 'sum')).reset_index()
 
-ratio = pd.merge(rgen, ab_tab, how = 'left', on='gene')
-ratio['rtpm/tpm'] = ratio['rtpm']/ratio['tpm']
-ratio_tab = ratio[['gene', 'rtpm/tpm']]
-gen_tab = pd.merge(gen_lenab, ratio_tab, how='left', on='gene')
+    # option to output log ratio for the ribosomal data
+    #rgen['log(rtpm+1)'] = np.log10(rgen['rtpm'] + 1)
+    #ab_tab['log(tpm+1)'] = np.log10(ab_tab['tpm'] + 1)
 
-# Output Table 
-gen_tab.to_csv(os.path.join(rdir, 'gene_level_tab.tsv'), sep="\t", index= False, na_rep='0')
+    ratio = pd.merge(rgen, ab_tab, how = 'left', on='gene')
+    ratio['rtpm/tpm'] = ratio['rtpm']/ratio['tpm']
+    ratio_tab = ratio[['gene', 'rtpm/tpm']]
+    gen_tab = pd.merge(gen_lenab, ratio_tab, how='left', on='gene')
+
+    # Output Table 
+    gen_tab.to_csv(os.path.join(odir, 'gene_level_tab.tsv'), sep="\t", index= False, na_rep='0')
+
+if __name__ == "__main__":
+    main()

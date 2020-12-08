@@ -76,3 +76,13 @@ For each PB transcript and the set of candidate ORFs as determined by CPAT, sele
 
 ### Threads
 - None
+
+## Script 
+    python orf_calling.py \
+    --orf_coord ../input/jurkat_cpat.ORF_prob.tsv \
+    --gencode ../gencode.v35.annotation.gtf \
+    --sample_gtf ../jurkat_corrected.gtf \
+    --pb_gene ../pb_to_gene.tsv \
+    --classification ../jurkat_classification.txt \
+    --sample_fasta ../jurkat_corrected.fasta \
+    --output ../output/jurcat_cpat.ORF_called.tsv
