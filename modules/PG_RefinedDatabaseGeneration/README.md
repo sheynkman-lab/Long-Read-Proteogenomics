@@ -3,14 +3,14 @@
 
 ## Input
 
-| argument | description |
-|----------|-------------|
-| --orfs | ORF coordinate input file location |
-| --pb_fasta | PacBio fasta sequence input file location |
+| argument | description | input module |
+|----------|-------------|-----------------------|
+| --orfs | ORF coordinate input file location | ORFCalling
+| --pb_fasta | PacBio fasta sequence input file location | SQUANTI
 
 
 ## Output
-| argument | description |
+| argument | description | 
 |----------|-------------|
 | --redundant | Output redundant accession file location |
 | --combined_tsv | Output combined tsv file location |

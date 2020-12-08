@@ -14,7 +14,7 @@
 | --ensg_gene | ensg to gene output file location |
 |--enst_isoname | enst to isoname output file location |
 |--gene_ensp | Gene to ensp output file location |
-|--gene_isoname' | Gene to isoname output file location |
+|--gene_isoname | Gene to isoname output file location |
 |--isoname_lens | Isoname length table output location |
 |--gen_lens | Gene Length statistics output location |
 

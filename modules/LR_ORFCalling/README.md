@@ -46,16 +46,22 @@ All that is required for input is a fasta file.
 For each PB transcript and the set of candidate ORFs as determined by CPAT, select the most biologically plausible ORF based on several paramters. These paramters include the coding score and properties of the start ATG.
 
 ## Input
-- CPAT ORFs (TSV)
-- Gencode annotation (GTF)
-- SQANTI PB isoform classification
-- SQANTI PB annotation (GTF)
-- SQANTI PB sequence (FASTA)
-- PB to gene map
+| argument | description | input module |
+|----------|-------------|--------------|
+| --orf_coord |CPAT ORFs (TSV) | LR_CPAT |
+| --gencode | Gencode annotation (GTF) | 
+| --sample_gtf | SQANTI PB annotation (GTF) | SQANTI |
+| --pb_gene | PacBio : Genecode Cross Ref | PG_ReferenceTables
+| --classification | SQANTI PB isoform classification | SQANTI |
+| --sample_fasta | SQANTI PB sequence (FASTA) | SQANTI |
+
+
 
 
 ## Output
-- table of best ORF with annotations (TSV)
+| argument | description | output module |
+|----------|-------------|--------------|
+| --output | table of best ORF with annotations (TSV) | RefineDatabaseGeneration
 
 ## Soure Module(s)
 - CPAT
@@ -85,4 +91,4 @@ For each PB transcript and the set of candidate ORFs as determined by CPAT, sele
     --pb_gene ../pb_to_gene.tsv \
     --classification ../jurkat_classification.txt \
     --sample_fasta ../jurkat_corrected.fasta \
-    --output ../output/jurcat_cpat.ORF_called.tsv
+    --output ../output/jurkat_cpat.ORF_called.tsv
