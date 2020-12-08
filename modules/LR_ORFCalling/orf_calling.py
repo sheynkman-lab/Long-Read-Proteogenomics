@@ -75,9 +75,9 @@ def minus_mapping(exons, orf_coord, start_codons):
 
     minus_comb['start_diff'] = minus_comb['orf_start'] - minus_comb['prior_size']
     minus_comb['cds_start'] = minus_comb['exon_end'] - minus_comb['start_diff'] + 1
-    minus_comb.drop(columns=['exon_length', 'current_size', 'prior_size', 'start_diff'], inplace = True)
-
     minus_comb['gencode_atg'] = minus_comb.apply(lambda row : compare_start_minus(row, start_codons), axis = 1)
+    minus_comb.drop(columns=['exon_length', 'current_size', 'prior_size', 'start_diff'], inplace = True)
+    return minus_comb
 
 def read_orf(filename):
     """
