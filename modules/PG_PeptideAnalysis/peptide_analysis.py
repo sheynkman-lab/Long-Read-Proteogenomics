@@ -1,307 +1,182 @@
-## Import Modules ##
-# Python Modules #
+""" 
+This module prepares a table comparing mass spec MM peptide results using different databases
+
+    Inputs:
+    ------------------------------------------------------------------------------------------
+    1. gene isoname file: map transcript name to gene name 
+    2. Gencode peptides file: AllPeptides file from mass spec search using Gencode 
+    3. Pacbio peptides file: Pacbio refined database fasta file 
+    4. Pacbio six frame translation: file listing all possible peptides that can be detected per gene in Pacbio Database
+    ------------------------------------------------------------------------------------------
+
+    Output Tables:
+    ------------------------------------------------------------------------------------------
+    - table comparing pacbio coverage of Gencode peptide results from MM
+    ------------------------------------------------------------------------------------------
+"""
+
+# Import Modules
 import pandas as pd 
-import csv
+import re
 import argparse
+import os
 from pathlib import Path 
 from collections import defaultdict
 from builtins import any  
+from Bio import SeqIO
 
-# Custom Modules #
-from gen_maps import GenMap 
+# Import Files
+parser = argparse.ArgumentParser(description='Process peptide related input file locations')
+parser.add_argument('--gene_to_isoname', '-gmap', action='store', dest='gene_isoname_file', help = 'Gene names to transcript names file location')
+parser.add_argument('--gc_pep', '-gc', action='store', dest='gc_pep_file', help='Genecode AllPeptides file location')
+parser.add_argument('--pb_pep', '-pb', action='store', dest='pb_ref_file', help='Pacbio AllPeptides file location')
+parser.add_argument('--pb_6frm', '-sft', action='store', dest='pb_6frm_file', help='Pacbio Six Frame Translation file location')
+results = parser.parse_args()
 
-# TODO: #
-# Ask Gloria to put the Trans_to_Gene file on Zenodo #
-# Figure out how to make optional command line arguments
+# Input Filepaths 
+"""gene_isoname_file = '../../results/PG_ReferenceTables/gene_to_isoname.tsv'
+gc_pep_file = '../../data/AllPeptides_Gencode.psmtsv'
+pb_6frm_file = '../../data/pacbio_6frm_database_gene_grouped.fasta'
+pb_refined_file = '../../data/jurkat_orf_refined.fasta'"""
 
-
-# %%
-## Import Files ##
-""" 
-Input Files:
------------
-- transcript to gene file: map transcript name to gene name
-OR
-- gtf file: contains jurkat genomic information 
-- pbacc_to_gene file: map uniprot gene names to gencode gene names
-
-Input Files from MM Outputs:
-----------------------------
-- Gencode Peptides File: AllPeptides file from genecode search 
-- Pacbio Peptides File: AllPeptides file from pacbio search
-- Pacbio Six Frame Translation: File listing all peptides that pacbio should be able to find 
-
-Output Files:
--------------
-- Table comparing pacbio coverage of gencode results
-- TBD
-"""
-#parser = argparse.ArgumentParser(description='Process peptide related input file locations')
-#parser.add_argument('--transcript_to_gene_file', '-tg', action='store', dest='trans_to_gene_file', help = 'File mapping transcript names to gene names location')
-#parser.add_argument('--gtf_file', '-g', action='store', dest='gtf_file',help='GTF file location')
-#parser.add_argument('--pbacc_to_gene', '-pbg', action='store', dest='pbacc_to_gene_file')
-#parser.add_argument('--gen_pep', '-gp', action='store', dest='gen_pep_file', help='Genecode AllPeptides file location')
-#parser.add_argument('--pb_pep', '-pp', action='store', dest='pb_pep_file', help='Pacbio AllPeptides file location')
-#parser.add_argument('--pbsix_fram', '-sf', action='store', dest='six_fr_file', help='Pacbio Six Frame Translation file location')
-
-## Input Files ##
-trans_to_gene_file = '../../data/trans_to_gene.tsv'
-gtf_file = '../../data/gencode.v35.annotation.gtf' # only need this if trans_to_gene file does not exist
-pbacc_to_gene_file = '../../data/uniprot_acc_to_gencode_gene.tsv'
-
-## MM Inputs ##
-gen_pep_file = '../../data/AllPeptides_Gencode.psmtsv'
-pb_pep_file = '../../data/AllPeptides_Pacbio.psmtsv'
-six_fa = '../../data/pacbio_6frm_database_gene_grouped.fasta'
+gene_isoname_file = results.gene_isoname_file
+gc_pep_file = results.gc_pep_file
+pb_refined_file = results.pb_ref_file 
+pb_6frm_file = results.pb_6frm_file
 
 
-# %%
-## Prepare Dictionaries for Genecode MM Outputs ##
-
-# If trans to gene file does not exist, make it #
-#TODO: Ask Gloria to put the trans_to_gene file in Zenodo 
-if Path(trans_to_gene_file).is_file()==False:
-    GenMap(gtf_file, 'trans_to_gene')
-
-# Import File #
-trans_to_gene = pd.read_csv(trans_to_gene_file, sep='\t')
-trans_to_gene.columns = ['gene', 'trans']
-
-# Map each transcript to a gene #
-gencode_map = pd.Series(trans_to_gene.gene.values, index=trans_to_gene.trans).to_dict()
+# loading gencode peptide data, initiate a dataframe
+df = pd.read_table(gene_isoname_file, header=None)
+isoname_gene = pd.Series(df[0].values, index=df[1]).to_dict()
 
 
-# %%
-## Process Gencode Data ##
-
-# Import AllPeptides File #
+# import gencode metamorpheus peptide data, filter to 1%FDR
 g_cols = ['Base Sequence', 'Protein Accession', 'Decoy/Contaminant/Target', 'QValue']
-g_data = pd.read_csv(gen_pep_file, delimiter=r"\t", usecols = g_cols)
-g_data.columns = ['seq', 'acc', 'dct', 'qval']
+g_data = pd.read_table(gc_pep_file, usecols = g_cols)
+g_data.columns = ['pep_seq', 'acc', 'dct', 'qval']
+g_tdata = g_data[(g_data['qval'] <= 0.01) & (g_data['dct']=='T')].reset_index(drop=True)
+gc = g_tdata
 
-"After importing data we have 365553 peptides"
-
-# Filter By Qvalue and Keep Targets #
-g_fdata = g_data[g_data['qval'] <= 0.01]
-g_tdata = g_fdata[g_fdata['dct']=='T'].reset_index(drop=True)
-
-"After filtering we now have 76181 peptides"
-
-"""
-Now we have situations where each peptide is mapping to multiple accessions like this:
-           GLATFCLDKDALRDEYDDLSDLNAVQMESVR        PGRMC2_201.PGRMC2_207|PGRMC2_208
-
-So, I'm going to remove and split the accession column so it is like this instead:
-                         PGRMC2_201 PGRMC2_207 PGRMC2_208
-"""
-
-# Extract acc col and split each row using . and | as delimiters #
-g_cut = g_tdata[['acc']]
-g_split = g_cut.acc.str.split('\||\.(?=\D)', expand=True)
-
-# Replace each transcript acc with its gene name #
-g_mapname = g_split.apply(lambda x: x.map(gencode_map, na_action='ignore'))
-
-# Find locations where there was no gene_name match and fill them with "No_match" #
-g_mapname.iloc[:,[0]] = g_mapname.iloc[:,[0]].fillna('No_match')
-
-# Compile all of the gene names for each row and remove duplicates #
-g_compile = g_mapname.stack().groupby(level=0).apply(lambda x: x.unique().tolist()).apply(pd.Series)
-
-"We still have 76181 peptides"
-
-# Add seqs, sort each peptide sequence by gene and then group by gene name #
-g_compile.insert(0, 'seq', g_tdata.seq.values)
-g_sort = g_compile.melt(id_vars=['seq'], value_name="gene").dropna().reset_index(drop=True).drop('variable',1)
-
-"We now have 80389 rows, so there is less than 4208 cases where one peptide maps to more than 1 gene "
-
-g_final = g_sort.groupby('gene')
+# replace each isoname with its gene name, explode distinct genes
+def get_gene_name(row):
+    isonames = re.split('\||\.(?=\D)', row['acc'])
+    genes = set()
+    for isoname in isonames:
+        # TODO - fix the issue of unparsed isoanmes
+        if isoname not in isoname_gene: continue # issues with lowercase parsing, Rob working on it 201122
+        gene = isoname_gene[isoname]
+        genes.add(gene)
+    genes = list(genes)
+    if len(genes) == 0:
+        return 'no_match'
+    return genes
+gc['genes'] = gc.apply(get_gene_name, axis=1)
 
 
-# %%
-## Process Pacbio Data ##
 
-# Import Peptides Dataset #
-cols = ['Base Sequence', 'Gene Name', 'Decoy/Contaminant/Target', 'QValue']
-pb_data = pd.read_csv(pb_pep_file, delimiter=r"\t", usecols = cols)
-pb_data.columns = ['seq', 'gene', 'dct', 'qval']
+# TODO - debug, see TODO above
+# print out isonames without a gene match
+# found 282 peptides with no matched gene, Rob troubleshooting issue (with parsing of lowercase chars)
+#gc[(gc['genes'] == 'no_match')]
 
-"After importing data we have 150806 peptides"
+gc = gc.explode('genes')
 
-# Remove 'primary:' from gene column 
-pb_data['gene'] = pb_data['gene'].str.replace('primary:', '')
+# ~5K peptides duplicated in the allpeptides file, due to peptides with diff. mods identified
+# gc[gc.duplicated(keep=False)]
 
-# Filter By Qvalue and Keep Targets #
-pb_fdata = pb_data[pb_data['qval'] <= 0.01]
-pb_tdata = pb_fdata[pb_fdata['dct'] == 'T'].reset_index(drop=True)
+gc = gc.drop_duplicates()
 
-"After filtering data we have 34660 peptides"
+gc = gc[['genes', 'pep_seq']]
+gc.columns = ['gene', 'pep_seq']
+gc_gene = gc.groupby('gene')['pep_seq'].apply(list).reset_index(name='gc_peps')
+gc_gene['peps_in_gc'] = gc_gene['gc_peps'].apply(len)
 
-# Extract acc col and split each row using . and | as delimiters #
-pb_cut = pb_tdata[['gene']]
-pb_split = pb_cut.gene.str.split('\||\.(?=\D)', expand=True)
+# ~77K unique peptide-to-gene pairs
+# 8018 unique genes
 
-# Compile all of the gene names for each row and remove duplicates #
-pb_compile = pb_split.stack().groupby(level=0).apply(lambda x: x.unique().tolist()).apply(pd.Series)
-
-"We still have 34660 peptides"
-
-# Add seqs, sort each peptide sequence by gene and then group by gene name #
-pb_compile.insert(0, 'seq', pb_tdata.seq.values)
-pb_sort = pb_compile.melt(id_vars=['seq'], value_name="gene").dropna().reset_index(drop=True).drop('variable',1)
-
-"After sorting, we have 35271 rows, so there are less than 611 cases where one peptide maps to more than 1 gene"
-
-pb_final = pb_sort.groupby('gene')
+# presence of gc peptides in pb databse (generic function)
+def get_pb_pep_coverage_stats(row, pb_dict):
+    gene, peps, peps_in_gc = row['gene'], row['gc_peps'], row['peps_in_gc']
+    if gene not in pb_dict:
+        return 0, 0, 0
+    else:
+        num_peps_in_db = 0
+        for pep in peps:
+            if pep in pb_dict[gene]:
+                num_peps_in_db += 1
+        frac_peps_in_db = num_peps_in_db / peps_in_gc
+        return 1, num_peps_in_db, frac_peps_in_db
 
 
-# %%
-## Group Six Frame Translation Data ##
+## add in info for pb 6frm 
+pb_6frm =  defaultdict()
+for rec in SeqIO.parse(pb_6frm_file, 'fasta'):
+    pb_6frm[rec.id] = str(rec.seq)
+db = ('6frm', pb_6frm)
+gc_gene[['in_{}'.format(db[0]),
+         'peps_in_{}'.format(db[0]),
+         'frac_peps_in_{}'.format(db[0])]] \
+         = gc_gene.apply(lambda x: get_pb_pep_coverage_stats(x, db[1]), axis=1, result_type='expand')
 
-# Initialize Lists #
-A_gene =[]
-B_seq = []
+# pb to gene map
+df_pb_gene = pd.read_table('../../data/pb_to_gene.tsv')
+pb_gene = pd.Series(df_pb_gene.gene.values, index=df_pb_gene.isoform).to_dict()
 
-# Parse file to get a list of genes and sequences #
-with open(six_fa) as f:
-    for line in f:
-        if line.startswith('>'):
-            gene = line.split('>')[1].strip()
-            seq = next(f,'').replace(' ', '-').split('-')
-            seq = [i.strip() for i in seq]
-            for i in seq:
-                A_gene.append(gene)
-                B_seq.append(i)
+## add in info for orf refined (ben) 
+pb_refined = {}
+for rec in SeqIO.parse(pb_refined_file, 'fasta'):
+    gene = rec.description.split('=')[1]
+    if gene not in pb_refined:
+        pb_refined[gene] = ''
+    pb_refined[gene] += '-' + str(rec.seq)
 
-# Convert lists to dataframe #
-six_data = {'gene': A_gene, 'seq': B_seq}
-PBsix = pd.DataFrame(six_data)
-PBsix.columns = ['gene', 'seq']
-PBsix = PBsix.sort_values(by=['gene', 'seq']).reset_index(drop=True)
-
-# Group by Gene #
-PBsix_final = PBsix.groupby('gene')
-
-
-# %%
-## Compare Peptides in Pacbio and Pacbio Sixframe Translation to Gencode ##
-
-# Initialize Lists #
-# For Pacbio Strict 
-genes = []
-pb_match = []
-gen_num = []
-score = []
-pb_only = []
-in_pb = []
-
-# For Six Frame Translation 
-s_genes = []
-s_match = []
-s_gen_num = []
-s_score = []
-six_only = []
-in_six = []
-
-# Main #
-# For a gene in gencode
-for group in g_final.groups:
-    
-    # If it is also in pacbio:
-    if group in pb_final.groups:
-        # Get peptides found in pacbio and genecode for a gene 
-        pb_seq = pb_final.get_group(group).drop_duplicates()
-        gen_seq = g_final.get_group(group).drop_duplicates()
-        
-        # Find overlapping genes
-        union = pd.merge(pb_seq, gen_seq, how='inner', on='seq')
-        overlap = len(union)/len(gen_seq)
-
-        # Save Values to List
-        genes.append(group)
-        pb_match.append(len(union))
-        gen_num.append(len(gen_seq))
-        score.append(overlap)
-        pb_only.append(overlap)
-        in_pb.append('yes')
-
-    if group not in pb_final.groups:
-        # Get number of gencode peptides
-        gen_seq = g_final.get_group(group).drop_duplicates()
-
-        # Save Values to List
-        genes.append(group)
-        pb_match.append(0)
-        gen_num.append(len(gen_seq))
-        score.append(0)
-        in_pb.append('no')
-    
-    if group in PBsix_final.groups:
-        # Get list of peptides for gene
-        six_seq = PBsix_final.get_group(group).drop_duplicates().seq.values.tolist()
-        gen_seq = g_final.get_group(group).drop_duplicates()
-
-        # Find Number of Overlapping Peptides
-        six = 0 
-        for i in gen_seq.seq:
-            if any(i in x for x in six_seq):
-                six = six + 1
-        overlap = six/len(gen_seq)
-
-        # Save Values to list 
-        s_genes.append(group)
-        s_match.append(six)
-        s_gen_num.append(len(gen_seq))
-        s_score.append(overlap)
-        six_only.append(overlap)
-        in_six.append('yes')
-    
-    if group not in PBsix_final.groups:
-        # Get number of gencode peptides
-        gen_seq = g_final.get_group(group).drop_duplicates()
-
-        # Save Values to List
-        s_genes.append(group)
-        s_match.append(0)
-        s_gen_num.append(len(gen_seq))
-        s_score.append(0)
-        in_six.append('no') 
-        
+db = ('refined', pb_refined)
+gc_gene[['in_{}'.format(db[0]),
+         'peps_in_{}'.format(db[0]),
+         'frac_peps_in_{}'.format(db[0])]] \
+         = gc_gene.apply(lambda x: get_pb_pep_coverage_stats(x, db[1]), axis=1, result_type='expand')
 
 
-# %%
-# Compile Lists in DataFrame # 
-data_pb = {'gene': genes, 'GC_pep': gen_num, 'in_pb': in_pb, 'PBorf_pep': pb_match, 'pb_overlap': score}
-df1 = pd.DataFrame(data_pb)
+## add in info for best cpat orfs
+df_best_orfs = pd.read_table('../../data/jurkat_cpat.ORF_prob.best.tsv')[['ORF_ID', 'Hexamer']]
+df_best_orfs.columns = ['orf', 'coding_score']
+df_best_orfs['pb_acc'] = df_best_orfs['orf'].str.split('_').str[0]
+df_best_orfs['gene'] = df_best_orfs['pb_acc'].map(pb_gene)
 
-data_sf = {'gene': s_genes, 'test_GC': s_gen_num, 'in_PB6frm': in_six, 'PB6frm_pep': s_match, 'PB6frm_overlap': s_score}
-df2 = pd.DataFrame(data_sf)
+# load in cpat prot seqs
+pb_seq = defaultdict()
+for rec in SeqIO.parse('../../data/jurkat_cpat.ORF_seqs.fa', 'fasta'):
+    pb_seq[rec.id] = str(rec.seq.translate())
 
-data = pd.merge(df1, df2, how='outer', on='gene').drop(columns=['test_GC'])
+# ...continuted cpat best orf
+df_best_orfs['prot_seq'] = df_best_orfs['orf'].map(pb_seq)
+df_best_orf_grp = df_best_orfs[['gene', 'prot_seq']].groupby('gene')['prot_seq'].apply(lambda x: '-'.join(x)).reset_index()
+pb_best = pd.Series(df_best_orf_grp.prot_seq.values, index=df_best_orf_grp.gene).to_dict()
+db = ('cpat_best', pb_best)
+gc_gene[['in_{}'.format(db[0]),
+         'peps_in_{}'.format(db[0]),
+         'frac_peps_in_{}'.format(db[0])]] \
+         = gc_gene.apply(lambda x: get_pb_pep_coverage_stats(x, db[1]), axis=1, result_type='expand')
 
-#gen_tab = pd.read_csv('gene_based_info.tsv', sep='\t')
-#tab = pd.merge(gen_tab, data, how='inner', on='gene')
-#tab.to_csv('gencode_pb_comparison_tab.tsv', sep='\t', index=None)
+## add in info for longest pb orf
+cpat = pd.read_table('../../data/jurkat_cpat.ORF_prob.tsv')
+cpat['pb_acc'] = cpat['ID'].str.split('_').str[0]
+cpat = cpat.loc[cpat.groupby('pb_acc')['ORF'].idxmax()][['pb_acc', 'ID']]
+cpat.columns = ['pb_acc', 'orf']
+cpat['gene'] = cpat['pb_acc'].map(pb_gene)
+cpat['prot_seq'] = cpat['orf'].map(pb_seq)
+cpat = cpat[['gene', 'prot_seq']].groupby('gene')['prot_seq'].apply(lambda x: '-'.join(x)).reset_index()
+pb_long = pd.Series(cpat.prot_seq.values, index=cpat.gene).to_dict()
+db = ('cpat_long', pb_long)
+gc_gene[['in_{}'.format(db[0]),
+         'peps_in_{}'.format(db[0]),
+         'frac_peps_in_{}'.format(db[0])]] \
+         = gc_gene.apply(lambda x: get_pb_pep_coverage_stats(x, db[1]), axis=1, result_type='expand')
 
+# If output directory DNE, make it
+rdir = '../../results/PG_PeptideAnalysis'
+if not os.path.exists(rdir):
+    os.mkdir(rdir)
 
-# %%
-# Plot Stuff #
-import matplotlib.pyplot as plt
-
-f = plt.figure(figsize=(20,15))
-ax = f.add_subplot(2, 2, 1)
-ax2 = f.add_subplot(2, 2, 2)
-ax3 = f.add_subplot(2, 2, 3)
-ax4 = f.add_subplot(2, 2, 4)
-ax.hist(score, bins=100)
-ax.set_title('PBorf_overlap')
-ax2.hist(s_score, bins=100)
-ax2.set_title('PB6frm_overlap')
-ax3.hist(pb_only, bins=100)
-ax3.set_title('PBorf_overlap for Gencode genes in Pacbio')
-ax4.hist(six_only, bins=100)
-ax4.set_title('PB6frm_overlap for Gencode genes in Pacbio6frm')
-f.savefig('Pacbio_Coverage_of_Gencode_Genes.pdf')
-
-
+## write out file
+gc_gene.to_csv(os.path.join(rdir, 'gc_pb_overlap_peptides.tsv'), sep='\t', index=None)
