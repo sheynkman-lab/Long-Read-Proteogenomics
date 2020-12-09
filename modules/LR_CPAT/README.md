@@ -11,6 +11,7 @@ CPAT finds the most likely ORF from a full-length transcript.
 - isoseq3
 
 ## Target Module(s)
+- LR_ORFCalling
 - refineddatabase
 
 ## Dependencies: 

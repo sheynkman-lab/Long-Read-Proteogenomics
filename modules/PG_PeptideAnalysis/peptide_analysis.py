@@ -31,6 +31,7 @@ parser.add_argument('--gene_to_isoname', '-gmap', action='store', dest='gene_iso
 parser.add_argument('--gc_pep', '-gc', action='store', dest='gc_pep_file', help='Genecode AllPeptides file location')
 parser.add_argument('--pb_pep', '-pb', action='store', dest='pb_ref_file', help='Pacbio AllPeptides file location')
 parser.add_argument('--pb_6frm', '-sft', action='store', dest='pb_6frm_file', help='Pacbio Six Frame Translation file location')
+parser.add_argument('-odir', '--output_directory', action='store', dest='odir', help = 'ouput directory')
 results = parser.parse_args()
 
 # Input Filepaths 
@@ -174,9 +175,10 @@ gc_gene[['in_{}'.format(db[0]),
          = gc_gene.apply(lambda x: get_pb_pep_coverage_stats(x, db[1]), axis=1, result_type='expand')
 
 # If output directory DNE, make it
-rdir = '../../results/PG_PeptideAnalysis'
-if not os.path.exists(rdir):
-    os.mkdir(rdir)
+# odir = '../../results/PG_PeptideAnalysis'
+odir = results.odir
+if not os.path.exists(odir):
+    os.mkdir(odir)
 
 ## write out file
-gc_gene.to_csv(os.path.join(rdir, 'gc_pb_overlap_peptides.tsv'), sep='\t', index=None)
+gc_gene.to_csv(os.path.join(odir, 'gc_pb_overlap_peptides.tsv'), sep='\t', index=None)
