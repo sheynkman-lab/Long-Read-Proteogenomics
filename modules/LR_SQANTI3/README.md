@@ -2,7 +2,7 @@
 Isoform annotations
 
 ## Input
-- jurkat.collapsed.fasta
+- jurkat.collapsed.gff
 - jurkat.collapsed.abundance.txt
 - gencode.v35.annotation.gtf
 - hg38.fa
@@ -32,4 +32,4 @@ Isoform annotations
 - None
 
 ## Shell
-python sqanti3_qc.py jurkat.collapsed.fasta gencode.v35.annotation.gtf hg38.fa --skipORF -o jurkat -d SQANTI3_out/ --fl_count jurkat.collapsed.abundance.txt -n8
+python sqanti3_qc.py jurkat.collapsed.gff gencode.v35.annotation.gtf hg38.fa --skipORF -o jurkat -d SQANTI3_out/ --fl_count jurkat.collapsed.abundance.txt -n8 --gtf
