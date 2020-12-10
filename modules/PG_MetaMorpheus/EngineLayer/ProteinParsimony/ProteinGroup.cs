@@ -182,7 +182,14 @@ namespace EngineLayer
             sb.Append("\t");
 
             // genes
-            sb.Append(GlobalVariables.CheckLengthOfOutput(string.Join("|", ListOfProteinsOrderedByAccession.Select(p => p.GeneNames.Select(x => x.Item2).FirstOrDefault()))));
+            if (ListOfProteinsOrderedByAccession.SelectMany(p => p.GeneNames.Select(v => v.Item2)).Distinct().Count() == 1)
+            {
+                sb.Append(ListOfProteinsOrderedByAccession.First().GeneNames.Select(x => x.Item2).FirstOrDefault());
+            }
+            else
+            {
+                sb.Append(GlobalVariables.CheckLengthOfOutput(string.Join("|", ListOfProteinsOrderedByAccession.Select(p => p.GeneNames.Select(x => x.Item2).FirstOrDefault()))));
+            }
             sb.Append("\t");
 
             // organisms

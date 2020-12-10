@@ -48,7 +48,7 @@ namespace Test
             }
 
             protected override MyTaskResults RunSpecific(string OutputFolder, List<DbForTask> dbFilenameList, List<string> currentRawFileList, string taskId, FileSpecificParameters[] fileSettingsList,
-                List<string> orfFiles = null)
+                List<string> orfData = null)
             {
                 LoadProteins("", dbFilenameList, true, DecoyType.None, new List<string>(), new CommonParameters());
                 return null;

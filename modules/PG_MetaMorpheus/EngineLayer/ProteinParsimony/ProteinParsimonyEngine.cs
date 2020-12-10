@@ -357,10 +357,11 @@ namespace EngineLayer
 
                     if (_useOrfInfoInProteinInference)
                     {
-                        //TODO: edit this to use ORF info
                         bestProtein = algDictionary
-                            .Where(p => p.Value.Count == numNewSeqs)
-                            .OrderByDescending(p => proteinToPepSeqMatch[p.Key].Count)
+                            .OrderByDescending(p => p.Value.Count // order by num new peptide sequences multiplied by transcript weight
+                            * (GlobalVariables.ProteinToProteogenomicInfo.ContainsKey(p.Key) ?
+                                GlobalVariables.ProteinToProteogenomicInfo[p.Key].ProteinInferenceWeight : LongReadInfo.ProteinInferenceWeightForNoTranscriptomicsData))
+                            .ThenByDescending(p => proteinToPepSeqMatch[p.Key].Count) // then order by num total sequences in protein
                             .First().Key;
                     }
                     else
@@ -420,9 +421,26 @@ namespace EngineLayer
                                     foreach (var parsimonyProtein in parsimonyProteinsWithSameNumPeptides)
                                     {
                                         // if the two proteins have the same set of peptide sequences, they're indistinguishable
+                                        // ignoring proteins that have identical gene names
                                         if (parsimonyProtein != otherProtein && proteinToPepSeqMatch[parsimonyProtein].SetEquals(proteinToPepSeqMatch[otherProtein]))
                                         {
-                                            indistinguishableProteins.Add(otherProtein);
+                                            if (_useOrfInfoInProteinInference)
+                                            {
+                                                double otherProteinWeight = GlobalVariables.ProteinToProteogenomicInfo.ContainsKey(otherProtein) ?
+                                                    GlobalVariables.ProteinToProteogenomicInfo[otherProtein].ProteinInferenceWeight : LongReadInfo.ProteinInferenceWeightForNoTranscriptomicsData;
+
+                                                double parsimonyProteinWeight = GlobalVariables.ProteinToProteogenomicInfo.ContainsKey(parsimonyProtein) ?
+                                                    GlobalVariables.ProteinToProteogenomicInfo[parsimonyProtein].ProteinInferenceWeight : LongReadInfo.ProteinInferenceWeightForNoTranscriptomicsData;
+
+                                                if (otherProteinWeight >= parsimonyProteinWeight)
+                                                {
+                                                    indistinguishableProteins.Add(otherProtein);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                indistinguishableProteins.Add(otherProtein);
+                                            }
                                         }
                                     }
                                 }

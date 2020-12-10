@@ -651,17 +651,38 @@ namespace TaskLayer
                     string[] fileLines = File.ReadAllLines(file);
 
                     string[] header = fileLines[0].Split(new char[] { '\t' }).Select(p => p.ToLowerInvariant()).ToArray();
-                    int indexOfAccession = Array.IndexOf(header, "pb_acc".ToLowerInvariant());
-                    int indexOfNumReads = Array.IndexOf(header, "CPM".ToLowerInvariant());
+
+                    int indexOfAccession = Array.IndexOf(header, "base_acc".ToLowerInvariant());
+                    //int indexOfAccession = Array.IndexOf(header, "pb_acc".ToLowerInvariant());
+                    //int indexOfFickett = Array.IndexOf(header, "fickett".ToLowerInvariant());
+                    //int indexOfHexamer = Array.IndexOf(header, "hexamer".ToLowerInvariant());
+                    //int indexOfCodingScore = Array.IndexOf(header, "coding_score".ToLowerInvariant());
+                    //int indexOfOrfRank = Array.IndexOf(header, "orf_rank".ToLowerInvariant());
+                    //int indexOfOrfCallingConfidence = Array.IndexOf(header, "orf_calling_confidence".ToLowerInvariant());
+                    //int indexOfAtgRank = Array.IndexOf(header, "atg_rank".ToLowerInvariant());
+                    //int indexOfAtgScore = Array.IndexOf(header, "atg_score".ToLowerInvariant());
+                    //int indexOfGencodeScore = Array.IndexOf(header, "gencode_score".ToLowerInvariant());
+                    //int indexOfOrfScore = Array.IndexOf(header, "orf_score".ToLowerInvariant());
+                    int indexOfCpm = Array.IndexOf(header, "CPM".ToLowerInvariant());
 
                     for (int i = 1; i < fileLines.Length; i++)
                     {
                         string line = fileLines[i];
                         string[] split = line.Split(new char[] { '\t' });
-                        string accession = split[indexOfAccession];
-                        string cpmString = split[indexOfNumReads];
 
-                        if(!double.TryParse(cpmString, out double cpm))
+                        string accession = split[indexOfAccession];
+                        //string fickett = split[indexOfFickett];
+                        //string hexamer = split[indexOfHexamer];
+                        //string codingScore = split[indexOfCodingScore];
+                        //string orfRank = split[indexOfOrfRank];
+                        //string orfCallingConfidence = split[indexOfOrfCallingConfidence];
+                        //string atgRank = split[indexOfAtgRank];
+                        //string atgScore = split[indexOfAtgScore];
+                        //string gencodeScore = split[indexOfGencodeScore];
+                        //string orfScore = split[indexOfOrfScore];
+                        string cpmString = split[indexOfCpm];
+
+                        if (!double.TryParse(cpmString, out double cpm))
                         {
                             throw new MetaMorpheusException("Could not parse CPM: " + cpmString + " on line " + (i + 1));
                         }
@@ -679,6 +700,10 @@ namespace TaskLayer
                         {
                             throw new MetaMorpheusException("The protein accession " + protein.Accession + " occurred twice in the protein database! This is not allowed when using ORF calling data");
                         }
+
+                        // add decoy stuff...
+                        var decoyProtein = proteinList.FirstOrDefault(p => p.Accession == "DECOY_" + protein.Accession);
+                        GlobalVariables.ProteinToProteogenomicInfo.Add(decoyProtein, longReadInfo);
                     }
                 }
             }

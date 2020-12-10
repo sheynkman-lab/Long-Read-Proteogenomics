@@ -89,7 +89,6 @@ namespace TaskLayer
         public SilacLabel StartTurnoverLabel { get; set; } //used for SILAC turnover experiments
         public SilacLabel EndTurnoverLabel { get; set; } //used for SILAC turnover experiments
         public TargetContaminantAmbiguity TCAmbiguity { get; set; }
-
         public bool UseOrfCallingInfoInProteinInference { get; set; }
     }
 }

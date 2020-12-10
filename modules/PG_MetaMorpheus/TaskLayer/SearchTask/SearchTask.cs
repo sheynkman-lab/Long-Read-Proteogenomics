@@ -82,7 +82,7 @@ namespace TaskLayer
         }
 
         protected override MyTaskResults RunSpecific(string OutputFolder, List<DbForTask> dbFilenameList, List<string> currentRawFileList, string taskId, FileSpecificParameters[] fileSettingsList,
-            List<string> orfCallingTables = null)
+            List<string> orfData = null)
         {
             if (SearchParameters.DoQuantification)
             {
@@ -138,8 +138,7 @@ namespace TaskLayer
             LoadModifications(taskId, out var variableModifications, out var fixedModifications, out var localizeableModificationTypes);
 
             // load proteins
-            List<Protein> proteinList = LoadProteins(taskId, dbFilenameList, SearchParameters.SearchTarget, SearchParameters.DecoyType, localizeableModificationTypes, CommonParameters,
-                orfCallingTables);
+            List<Protein> proteinList = LoadProteins(taskId, dbFilenameList, SearchParameters.SearchTarget, SearchParameters.DecoyType, localizeableModificationTypes, CommonParameters, orfData);
             SanitizeProteinDatabase(proteinList, SearchParameters.TCAmbiguity);
 
             // write prose settings
