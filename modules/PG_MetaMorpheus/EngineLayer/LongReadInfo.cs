@@ -15,6 +15,7 @@ namespace EngineLayer
         public readonly double CPM;
         public readonly double ProteinInferenceWeight;
 
+
         public LongReadInfo(Protein protein, double cpm)
         {
             this.Protein = protein;
