@@ -1,5 +1,5 @@
-# Long REad SMARTLinkCSS 
-*Description of the module*
+# SQANTI3 analysis
+Isoform annotations
 
 ## Input
 - jurkat.collapsed.fasta
