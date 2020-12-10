@@ -5,7 +5,7 @@
 This module calls the Open Reading Frames (ORF) with two different ORF calling routines.
 TransDecoder and CPAT.
 
-The output of these runs are then filtered by a third program lr_orfcalling.py which cleans up and removes ORFS that are not meaningful.
+The output of these runs are then filtered by a third program orfcalling.py which cleans up and removes ORFS that are not meaningful.
 
 ## Testing locally
 
@@ -23,7 +23,7 @@ nextflow run lr_orfcalling.nr --help -profile lr_orfcalling_nextflow.config
 
 Then to run a test run on a specific fasta file **ALWAYS USE ABSOLUTE PATHS**
 ```bash
-nextflow run lr_orfcalling.nr --fasta /mnt/shared/ubuntu/session_data/Long-Read-Proteogenomics/data/jurkat_corrected.fasta -profile lr_orfcalling_nextflow.confg
+nextflow run lr_orfcalling.nf --fasta /mnt/shared/ubuntu/session_data/Long-Read-Proteogenomics/data/jurkat_corrected.fasta -profile lr_orfcalling_nextflow.confg
 ```
 
 ## process runTransDecoder
@@ -40,7 +40,7 @@ All that is required for input is a fasta file.
 - jurkat_corrected.fasta 
 
 ### Output
-- [outputs explained here](https://github.com/TransDecoder/TransDecoder/wiki)
+
 
 # ORF calling from CPAT
 For each PB transcript and the set of candidate ORFs as determined by CPAT, select the most biologically plausible ORF based on several paramters. These paramters include the coding score and properties of the start ATG.
@@ -54,9 +54,6 @@ For each PB transcript and the set of candidate ORFs as determined by CPAT, sele
 | --pb_gene | PacBio : Genecode Cross Ref | PG_ReferenceTables
 | --classification | SQANTI PB isoform classification | SQANTI |
 | --sample_fasta | SQANTI PB sequence (FASTA) | SQANTI |
-
-
-
 
 ## Output
 | argument | description | output module |
@@ -75,7 +72,6 @@ For each PB transcript and the set of candidate ORFs as determined by CPAT, sele
 
 ## Threads
 - 1-2 cpus
-
 
 ### Dependencies: 
 - None
