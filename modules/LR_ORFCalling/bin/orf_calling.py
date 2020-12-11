@@ -1,8 +1,10 @@
-import pandas as pd
+#!/usr/bin/env python3
+
 from gtfparse import read_gtf
 from collections import defaultdict
 import argparse
 from Bio import SeqIO
+import pandas as pd
 
 def orf_mapping(orf_coord, gencode, sample_gtf, orf_seq):
     exons = sample_gtf[sample_gtf['feature'] == 'exon'].copy()
