@@ -18,7 +18,14 @@ def helpMessage() {
     log.info """
     Usage:
     The typical command for running the pipeline is as follows:
-    nextflow run refined_db_generation.nf --orfs orf-testset-fraciton16.csv --seq jurkat_corrected.fasta --sample 'jurkat'
+nextflow run orf_calling.nf \
+--orf_coord /mnt/shared/ubuntu/session_data/data/test_data/jurkat_cpat.ORF_prob_testset_fraction16.tsv \
+--gencode_gtf /mnt/shared/ubuntu/session_data/data/test_data/gencode.v35.annotation.gtf \
+--sample_gtf /mnt/shared/ubuntu/session_data/data/test_data/jurkat_corrected.gtf \
+--pb_gene /mnt/shared/ubuntu/session_data/data/test_data/pb_to_gene.tsv \
+--classification /mnt/shared/ubuntu/session_data/data/test_data/jurkat_classification.txt \
+--sample_fasta /mnt/shared/ubuntu/session_data/data/test_data/jurkat_corrected.fasta \
+--name jurkat_testset_fraction16
     
     Input files:
       | argument          | description                       | input module        |
@@ -101,7 +108,7 @@ log.info "sample_fasta ${params.sample_fasta}"
     input:
     file(orf_coord) from ch_orf_coord
     file(gencode_gtf) from ch_gencode_gtf
-    file(sample_gtf) from ch_sample_fasta
+    file(sample_gtf) from ch_sample_gtf
     file(pb_gene) from ch_pb_gene
     file(classification) from ch_classification
     file(sample_fasta) from ch_sample_fasta
@@ -111,14 +118,7 @@ log.info "sample_fasta ${params.sample_fasta}"
     
     script:
     """
-    orf_calling.py \
-    --orf_coord $orf_coord \
-    --gencode $gencode_gtf \
-    --sample_gtf $sample_gtf \
-    --pb_gene $pb_gene \
-    --classification $classification \
-    --sample_fasta $sample_fasta \ 
-    --output ${params.name}_orf_called.tsv
+    python orf_calling.py --orf_coord $orf_coord --gencode $gencode_gtf --sample_gtf $sample_gtf --pb_gene $pb_gene --classification $classification --sample_fasta $sample_fasta --output ${params.name}_orf_called.tsv
     """
   }
 
