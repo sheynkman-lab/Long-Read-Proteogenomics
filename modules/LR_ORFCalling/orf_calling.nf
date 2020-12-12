@@ -56,12 +56,12 @@ if (params.help) {
 
 log.info "lr_orfcalling - N F  ~  version 0.1"
 log.info "====================================="
-log.info "orfs : ${params.orf_coord}"
-log.info "gencode_gtf  : ${params.gencode_gtf}"
-log.info "sample_gtf : ${params.sample_gtf}"
-log.info "pb_gene : ${params.pb_gene}"
-log.info "classification ${params.classification}"
-log.info "sample_fasta ${params.sample_fasta}"
+log.info "orf_coord      : ${params.orf_coord}"
+log.info "gencode_gtf    : ${params.gencode_gtf}"
+log.info "sample_gtf     : ${params.sample_gtf}"
+log.info "pb_gene        : ${params.pb_gene}"
+log.info "classification : ${params.classification}"
+log.info "sample_fasta   : ${params.sample_fasta}"
 
 
 
@@ -118,7 +118,7 @@ log.info "sample_fasta ${params.sample_fasta}"
     
     script:
     """
-    conda run -n orf-calling python /opt/bin/orf_calling.py --orf_coord $orf_coord --gencode $gencode_gtf --sample_gtf $sample_gtf --pb_gene $pb_gene --classification $classification --sample_fasta $sample_fasta --output ${params.name}_orf_called.tsv
+    conda run -n orf-calling orf_calling.py --orf_coord $orf_coord --gencode $gencode_gtf --sample_gtf $sample_gtf --pb_gene $pb_gene --classification $classification --sample_fasta $sample_fasta --output ${params.name}_orf_called.tsv
     """
   }
 
