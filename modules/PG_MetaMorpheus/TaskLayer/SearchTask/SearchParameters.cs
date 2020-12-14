@@ -27,7 +27,7 @@ namespace TaskLayer
             MaxFragmentSize = 30000.0;
             WriteMzId = true;
             WritePepXml = false;
-
+            
             ModsToWriteSelection = new Dictionary<string, int>
             {
                 //Key is modification type.

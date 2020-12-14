@@ -1,8 +1,10 @@
-import pandas as pd
+#!/usr/bin/env python3
+
 from gtfparse import read_gtf
 from collections import defaultdict
 import argparse
 from Bio import SeqIO
+import pandas as pd
 
 def orf_mapping(orf_coord, gencode, sample_gtf, orf_seq):
     exons = sample_gtf[sample_gtf['feature'] == 'exon'].copy()
@@ -75,9 +77,9 @@ def minus_mapping(exons, orf_coord, start_codons):
 
     minus_comb['start_diff'] = minus_comb['orf_start'] - minus_comb['prior_size']
     minus_comb['cds_start'] = minus_comb['exon_end'] - minus_comb['start_diff'] + 1
-    minus_comb.drop(columns=['exon_length', 'current_size', 'prior_size', 'start_diff'], inplace = True)
-
     minus_comb['gencode_atg'] = minus_comb.apply(lambda row : compare_start_minus(row, start_codons), axis = 1)
+    minus_comb.drop(columns=['exon_length', 'current_size', 'prior_size', 'start_diff'], inplace = True)
+    return minus_comb
 
 def read_orf(filename):
     """

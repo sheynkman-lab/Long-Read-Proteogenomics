@@ -1,0 +1,14 @@
+# You can use this file to create a conda environment for this pipeline:
+#   conda env create -f environment.yml
+name: orf-calling
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # Module 8: Refined Db Generation
+  - python=3.7.3
+  - biopython
+  - numpy
+  - pandas
+  - gtfparse
