@@ -116,4 +116,3 @@ log.info "sample_gtf     : ${params.sample_gtf}"
     """
     //
   }
-

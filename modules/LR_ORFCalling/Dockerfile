@@ -31,3 +31,5 @@ RUN mkdir /opt/bin
 COPY bin/* /opt/bin/
 RUN chmod +x /opt/bin/*
 ENV PATH="$PATH:/opt/bin/"
+
+
