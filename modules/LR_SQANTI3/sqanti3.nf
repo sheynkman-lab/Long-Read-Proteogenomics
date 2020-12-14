@@ -56,12 +56,11 @@ if (params.help) {
 
 log.info "lr_orfcalling - N F  ~  version 0.1"
 log.info "====================================="
-log.info "orf_coord      : ${params.orf_coord}"
+log.info "fl_count       : ${params.fl_count}"
 log.info "gencode_gtf    : ${params.gencode_gtf}"
+log.info "gencode_fasta  : ${params.gencode_fasta}"
 log.info "sample_gtf     : ${params.sample_gtf}"
-log.info "pb_gene        : ${params.pb_gene}"
-log.info "classification : ${params.classification}"
-log.info "sample_fasta   : ${params.sample_fasta}"
+
 
 
 
@@ -100,7 +99,7 @@ log.info "sample_fasta   : ${params.sample_fasta}"
     input:
     file(fl_count) from ch_fl_count
     file(gencode_gtf) from ch_gencode_gtf
-    file(sample_gtf) from ch_sample_gtf
+    file(gencode_fasta) from ch_gencode_fasta
     file(sample_gtf) from ch_sample_gtf
     
     output:
