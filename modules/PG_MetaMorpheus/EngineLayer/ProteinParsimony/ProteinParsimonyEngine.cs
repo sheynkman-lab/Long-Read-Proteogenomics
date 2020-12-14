@@ -84,6 +84,10 @@ namespace EngineLayer
             // parsimonious list of proteins built by this protein parsimony engine
             HashSet<Protein> parsimoniousProteinList = new HashSet<Protein>();
 
+            // if transcriptomic data is used, this is a list of proteins that would normally been removed based on parsimony algorithm,
+            // but have sufficient transcriptomic support to remain
+            HashSet<Protein> rescuedProteinList = new HashSet<Protein>();
+
             // list of peptides that can only be digestion products of one protein in the proteome (considering different protease digestion rules)
             HashSet<PeptideWithSetModifications> uniquePeptides = new HashSet<PeptideWithSetModifications>();
 
@@ -299,22 +303,82 @@ namespace EngineLayer
                     proteinToPepSeqMatch.Add(peptide.Protein, new HashSet<ParsimonySequence> { sequence });
                 }
             }
-
-            // remove the peptides observed by proteins with unique peptides
-            HashSet<ParsimonySequence> toRemove = new HashSet<ParsimonySequence>();
-            foreach (var seq in peptideSequenceToProteins)
+            
+            if (_useOrfInfoInProteinInference)
             {
-                bool observedAlready = seq.Value.Any(p => parsimoniousProteinList.Contains(p));
-
-                if (observedAlready)
+                Dictionary<Protein, HashSet<Protein>> candidateRescueProteins = new Dictionary<Protein, HashSet<Protein>>();
+                HashSet<ParsimonySequence> toRemove = new HashSet<ParsimonySequence>();
+                foreach (var seq in peptideSequenceToProteins)
                 {
-                    toRemove.Add(seq.Key);
+                    bool observedAlready = seq.Value.Any(p => parsimoniousProteinList.Contains(p));
+
+                    if (observedAlready)
+                    {
+                        if (seq.Value.Count > 1)
+                        {
+                            List<Protein> uniqueProteins = seq.Value.Where(p => parsimoniousProteinList.Contains(p)).ToList();
+                            if (seq.Value.Count > uniqueProteins.Count)
+                            {
+                                List<Protein> sharedProteins = seq.Value.Except(uniqueProteins).ToList();
+                                foreach (var uniqueProt in uniqueProteins)
+                                {
+                                    if (candidateRescueProteins.ContainsKey(uniqueProt))
+                                    {
+                                        foreach (var sharedProt in sharedProteins)
+                                        {
+                                            candidateRescueProteins[uniqueProt].Add(sharedProt);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        candidateRescueProteins.Add(uniqueProt, sharedProteins.ToHashSet());
+                                    }
+                                }
+                            }                           
+
+                        }
+                        toRemove.Add(seq.Key);
+                    }
                 }
+                var ProteinTranscriptAbundance = GlobalVariables.ProteinToProteogenomicInfo;
+                foreach (var entry in candidateRescueProteins)
+                {
+                    List<Protein> toRescue = entry.Value.ToList().Where(p => ProteinTranscriptAbundance[p.Accession].CPM >= 10.0).ToList();
+                    foreach (var protein in toRescue)
+                    {
+                        if (protein.IsDecoy == false)
+                        {
+                            var decoyP = proteinToPepSeqMatch.Where(p => p.Key.Accession == "DECOY_" + protein.Accession).ToList();
+                            if (decoyP.Count != 0)
+                            {
+                                rescuedProteinList.Add(decoyP.FirstOrDefault().Key);
+                            }
+                            rescuedProteinList.Add(protein);
+                        }
+                        
+                    }
+                }
+
             }
-            foreach (var sequence in toRemove)
+
+            else
             {
-                peptideSequenceToProteins.Remove(sequence);
-            }
+                // remove the peptides observed by proteins with unique peptides
+                HashSet<ParsimonySequence> toRemove = new HashSet<ParsimonySequence>();
+                foreach (var seq in peptideSequenceToProteins)
+                {
+                    bool observedAlready = seq.Value.Any(p => parsimoniousProteinList.Contains(p));
+
+                    if (observedAlready)
+                    {
+                        toRemove.Add(seq.Key);
+                    }
+                }
+                foreach (var sequence in toRemove)
+                {
+                    peptideSequenceToProteins.Remove(sequence);
+                }
+            }           
 
             if (peptideSequenceToProteins.Any())
             {
@@ -359,8 +423,8 @@ namespace EngineLayer
                     {
                         bestProtein = algDictionary
                             .OrderByDescending(p => p.Value.Count // order by num new peptide sequences multiplied by transcript weight
-                            * (GlobalVariables.ProteinToProteogenomicInfo.ContainsKey(p.Key) ?
-                                GlobalVariables.ProteinToProteogenomicInfo[p.Key].ProteinInferenceWeight : LongReadInfo.ProteinInferenceWeightForNoTranscriptomicsData))
+                            * (GlobalVariables.ProteinToProteogenomicInfo.ContainsKey(p.Key.Accession) ?
+                                GlobalVariables.ProteinToProteogenomicInfo[p.Key.Accession].ProteinInferenceWeight : LongReadInfo.ProteinInferenceWeightForNoTranscriptomicsData))
                             .ThenByDescending(p => proteinToPepSeqMatch[p.Key].Count) // then order by num total sequences in protein
                             .First().Key;
                     }
@@ -397,17 +461,18 @@ namespace EngineLayer
                 }
 
                 // *** done with greedy algorithm
-
+                parsimoniousProteinList.UnionWith(rescuedProteinList);
                 // Parsimony stage 4: add back indistinguishable proteins (proteins that have identical peptide sets as parsimonious proteins)
                 var allProteinsGroupedByNumPeptides = proteinToPepSeqMatch.GroupBy(p => p.Value.Count);
                 var parsimonyProteinsGroupedByNumPeptides = parsimoniousProteinList.GroupBy(p => proteinToPepSeqMatch[p].Count);
                 var indistinguishableProteins = new ConcurrentBag<Protein>();
+                var rescueProteins = new Dictionary<Protein, ConcurrentBag<Protein>>();
 
                 foreach (var group in allProteinsGroupedByNumPeptides)
                 {
                     var parsimonyProteinsWithSameNumPeptides = parsimonyProteinsGroupedByNumPeptides.FirstOrDefault(p => p.Key == group.Key);
                     var list = group.ToList();
-
+                    var parsimonyProteinsWithFewerPeptides = parsimonyProteinsGroupedByNumPeptides.Where(p => p.Key > group.Key).ToList();
                     if (parsimonyProteinsWithSameNumPeptides != null)
                     {
                         Parallel.ForEach(Partitioner.Create(0, list.Count),
@@ -422,36 +487,106 @@ namespace EngineLayer
                                     {
                                         // if the two proteins have the same set of peptide sequences, they're indistinguishable
                                         // ignoring proteins that have identical gene names
+                                        
                                         if (parsimonyProtein != otherProtein && proteinToPepSeqMatch[parsimonyProtein].SetEquals(proteinToPepSeqMatch[otherProtein]))
-                                        {
-                                            if (_useOrfInfoInProteinInference)
-                                            {
-                                                double otherProteinWeight = GlobalVariables.ProteinToProteogenomicInfo.ContainsKey(otherProtein) ?
-                                                    GlobalVariables.ProteinToProteogenomicInfo[otherProtein].ProteinInferenceWeight : LongReadInfo.ProteinInferenceWeightForNoTranscriptomicsData;
-
-                                                double parsimonyProteinWeight = GlobalVariables.ProteinToProteogenomicInfo.ContainsKey(parsimonyProtein) ?
-                                                    GlobalVariables.ProteinToProteogenomicInfo[parsimonyProtein].ProteinInferenceWeight : LongReadInfo.ProteinInferenceWeightForNoTranscriptomicsData;
-
-                                                if (otherProteinWeight >= parsimonyProteinWeight)
-                                                {
-                                                    indistinguishableProteins.Add(otherProtein);
-                                                }
-                                            }
-                                            else
-                                            {
-                                                indistinguishableProteins.Add(otherProtein);
-                                            }
-                                        }
+                                        {                                            
+                                            indistinguishableProteins.Add(otherProtein);                                           
+                                        }                                        
+                                        
                                     }
                                 }
                             }
                         );
                     }
+
+                    if (parsimonyProteinsWithFewerPeptides != null)
+                    {
+                        Parallel.ForEach(Partitioner.Create(0, list.Count),
+                            new ParallelOptions { MaxDegreeOfParallelism = CommonParameters.MaxThreadsToUsePerFile },
+                            (range, loopState) =>
+                            {
+                                for (int i = range.Item1; i < range.Item2; i++)
+                                {
+                                    Protein otherProtein = list[i].Key;
+
+                                    foreach (var peptideCount in parsimonyProteinsWithFewerPeptides)
+                                    {
+                                        foreach (var parsimonyProtein in peptideCount)
+                                        {
+                                            if (_useOrfInfoInProteinInference)
+                                            {
+                                                double otherProteinWeight = GlobalVariables.ProteinToProteogenomicInfo.ContainsKey(otherProtein.Accession) ?
+                                                        GlobalVariables.ProteinToProteogenomicInfo[otherProtein.Accession].CPM : 0;
+
+                                                double parsimonyProteinWeight = GlobalVariables.ProteinToProteogenomicInfo.ContainsKey(parsimonyProtein.Accession) ?
+                                                    GlobalVariables.ProteinToProteogenomicInfo[parsimonyProtein.Accession].CPM : 0;
+
+                                                var a = proteinToPepSeqMatch[otherProtein];
+                                                var b = proteinToPepSeqMatch[parsimonyProtein];
+                                                var sub = a.IsProperSubsetOf(b);
+
+                                                if (proteinToPepSeqMatch[otherProtein].IsProperSubsetOf(proteinToPepSeqMatch[parsimonyProtein]))
+                                                {
+                                                    if (otherProteinWeight >= 10.0)
+                                                    {
+                                                        lock (rescueProteins)
+                                                        {
+                                                            if (rescueProteins.ContainsKey(parsimonyProtein))
+                                                            {
+                                                                rescueProteins[parsimonyProtein].Add(otherProtein);
+                                                            }
+                                                            else
+                                                            {
+                                                                rescueProteins.Add(parsimonyProtein, new ConcurrentBag<Protein>() { otherProtein });
+                                                            }
+                                                        }
+                                                        
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        
+                                    }
+                                }
+                            }
+                        );
+                    }
+                   
                 }
 
                 foreach (Protein protein in indistinguishableProteins)
                 {
                     parsimoniousProteinList.Add(protein);
+                }
+
+                foreach (var proteinCandidates in rescueProteins)
+                {
+                    HashSet<ParsimonySequence> coveredPeptides = new HashSet<ParsimonySequence>();
+                    foreach (var protein in proteinCandidates.Value)
+                    {
+                        if (protein.IsDecoy == false)
+                        {
+                            var decoyP = proteinToPepSeqMatch.Where(p => p.Key.Accession == "DECOY_" + protein.Accession).ToList();
+                            if (decoyP.Count != 0)
+                            {
+                                parsimoniousProteinList.Add(decoyP.FirstOrDefault().Key);
+                            }
+
+                        }
+                        parsimoniousProteinList.Add(protein);
+                        coveredPeptides.UnionWith(proteinToPepSeqMatch[protein]);
+                    }
+
+                    if (proteinToPepSeqMatch[proteinCandidates.Key].SetEquals(coveredPeptides))
+                    {
+                        double originalProteinWeight = GlobalVariables.ProteinToProteogenomicInfo.ContainsKey(proteinCandidates.Key.Accession) ?
+                                                            GlobalVariables.ProteinToProteogenomicInfo[proteinCandidates.Key.Accession].CPM : 0;
+                        if (originalProteinWeight < 10.0)
+                        {
+                            parsimoniousProteinList.Remove(proteinCandidates.Key);
+                        }
+                    }                    
+                    
                 }
             }
 

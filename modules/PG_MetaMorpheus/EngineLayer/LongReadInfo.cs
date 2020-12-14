@@ -11,14 +11,13 @@ namespace EngineLayer
         // this would be used if UniProt proteins are added for genes that weren't observed in the transcriptomics data
         public static readonly double ProteinInferenceWeightForNoTranscriptomicsData = 0.5;
 
-        public readonly Protein Protein;
+        public readonly string ProteinAccession;
         public readonly double CPM;
         public readonly double ProteinInferenceWeight;
 
-
-        public LongReadInfo(Protein protein, double cpm)
+        public LongReadInfo(string protein, double cpm)
         {
-            this.Protein = protein;
+            this.ProteinAccession = protein;
             this.CPM = cpm;
             ProteinInferenceWeight = CalculateProteinInferenceWeight();
         }
