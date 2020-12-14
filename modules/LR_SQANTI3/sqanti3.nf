@@ -67,6 +67,8 @@ log.info "sample_gtf     : ${params.sample_gtf}"
   /*--------------------------------------------------
     Refined Protein Database Generation 
   ---------------------------------------------------*/
+  
+  
   Channel
      .value(file(params.fl_count))
      .ifEmpty { error "Cannot find orfs file for parameter --fl_count: ${params.fl_count}" }
@@ -87,6 +89,7 @@ log.info "sample_gtf     : ${params.sample_gtf}"
      .value(file(params.sample_gtf))
      .ifEmpty { error "Cannot find any seq file for parameter --sample_gtf: ${params.sample_gtf}" }
      .set { ch_sample_gtf } 
+  
 
   
 
@@ -97,17 +100,20 @@ log.info "sample_gtf     : ${params.sample_gtf}"
     publishDir "${params.outdir}/sqanti3/", mode: 'copy'
 
     input:
+    
     file(fl_count) from ch_fl_count
     file(gencode_gtf) from ch_gencode_gtf
     file(gencode_fasta) from ch_gencode_fasta
     file(sample_gtf) from ch_sample_gtf
+    
     
     output:
     file("*")
     
     script:
     """
-    conda run -n sqanti3 python sqanti3_qc.py $sample_gtf $gencode_gtf $gencode_fasta -o ${params.name} -d sqanti3 --fl_count $fl_count -n8
+    sqanti3_qc $sample_gtf $gencode_gtf $gencode_fasta -o ${params.name}  --fl_count $fl_count -n8 --gtf
     """
+    //
   }
 
