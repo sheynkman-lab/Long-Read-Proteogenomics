@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # categorization of protein group comparisons across databases
 
 

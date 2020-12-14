@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 This module prepares an isoform classification table and a gene info table 
 

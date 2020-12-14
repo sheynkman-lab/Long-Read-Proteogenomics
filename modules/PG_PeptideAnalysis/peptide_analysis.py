@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """ 
 This module prepares a table comparing mass spec MM peptide results using different databases
 

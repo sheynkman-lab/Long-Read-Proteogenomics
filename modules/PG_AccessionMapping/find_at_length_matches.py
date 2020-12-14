@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # find at-length matches (see notes) for query to subject alignments
 # 'at-length' match criteria
 #  - length of query match equals the full length of the database entry

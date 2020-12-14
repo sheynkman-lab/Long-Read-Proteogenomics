@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # make a six frame translation database for from the pacbio transcripts
 
 from Bio import SeqIO

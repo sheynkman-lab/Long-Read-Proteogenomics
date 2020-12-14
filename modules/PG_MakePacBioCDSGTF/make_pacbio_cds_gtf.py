@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # make GTF file that includes the ORF regions (as CDS features)
 # input - pacbio gtf ('jurkat_corrected.gtf'), orf calls ('jurkat_refine_orf_calls.tsv')
 # output - pacbio gtf with added "cds" features (orfs)

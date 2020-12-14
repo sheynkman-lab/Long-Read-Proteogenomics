@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # derive a same-protein-sequence gencode file
 
 # %%
