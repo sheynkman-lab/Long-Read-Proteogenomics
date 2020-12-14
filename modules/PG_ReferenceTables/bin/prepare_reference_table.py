@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 
 """ 
 This module prepares reference tables for other modules 
