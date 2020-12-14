@@ -19,7 +19,7 @@ namespace EngineLayer
         // better to edit the protein object to have its own proteogenomic long read info
         // but this would require editing mzLib which is more work than it's worth at this stage.
         // TODO: change this so the protein object in mzLib has long read info as a variable
-        public static Dictionary<Protein, LongReadInfo> ProteinToProteogenomicInfo;
+        public static Dictionary<string, LongReadInfo> ProteinToProteogenomicInfo;
 
         // for now, these are only used for error-checking in the command-line version.
         // compressed versions of the protein databases (e.g., .xml.gz) are also supported
