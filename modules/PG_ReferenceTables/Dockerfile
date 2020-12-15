@@ -2,7 +2,7 @@
 
 FROM continuumio/miniconda3:4.8.2
 LABEL description="Base docker image with conda and util libraries"
-ARG ENV_NAME="ref-tables"
+ARG ENV_NAME="lrpg"
 
 # Install mamba for faster installation in the subsequent step
 # Install r-base for being able to run the install.R script
@@ -20,11 +20,7 @@ RUN mamba env create --quiet --name ${ENV_NAME} --file /environment.yml && conda
 ENV PATH /opt/conda/envs/${ENV_NAME}/bin:$PATH
 
 # Dump the details of the installed packages to a file for posterity
-RUN conda env export --name ${ENV_NAME} > ${ENV_NAME}_exported.yml
-
-# Instruct R processes to use these empty files instead of clashing with a local version
-RUN touch .Rprofile
-RUN touch .Renviron
+RUN mamba env export --name ${ENV_NAME} > ${ENV_NAME}_exported.yml
 
 # Copy additional scripts from bin and add to PATH
 RUN mkdir /opt/bin

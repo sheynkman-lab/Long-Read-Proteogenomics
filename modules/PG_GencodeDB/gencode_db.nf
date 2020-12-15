@@ -63,7 +63,8 @@ log.info "gencode_fasta : ${params.gencode_fasta}"
     file(gencode_fasta) from ch_gencode_fasta
     
     output:
-    file("*")
+    file("gencode.fasta") into ch_gencode_fasta
+    file("gencode_isoname_clusters.tsv") into ch_gencode_isoname_clusters
     
     script:
     """

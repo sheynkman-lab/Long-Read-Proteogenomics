@@ -1,29 +1,26 @@
-# nf-core style template for Dockerfile
-FROM continuumio/miniconda3:4.8.2
-LABEL description="Basic docker image containing util software requirements for the sheynkman-lab/Long-Read-Proteogenomics pipeline Refined Database Module"
-ARG ENV_NAME="refined-database-generation"
-# Install procps so that Nextflow can poll CPU usage and
-# deep clean the apt cache to reduce image/layer size
-# ! Leave this as is for any module
-RUN apt-get update \
- && apt-get install -y procps \
- && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+# Full contents of Dockerfile
 
-# ! Leave this as is for any module
+FROM continuumio/miniconda3:4.8.2
+LABEL description="Base docker image with conda and util libraries"
+ARG ENV_NAME="lrpg"
+
+# Install mamba for faster installation in the subsequent step
+# Install r-base for being able to run the install.R script
+RUN conda install -c conda-forge mamba r-base -y
+
 # Install the conda environment
 COPY environment.yml /
-RUN conda env create --name ${ENV_NAME} --quiet --file /environment.yml && conda clean -a
+RUN mamba env create --quiet --name ${ENV_NAME} --file /environment.yml && conda clean -a
 
-# ! Update the envs/<name> based on the environment.yml file
+# Install R packages that are possibly not available via conda
+# COPY bin/install.R /
+# RUN Rscript /install.R
+
 # Add conda installation dir to PATH (instead of doing 'conda activate')
 ENV PATH /opt/conda/envs/${ENV_NAME}/bin:$PATH
 
 # Dump the details of the installed packages to a file for posterity
-RUN conda env export --name ${ENV_NAME} > ${ENV_NAME}.yml
-
-# Instruct R processes to use these empty files instead of clashing with a local version
-RUN touch .Rprofile
-RUN touch .Renviron
+RUN mamba env export --name ${ENV_NAME} > ${ENV_NAME}_exported.yml
 
 # Copy additional scripts from bin and add to PATH
 RUN mkdir /opt/bin

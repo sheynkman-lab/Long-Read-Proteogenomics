@@ -1,0 +1,12 @@
+#   conda env create -f environment.yml
+name: reference-tables 
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # Module: Make 6 frame
+  # Note - not using Biopython, but may in future version (to read in fasta)
+  - python=3.7.3
+  - biopython
+  - pandas

@@ -83,7 +83,7 @@ log.info "sample_fasta : ${params.sample_fasta}"
     file(sample_fasta) from ch_sample_fasta
     
     output:
-    file("*")
+    file("${params.name}_pacbio_6frm_database_gene_grouped.fasta") into ch_6frame
 
     script:
     """
