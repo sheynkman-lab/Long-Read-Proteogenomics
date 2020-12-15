@@ -83,15 +83,12 @@ log.info "sample_fasta : ${params.sample_fasta}"
     file(sample_fasta) from ch_sample_fasta
     
     output:
-    file("${params.name}_pacbio_6frm_database_gene_grouped.fasta") into ch_6frame
+    file("${params.name}.6frame.fasta") into ch_6frm
 
     script:
     """
-    make_pacbio6frm_gene_grouped.py \
-    --iso_annot $iso_annot \
-    --ensg_gene $ensg_gene \
-    --sample_fasta $sample_fasta \
-    --output_fasta ${params.name}_pacbio_6frm_database_gene_grouped.fasta"""
+    make_pacbio6frm_gene_grouped.py --iso_annot $iso_annot --ensg_gene $ensg_gene --sample_fasta $sample_fasta --output_fasta ${params.name}.6frame.fasta
+    """
 
   }
 
