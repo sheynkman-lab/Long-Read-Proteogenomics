@@ -33,7 +33,7 @@ nextflow run orf_calling.nf \
       | --orf_coord       | CPAT ORFs (TSV)                   | LR_CPAT             |
       | --gencode         | Gencode annotation (GTF)          |                     |
       | --sample_gtf      | SQANTI PB annotation (GTF)        | SQANTI              |
-      | --pb_gene         | PacBio : Gencode Cross Ref       | PG_ReferenceTables  |
+      | --pb_gene         | PacBio : Gencode Cross Ref        | PG_ReferenceTables  |
       | --classification  | SQANTI PB isoform classification  | SQANTI              |
       | --sample_fasta    | SQANTI PB sequence (FASTA)        | SQANTI              |
       
