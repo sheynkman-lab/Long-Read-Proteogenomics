@@ -117,7 +117,7 @@ log.info "sample_gtf     : ${params.sample_gtf}"
     
     script:
     """
-    sqanti3_qc $sample_fasta $gencode_gtf $gencode_fasta -o {params.name} -d SQANTI3_out/ --fl_count $fl_count -n8
+    sqanti3_qc $sample_fasta $gencode_gtf $gencode_fasta -o ${params.name} -d SQANTI3_out/ --fl_count $fl_count
 
     """
     //

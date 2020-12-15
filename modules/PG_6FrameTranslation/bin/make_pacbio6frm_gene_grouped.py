@@ -67,7 +67,7 @@ def main():
     parser = argparse.ArgumentParser(description='PacBIO 6 frame gene grouping')
     parser.add_argument('--iso_annot', action='store', dest='iso_annot', help = 'SQANTI3 jurkat classification file location')
     parser.add_argument('--ensg_gene', action='store', dest='ensg_gene',help='ENSG_GENE file location from ReferenceTables')
-    parser.add_argument('--sample_fasta', action='store', dest='sample_fasta' help='Sample corrected fasta file')
+    parser.add_argument('--sample_fasta', action='store', dest='sample_fasta', help='Sample corrected fasta file')
     parser.add_argument('--output_fasta', '--output', action='store', dest='output_file', help = 'output: grouped fasta file')
     results = parser.parse_args()
 
