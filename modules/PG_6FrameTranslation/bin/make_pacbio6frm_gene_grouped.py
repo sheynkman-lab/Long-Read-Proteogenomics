@@ -42,7 +42,7 @@ def make_pacbio6fm_gene_grouped(iso_annot, ensg_gene, sample_fasta, output_fasta
 
     gene_seqs = defaultdict(lambda: set()) # gene -> pacbio sequences as list
 
-    for rec in SeqIO.parse(pacbio_transcript_fasta_fpath, 'fasta'):
+    for rec in SeqIO.parse(sample_fasta, 'fasta'):
         gene = pb_gene[rec.id]
         F1 = rec.seq.translate()
         F2 = rec.seq[1:].translate()
@@ -68,8 +68,9 @@ def main():
     parser.add_argument('--iso_annot', action='store', dest='iso_annot', help = 'SQANTI3 jurkat classification file location')
     parser.add_argument('--ensg_gene', action='store', dest='ensg_gene',help='ENSG_GENE file location from ReferenceTables')
     parser.add_argument('--sample_fasta', action='store', dest='sample_fasta', help='Sample corrected fasta file')
-    parser.add_argument('--output_fasta', '--output', action='store', dest='output_file', help = 'output: grouped fasta file')
+    parser.add_argument('--output_fasta', '--output', action='store', dest='output_fasta', help = 'output: grouped fasta file')
     results = parser.parse_args()
+    make_pacbio6fm_gene_grouped(results.iso_annot, results.ensg_gene, results.sample_fasta, results.output_fasta)
 
 if __name__ == "__main__":
     main()
