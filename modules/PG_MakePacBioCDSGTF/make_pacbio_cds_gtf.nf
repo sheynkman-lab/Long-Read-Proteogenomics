@@ -90,12 +90,7 @@ log.info "pb_gene ${params.pb_gene}"
     
     script:
     """
-    make_pacbio_cds_gtf.py \
-    --sample_gtf $sample_gtf \
-    --agg_orfs $agg_orfs \
-    --refined_orfs $refined_orfs \
-    --pb_gene $pb_gene \
-    --output_cds ${params.name}_cds.gtf
+    make_pacbio_cds_gtf.py --sample_gtf $sample_gtf --agg_orfs $agg_orfs --refined_orfs $refined_orfs --pb_gene $pb_gene --output_cds ${params.name}_cds.gtf
     """
   }
 
