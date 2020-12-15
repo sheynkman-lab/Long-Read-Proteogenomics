@@ -89,6 +89,11 @@ log.info "sample_gtf     : ${params.sample_gtf}"
      .value(file(params.sample_gtf))
      .ifEmpty { error "Cannot find any seq file for parameter --sample_gtf: ${params.sample_gtf}" }
      .set { ch_sample_gtf } 
+
+  Channel
+     .value(file(params.sample_fasta))
+     .ifEmpty { error "Cannot find any fasta file for parameter --sample_fasta: ${params.sample_fasta}" }
+     .set { ch_sample_fasta } 
   
 
   
@@ -104,7 +109,7 @@ log.info "sample_gtf     : ${params.sample_gtf}"
     file(fl_count) from ch_fl_count
     file(gencode_gtf) from ch_gencode_gtf
     file(gencode_fasta) from ch_gencode_fasta
-    file(sample_gtf) from ch_sample_gtf
+    file(sample_fasta) from ch_sample_fasta
     
     
     output:
@@ -112,7 +117,8 @@ log.info "sample_gtf     : ${params.sample_gtf}"
     
     script:
     """
-    sqanti3_qc $sample_gtf $gencode_gtf $gencode_fasta -o ${params.name}  --fl_count $fl_count -n8 --gtf
+    sqanti3_qc $sample_fasta $gencode_gtf $gencode_fasta -o {params.name} -d SQANTI3_out/ --fl_count $fl_count -n8
+
     """
     //
   }

@@ -118,7 +118,7 @@ log.info "sample_fasta   : ${params.sample_fasta}"
     
     script:
     """
-    conda run -n orf-calling orf_calling.py --orf_coord $orf_coord --gencode $gencode_gtf --sample_gtf $sample_gtf --pb_gene $pb_gene --classification $classification --sample_fasta $sample_fasta --output ${params.name}_orf_called.tsv
+    orf_calling.py --orf_coord $orf_coord --gencode $gencode_gtf --sample_gtf $sample_gtf --pb_gene $pb_gene --classification $classification --sample_fasta $sample_fasta --output ${params.name}_orf_called.tsv
     """
   }
 
