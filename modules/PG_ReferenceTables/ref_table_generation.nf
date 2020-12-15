@@ -16,11 +16,11 @@ def helpMessage() {
     log.info """
     Usage:
     The typical command for running the pipeline is as follows:
-    // example: nextflow run ref_table_generation.nf --gtf gencode.gtf --fa gencode.fasta
+    // example: nextflow run ref_table_generation.nf --gencode_gtf gencode.gtf --gencode_fasta gencode.fasta
     
     Input files:
-      --gtf           path to the gencode gtf file
-      --fa           path to the gencode transcript fasta file
+      --gencode_gtf           path to the gencode gtf file
+      --gencode_fasta           path to the gencode transcript fasta file
 
     See here for more info: https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/master/docs/usage.md
     """.stripIndent()
@@ -34,8 +34,8 @@ if (params.help) {
 
 log.info "reference_tables - N F  ~  version 0.1"
 log.info "====================================="
-log.info "gtf : ${params.gtf}"
-log.info "fa  : ${params.fa}"
+log.info "gencode_gtf : ${params.gencode_gtf}"
+log.info "gencode_fasta  : ${params.gencode_fasta}"
 
 
 
@@ -43,23 +43,23 @@ log.info "fa  : ${params.fa}"
     Reference Table Generation 
   ---------------------------------------------------*/
   Channel
-     .value(file(params.gtf))
-     .ifEmpty { error "Cannot find gtf file for parameter --gtf: ${params.gtf}" }
-     .set { ch_gtf }   
+     .value(file(params.gencode_gtf))
+     .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.gencode_gtf}" }
+     .set { ch_gencode_gtf }   
      
   Channel
-     .value(file(params.fa))
-     .ifEmpty { error "Cannot find any fasta file for parameter --fa: ${params.fa}" }
-     .set { ch_fa }  
+     .value(file(params.gencode_fasta))
+     .ifEmpty { error "Cannot find any gencode_fasta file for parameter --gencode_fasta: ${params.gencode_fasta}" }
+     .set { ch_gencode_fasta }  
 
   process generate_reference_tables {
-    tag "${gtf}, ${fa}"
+    tag "${gencode_gtf}, ${gencode_fasta}"
 
     publishDir "${params.outdir}/PG_ReferenceTables/", mode: 'copy'
 
     input:
-    file(gtf) from ch_gtf
-    file(fa) from ch_fa
+    file(gencode_gtf) from ch_gencode_gtf
+    file(gencode_fasta) from ch_gencode_fasta
     
     output:
     file("ensg_gene.tsv") into ch_ensg_gene
@@ -71,14 +71,6 @@ log.info "fa  : ${params.fa}"
     
     script:
     """
-    python3 /opt/bin/prepare_reference_table.py \
-        --gtf $gtf \
-        --fa $fa \
-        --ensg_gene ensg_gene.tsv \
-        --enst_isoname enst_isoname.tsv \
-        --gene_ensp gene_ensp.tsv \
-        --gene_isoname gene_isoname.tsv \
-        --isoname_lens isoname_lens.tsv \
-        --gen_lens gene_lens.tsv
+    prepare_reference_table.py --gtf $gencode_gtf --fa $gencode_fasta --ensg_gene ensg_gene.tsv --enst_isoname enst_isoname.tsv --gene_ensp gene_ensp.tsv --gene_isoname gene_isoname.tsv --isoname_lens isoname_lens.tsv --gen_lens gene_lens.tsv
     """
   }
