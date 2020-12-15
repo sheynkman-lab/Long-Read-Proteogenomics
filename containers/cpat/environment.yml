@@ -5,6 +5,7 @@ channels:
   - conda-forge
 dependencies:
   - conda-forge::python=3.7.3
+  - conda-forge::r-base
   - conda-forge::pip
   - pip:
     # works for regular pip packages
