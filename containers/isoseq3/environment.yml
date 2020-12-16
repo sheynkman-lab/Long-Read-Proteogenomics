@@ -1,0 +1,13 @@
+# You can use this file to create a conda environment for this pipeline:
+#   conda env create -f environment.yml
+name: isoseq3
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - conda-forge::python=3.7.3
+  - bioconda::lima
+  - bioconda::isoseq3
+  - bioconda::pbbam
+  - bioconda::pbmm2
+  
