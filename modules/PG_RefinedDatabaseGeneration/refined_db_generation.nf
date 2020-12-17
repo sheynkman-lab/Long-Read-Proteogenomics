@@ -59,9 +59,9 @@ log.info "seq  : ${params.seq}"
     Refined Protein Database Generation 
   ---------------------------------------------------*/
   Channel
-     .value(file(params.orfs))
+     .value(file(params.protein_coding_genes))
      .ifEmpty { error "Cannot find orfs file for parameter --orfs: ${params.orfs}" }
-     .set { ch_orfs }   
+     .set { ch_protein_coding_genes }   
      
   Channel
      .value(file(params.seq))
@@ -84,12 +84,16 @@ log.info "seq  : ${params.seq}"
     """
     refine_orf.py \
     --orfs $orfs \
-    --seq $seq \
+    --pb_fasta $sample_fasta \
     --redundant ${params.sample}_redundant_accessions.txt \
-    --ctsv ${params.sample}_orf_combined.tsv \
-    --cfasta ${params.sample}_orf_combined.fasta \
-    --aggtsv ${params.sample}_orf_aggregated.tsv \
-    --aggfasta ${params.sample}_orf_aggregated.fasta
+    --combined_tsv ${params.sample}_orf_combined.tsv \
+    --combined_fasta ${params.sample}_orf_combined.fasta \
+    --agg_tsv ${params.sample}_orf_aggregated.tsv \
+    --agg_fasta ${params.sample}_orf_aggregated.fasta \
+    --protein_coding_only ${params.protein_coding_only} \
+    --protein_coding_genes $ch_protein_coding_genes \
+    --cutoff ${params.refine_cutoff} \
+    
     """
   }
 

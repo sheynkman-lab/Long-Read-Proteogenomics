@@ -151,7 +151,7 @@ def orf_calling(orf, num_orfs_per_accession = 1):
 
         atg_shift = 5       # how much to shift sigmoid for atg score
         atg_growth = 0.5    # how quickly the slope of the sigmoid changes 
-        group['atg_score'] = group['upstream_atgs'].apply(lambda x : 1 - 1/( 1+ np.exp(-atg_growth*(x - atg_shift)))
+        group['atg_score'] = group['upstream_atgs'].apply(lambda x : 1 - 1/( 1+ np.exp(-atg_growth*(x - atg_shift))))
 #         group['atg_score'] = group['upstream_atgs'].apply(lambda x : 1/x  if x > 1 else 0.99)
 #         group['gencode_score'] = group['gencode_atg'].apply(lambda x : 0 if x == '' else 0.8)
         group['orf_score'] = group.apply(lambda row: 1 - (1-row['coding_score']*0.99)*(1-row['atg_score']), axis = 1)

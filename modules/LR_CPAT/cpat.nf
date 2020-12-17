@@ -100,6 +100,7 @@ log.info "sample fasta  : ${params.sample_fasta}"
     
     
     output:
+    file("${params.name}.ORF_prob.tsv") into ch_cpat_orfs
     file("*")
     
     script:

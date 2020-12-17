@@ -55,7 +55,7 @@ def process_args():
     parser = argparse.ArgumentParser(description='Proccess ORF related file locations')
     parser.add_argument('-io', '--orfs',action='store', dest= 'orfs',help='ORF coordinate input file location')
     parser.add_argument('-if', '--pb_fasta', action = 'store', dest='pb_fasta', help='PacBio fasta sequence input file location')
-    parser.add_argument('-ipc', '--protien_coding', action = 'store', dest='protein_coding_file', help='Gencode protien coding genes input file location')
+    parser.add_argument('-ipc', '--protein_coding_genes', action = 'store', dest='protein_coding_genes', help='Gencode protein coding genes input file location')
     parser.add_argument('-or', '--redundant', action='store', dest='red', help = 'Output redundant accession file location')
     parser.add_argument('-oct', '--combined_tsv', action='store', dest='combined_tsv', help = 'Output combined tsv file location')
     parser.add_argument('-ocf', '--combined_fasta', action='store', dest='combined_fasta', help = 'Output combined fasta file location')
@@ -147,7 +147,7 @@ def main():
     orfs = filter_orf_scores(orfs, results.cutoff)
     protein_coding_only = string_to_boolean(results.protein_coding_only)
     if protein_coding_only:
-        orfs = filter_protein_coding(orfs, results.protein_coding_file)
+        orfs = filter_protein_coding(orfs, results.protein_coding_genes)
     
     pb_seqs,redundant_accs = get_accession_seqs(seqs)
     pb_pseqs = combine_by_sequence(orfs, pb_seqs)
