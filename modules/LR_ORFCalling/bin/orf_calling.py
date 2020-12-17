@@ -148,11 +148,13 @@ def orf_calling(orf, num_orfs_per_accession = 1):
 #         good_score = group[group['coding_score'] >= score_threshold]
 #         if(len(good_score) >= 1):
 #             group = good_score
-        atg_shift = 10       # how much to shift sigmoid for atg score
-        group['atg_score'] = group['upstream_atgs'].apply(lambda x : 1 - 1/( 1+ np.exp(-x+atg_shift))
-        group['atg_score'] = group['upstream_atgs'].apply(lambda x : 1/x  if x > 1 else 0.99)
+
+        atg_shift = 5       # how much to shift sigmoid for atg score
+        atg_growth = 0.5    # how quickly the slope of the sigmoid changes 
+        group['atg_score'] = group['upstream_atgs'].apply(lambda x : 1 - 1/( 1+ np.exp(-atg_growth*(x - atg_shift)))
+#         group['atg_score'] = group['upstream_atgs'].apply(lambda x : 1/x  if x > 1 else 0.99)
 #         group['gencode_score'] = group['gencode_atg'].apply(lambda x : 0 if x == '' else 0.8)
-        group['orf_score'] = group.apply(lambda row: 1 - (1-row['coding_score']*0.95)*(1-row['atg_score']), axis = 1)
+        group['orf_score'] = group.apply(lambda row: 1 - (1-row['coding_score']*0.99)*(1-row['atg_score']), axis = 1)
 #         group = group.sort_values(by='atg_rank').reset_index(drop=True)
 #         if group.loc[0,'atg_rank'] == group.loc[0,'score_rank']:
 #             return group.head(1)
