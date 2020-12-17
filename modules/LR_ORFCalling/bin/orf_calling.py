@@ -8,47 +8,6 @@ import pandas as pd
 import numpy as np
 import logging
 
-# def compare_start_locations(sample, start_codons):
-#     # Get Transcripts where strands match
-#     strand = sample['strand']
-#     same_list = []
-#     same_codons = start_codons[start_codons['strand'] == strand]
-#     if len(same_codons) > 0:
-#         start = int(sample['cds_start'])
-#         same_match = same_codons[same_codons['start_codon_start'] == start]
-#         same_match = same_match[same_match['seqname'].str.strip() == sample['seqname'].strip()] # same chromosome
-#         if len(same_match) > 0:
-#             same_list = list(same_match['transcript_id'])
-    
-#     # Get Transcripts where strands are opposite 
-#     strand = '-' if strand == '+' else '-'
-#     opp_list = []
-#     opposite_codons = start_codons[start_codons['strand'] == strand]
-#     if len(opposite_codons) > 0:
-#         start = int(sample['cds_start'])
-#         opp_match = opposite_codons[(opposite_codons['start_codon_end'] == start) ]
-#         opp_match = opp_match[opp_match['seqname'].str.strip() == sample['seqname'].strip()]
-#         if len(opp_match) > 0:
-#             opp_list = list(opp_match['transcript_id'])
-    
-#     combined = same_list + opp_list
-#     if len(combined) > 0:
-#         return combined
-#     else:
-#         return None
-    
-
-        
-    
-    
-    def compare_start_plus(row, start_codons):
-        start = int(row['cds_start'])
-        match = start_codons[start_codons['start_codon_start'] == start]
-        match = match[match['seqname'].str.strip() == row['seqname'].strip()]
-        if len(match) > 0:
-            return list(match['transcript_id'])
-        return None
-
 def orf_mapping(orf_coord, gencode, sample_gtf, orf_seq):
     def get_num_upstream_atgs(row):
         orf_start = int(row['orf_start'])
@@ -172,28 +131,28 @@ def orf_calling(orf, num_orfs_per_accession = 1):
             highscore = 0.9
             if row['atg_rank'] == 1 and row['score_rank'] == 1:
                 return 'Clear Best ORF'
-            elif row['coding_score'] > highscore and row['atg_rank'] == 1:
+            elif row['coding_score'] > score_threshold and row['atg_rank'] == 1:
                 return 'Nonsense Mediated Decay'
-            elif row['coding_score'] < score_threshold:
+            elif row['coding_score'] <= score_threshold:
                 return 'Low Quality ORF'
-            return 'None'
+            return 'Plausable ORF'
+        
+        group['atg_rank'] = group['upstream_atgs'].rank(ascending=True)
+        group['score_rank'] = group['coding_score'].rank(ascending=False)
+        group['orf_calling_confidence'] = group.apply(lambda row : calling_confidence(row), axis = 1)
         
         with_gencode = group.dropna(subset=['gencode_atg'])
         if len(with_gencode) >=1:
             group = with_gencode
         
-        good_score = group[group['coding_score'] >= score_threshold]
-        if(len(good_score) >= 1):
-            group = good_score
-        
-        group['atg_rank'] = group['upstream_atgs'].rank(ascending=True)
-        group['score_rank'] = group['coding_score'].rank(ascending=False)
-
+#         good_score = group[group['coding_score'] >= score_threshold]
+#         if(len(good_score) >= 1):
+#             group = good_score
+        atg_shift = 10       # how much to shift sigmoid for atg score
+        group['atg_score'] = group['upstream_atgs'].apply(lambda x : 1 - 1/( 1+ np.exp(-x+atg_shift))
         group['atg_score'] = group['upstream_atgs'].apply(lambda x : 1/x  if x > 1 else 0.99)
 #         group['gencode_score'] = group['gencode_atg'].apply(lambda x : 0 if x == '' else 0.8)
-        group['orf_score'] = group.apply(lambda row: 1 - (1-row['coding_score']*0.99)*(1-row['atg_score']), axis = 1)
-
-        group['orf_calling_confidence'] = group.apply(lambda row : calling_confidence(row), axis = 1)
+        group['orf_score'] = group.apply(lambda row: 1 - (1-row['coding_score']*0.95)*(1-row['atg_score']), axis = 1)
 #         group = group.sort_values(by='atg_rank').reset_index(drop=True)
 #         if group.loc[0,'atg_rank'] == group.loc[0,'score_rank']:
 #             return group.head(1)
@@ -274,7 +233,7 @@ def main():
 
 
     all_orfs = orf_mapping(orf_coord, gencode, sample_gtf, orf_seq)
-    orfs = orf_calling(all_orfs, 1)
+    orfs = orf_calling(all_orfs, 100)
 
     classification = classification[['isoform', 'FL']]
     total = classification['FL'].sum()
