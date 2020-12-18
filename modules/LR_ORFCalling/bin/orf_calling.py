@@ -9,9 +9,6 @@ import pandas as pd
 import numpy as np
 import logging
 
-
-
-
 def orf_mapping(orf_coord, gencode, sample_gtf, orf_seq, num_cores = 12):
     def get_num_upstream_atgs(row):
         orf_start = int(row['orf_start'])
@@ -62,10 +59,8 @@ def plus_mapping_single_chromosome(orf_exons, start_codons):
     orf_exons['current_size'] = orf_exons.sort_values(by = ['transcript_id', 'exon_start']).groupby('transcript_id')['exon_length'].cumsum()
     orf_exons['prior_size'] = orf_exons['current_size'] - orf_exons['exon_length']
     orf_exons = orf_exons[(orf_exons['prior_size'] <= orf_exons['orf_start']) &  (orf_exons['orf_start'] <= orf_exons['current_size'])]
-#     logging.info("Plus Strands : finding start ATG in sample...")
     orf_exons['start_diff'] = orf_exons['orf_start'] - orf_exons['prior_size']
     orf_exons['cds_start'] = orf_exons['exon_start'] + orf_exons['start_diff'] - 1
-#     logging.info("Plus Stands : finding matching transcripts...")
     orf_exons['gencode_atg'] = orf_exons.apply(lambda row : compare_start_plus(row, start_codons), axis = 1)
     orf_exons.drop(columns=['exon_length', 'current_size', 'prior_size', 'start_diff'], inplace = True)
     return orf_exons
@@ -77,7 +72,7 @@ def plus_mapping(exons, orf_coord, start_codons, num_cores = 12):
     orf_exons = pd.merge(orf_coord, plus_exons, left_on = 'pb_acc', right_on = 'transcript_id', how = 'inner')
     orf_chromosomes = orf_exons['seqname'].unique()
     ref_chromosomes = start_codons['seqname'].unique()
-    orf_exon_list = [orf_exons[orf_exons['seqname'] == csome] for csome in chromosomes]
+    orf_exon_list = [orf_exons[orf_exons['seqname'] == csome] for csome in orf_chromosomes]
     start_codon_list = []
     for csome in orf_chromosomes:
         if csome in ref_chromosomes:
@@ -136,26 +131,24 @@ def minus_mapping_single_chromosome(orf_exons, start_codons):
     orf_exons = orf_exons[orf_exons['orf_start'].between(orf_exons['prior_size'],orf_exons['current_size'])]
     
     orf_exons['start_diff'] = orf_exons['orf_start'] - orf_exons['prior_size']
-    orf_exons['cds_start'] = orf_exons['exon_end'] - orf_exons['start_diff'] + 1
-    logging.info("Minus Stands : finding matching transcripts...")
+    orf_exons['cds_start'] = orf_exons['exon_end'] - orf_exons['start_diff'] + 
     orf_exons['gencode_atg'] = orf_exons.apply(lambda row : compare_start_minus(row, start_codons), axis = 1)
     orf_exons.drop(columns=['exon_length', 'current_size', 'prior_size', 'start_diff'], inplace = True)
     return orf_exons
 
-def minus_mapping(exons, oorf_coord, start_codons, num_cores = 12):
+def minus_mapping(exons, orf_coord, start_codons, num_cores = 12):
     minus_exons = exons[exons['strand'] == '-'].copy()
     orf_exons = pd.merge(orf_coord, minus_exons, left_on = 'pb_acc', right_on = 'transcript_id', how = 'inner')
     
     orf_chromosomes = orf_exons['seqname'].unique()
     ref_chromosomes = start_codons['seqname'].unique()
-    orf_exon_list = [orf_exons[orf_exons['seqname'] == csome] for csome in chromosomes]
+    orf_exon_list = [orf_exons[orf_exons['seqname'] == csome] for csome in orf_chromosomes]
     start_codon_list = []
     for csome in orf_chromosomes:
         if csome in ref_chromosomes:
             start_codon_list.append(start_codons[start_codons['seqname'] == csome])
         else:
             start_codon_list.append(start_codons.head())
-    
     
     iterable = zip(orf_exon_list, start_codon_list)
     
@@ -226,14 +219,13 @@ def orf_calling(orf, num_orfs_per_accession = 1):
     def call_orf(group):
         score_threshold = 0.364
         def calling_confidence(row):
-            highscore = 0.9
+#             highscore = 0.9
             if row['atg_rank'] == 1 and row['score_rank'] == 1:
                 return 'Clear Best ORF'
-            elif row['coding_score'] > score_threshold and row['atg_rank'] == 1:
-                return 'Nonsense Mediated Decay'
             elif row['coding_score'] <= score_threshold:
                 return 'Low Quality ORF'
-            return 'Plausable ORF'
+            else:
+                return 'Plausable ORF'
         
         group['atg_rank'] = group['upstream_atgs'].rank(ascending=True)
         group['score_rank'] = group['coding_score'].rank(ascending=False)
@@ -243,19 +235,10 @@ def orf_calling(orf, num_orfs_per_accession = 1):
         if len(with_gencode) >=1:
             group = with_gencode
         
-#         good_score = group[group['coding_score'] >= score_threshold]
-#         if(len(good_score) >= 1):
-#             group = good_score
-
         atg_shift = 5       # how much to shift sigmoid for atg score
         atg_growth = 0.5    # how quickly the slope of the sigmoid changes 
         group['atg_score'] = group['upstream_atgs'].apply(lambda x : 1 - 1/( 1+ np.exp(-atg_growth*(x - atg_shift))))
-#         group['atg_score'] = group['upstream_atgs'].apply(lambda x : 1/x  if x > 1 else 0.99)
-#         group['gencode_score'] = group['gencode_atg'].apply(lambda x : 0 if x == '' else 0.8)
         group['orf_score'] = group.apply(lambda row: 1 - (1-row['coding_score']*0.99)*(1-row['atg_score']), axis = 1)
-#         group = group.sort_values(by='atg_rank').reset_index(drop=True)
-#         if group.loc[0,'atg_rank'] == group.loc[0,'score_rank']:
-#             return group.head(1)
         
         group = group.sort_values(by='orf_score', ascending=False).reset_index(drop=True)
         return group.head(num_orfs_per_accession)
@@ -335,7 +318,7 @@ def main():
     all_orfs = orf_mapping(orf_coord, gencode, sample_gtf, orf_seq)
     
     logging.info("Calling ORFs...")
-    orfs = orf_calling(all_orfs, 100)
+    orfs = orf_calling(all_orfs, num_orfs_per_accession = 1)
     
     logging.info("Adding metadata...")
     classification = classification[['isoform', 'FL']]

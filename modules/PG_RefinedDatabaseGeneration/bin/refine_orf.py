@@ -177,15 +177,17 @@ def main():
     seqs = SeqIO.parse(open(results.combined_fasta), 'fasta')
     
     pacbio = aggregate_results(pacbio, orfs)
-    
+    orfs = orfs[['pb_acc', 'coding_score', 'orf_score', 'orf_calling_confidence', 'upstream_atgs', 'gene']]
+    pacbio = pd.merge(pacbio, orfs, how = 'inner', left_on = 'base_acc', right_on = 'pb_acc')
     logging.info("Writing aggregate fasta results...")
+    pb_gene = pd.Series(orfs.gene.values,index=orfs.pb_acc).to_dict()
+    base_map = pd.Series(pacbio.base_acc.values,index=pacbio.pb_accs).to_dict()
     with open(results.agg_fasta, "w") as ofile:
         for entry in seqs:
             seq = str(entry.seq)
             pb_acc = entry.id
-            pb_row = pacbio[pacbio['pb_accs'] == pb_acc].iloc[0]
-            base_acc = pb_row['base_acc']
-            gene = orfs[orfs['pb_acc'] == base_acc].iloc[0]['gene']
+            base_acc = base_map[pb_acc]
+            gene = pb_gene[base_acc]
             ofile.write(f">pb|{base_acc}|fullname GN={gene}\n{seq}\n")
     
     logging.info("Writing aggregate tsv results...")
