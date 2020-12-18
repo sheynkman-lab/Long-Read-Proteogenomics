@@ -7,16 +7,17 @@ from Bio import SeqIO
 from Bio import Seq
 from collections import defaultdict
 import argparse
-
+import logging
 
 
 
 def get_accession_seqs(seqs):
+    logging.info("getting accesssion sequences...")
     pb_seqs = defaultdict() # pb_acc -> transcript_seq
     redundant_accs = []
     for entry in seqs:
         seq = str(entry.seq)
-        pb_acc = entry.id
+        pb_acc = entry.id.split('|')[0]
         # skip duplicates
         if pb_acc in pb_seqs:
             redundant_accs.append(pb_acc)
@@ -26,6 +27,7 @@ def get_accession_seqs(seqs):
     
     
 def combine_by_sequence(orfs, pb_seqs):
+    logging.info("combining by sequence...")
     orfs = orfs[['pb_acc', 'orf_start', 'orf_end', 'orf_len']]
     # extract, translate, and aggregate protein sequences
     pb_pseqs = defaultdict(lambda: list()) # protein_seq -> list of pb acc
@@ -39,6 +41,7 @@ def combine_by_sequence(orfs, pb_seqs):
 
 
 def order_pb_acc_numerically(accs):
+    logging.info("Ordering PB Accession Numerically...")
     # order pb accessions by numbers
     accs_numerical = []
     for acc in accs:
@@ -62,13 +65,13 @@ def process_args():
     parser.add_argument('-ot', '--agg_tsv', action='store', dest='agg_tsv', help = 'Output aggregated tsv file location')
     parser.add_argument('-of', '--agg_fasta', action='store', dest='agg_fasta', help = 'Output aggregated fasta file location')
     parser.add_argument('-pc', '--protein_coding_only', dest= 'protein_coding_only', default = 'no', help ='Keep only protein coding genes', )
-    parser.add_argument('-cut', '--coding_score_cutoff', dest = 'coding_score_cutoff', 
-                        type = 'float', default = 0.0, help='CPAT coding score cutoff. remove all below')
+    parser.add_argument('-cut', '--coding_score_cutoff', dest = 'cutoff', type = float, default = 0.0, help='CPAT coding score cutoff. remove all below')
     results = parser.parse_args()
     return results
     
 
 def aggregate_results(pacbio, orfs):
+    logging.info("Aggregating Results")
     def get_total(accessions, orf_dict):
         total = 0
         for acc in accessions:
@@ -86,6 +89,7 @@ def aggregate_results(pacbio, orfs):
     return pacbio
 
 def filter_orf_scores(orfs, cutoff):
+    logging.info(f"Filtering ORF coding_score to be above {cutoff}")
     """
     Filter ORFS so only orfs above a cutoff value are used.
     Per CPAT a score >= 0.364 is considered a protein-coding score
@@ -97,7 +101,7 @@ def filter_orf_scores(orfs, cutoff):
     orfs = orfs[orfs['coding_score'] >= cutoff]
     return orfs
 
-def filter_orf_protein_coding(orfs, protein_coding_filename):
+def filter_protein_coding(orfs, protein_coding_filename):
     """
     Filter ORFs to only contain genes that are known to be protein-coding
     per Gencode
@@ -109,6 +113,7 @@ def filter_orf_protein_coding(orfs, protein_coding_filename):
     protein_coding_filename : filename
         file of protien-coding genes. text file seperated by lines
     """
+    logging.info("Filtering for only protein coding genes")
     with open(protein_coding_filename, 'r') as file:
         protein_coding_genes = file.read().splitlines()
     orfs = orfs[orfs['gene'].isin(protein_coding_genes)]
@@ -140,7 +145,9 @@ def string_to_boolean(string):
     
 def main():
     results = process_args()
+    logging.info("Reading Fasta File...")
     seqs = SeqIO.parse(open(results.pb_fasta), 'fasta')
+    logging.info("Reading ORFS...")
     orfs = pd.read_csv(results.orfs, sep = '\t')
     
     # Filter ORFS based on score and whether protein coding
@@ -171,7 +178,7 @@ def main():
     
     pacbio = aggregate_results(pacbio, orfs)
     
-    
+    logging.info("Writing aggregate fasta results...")
     with open(results.agg_fasta, "w") as ofile:
         for entry in seqs:
             seq = str(entry.seq)
@@ -181,8 +188,11 @@ def main():
             gene = orfs[orfs['pb_acc'] == base_acc].iloc[0]['gene']
             ofile.write(f">pb|{base_acc}|fullname GN={gene}\n{seq}\n")
     
-    pacbio = pacbio[['pb_accs', 'base_acc', 'FL', 'CPM']]
+    logging.info("Writing aggregate tsv results...")
+    pacbio = pacbio[['pb_accs', 'base_acc', 'coding_score','orf_calling_confidence','upstream_atgs','orf_score','gene','FL', 'CPM']]
     pacbio.to_csv(results.agg_tsv, sep = '\t', index = False) 
+    logging.info("Refine Database Complete")
+    logging.info("************************")
     
     
 if __name__ == "__main__":
