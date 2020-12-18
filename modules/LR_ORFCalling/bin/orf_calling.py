@@ -27,23 +27,13 @@ def orf_mapping(orf_coord, gencode, sample_gtf, orf_seq, num_cores = 12):
     start_codons = gencode[gencode['feature'] == 'start_codon']
     start_codons = start_codons[['seqname','transcript_id','strand',  'start', 'end']].copy()
     start_codons.rename(columns = {'start' : 'start_codon_start', 'end': 'start_codon_end'}, inplace = True)
-    
-    
-#     chromosomes = start_codons['seqname'].unique()
-#     start_codon_map = defaultdict() # strand->chromosome ->start_codon
-#     for strand in ['-','+']:
-#         matching_strand = start_codons[start_codons['strand'] == strand]
-#         start_codon_map[strand] = defaultdict()
-#     for csome in chromosomes:
-#         matching_chromosome = start_codons[start_codons['seqname'] == csome]
-#         start_codon_map[strand][csome] = start_codons[matching_strand & matching_chromosome]
         
-    
     logging.info("Mapping plus strands...")
     plus = plus_mapping(exons, orf_coord, start_codons, num_cores)
     logging.info("Mapping minus strands...")
     minus = minus_mapping(exons, orf_coord, start_codons, num_cores)
     all_cds = pd.concat([plus, minus])
+    
     all_cds['upstream_atgs'] = all_cds.apply(get_num_upstream_atgs, axis=1)
     return all_cds
 
@@ -54,11 +44,15 @@ def compare_start_plus(row, start_codons):
         return list(match['transcript_id'])
     return None
 
-def plus_mapping_single_chromosome(orf_exons, start_codons):
-    orf_exons = orf_exons.copy()
-    orf_exons['current_size'] = orf_exons.sort_values(by = ['transcript_id', 'exon_start']).groupby('transcript_id')['exon_length'].cumsum()
-    orf_exons['prior_size'] = orf_exons['current_size'] - orf_exons['exon_length']
+def plus_mapping_single_chromosome(orf_coord, plus_exons, start_codons):
+#     orf_exons = orf_exons.copy()
+    plus_exons['current_size'] = plus_exons.sort_values(by = ['transcript_id', 'exon_start']).groupby('transcript_id')['exon_length'].cumsum()
+    plus_exons['prior_size'] = plus_exons['current_size'] - plus_exons['exon_length']
+    orf_exons = pd.merge(orf_coord, plus_exons, left_on = 'pb_acc', right_on = 'transcript_id', how = 'inner')
     orf_exons = orf_exons[(orf_exons['prior_size'] <= orf_exons['orf_start']) &  (orf_exons['orf_start'] <= orf_exons['current_size'])]
+    if len(orf_exons) ==0 :
+        logging.warning("no coding start found")
+        return orf_exons
     orf_exons['start_diff'] = orf_exons['orf_start'] - orf_exons['prior_size']
     orf_exons['cds_start'] = orf_exons['exon_start'] + orf_exons['start_diff'] - 1
     orf_exons['gencode_atg'] = orf_exons.apply(lambda row : compare_start_plus(row, start_codons), axis = 1)
@@ -69,10 +63,15 @@ def plus_mapping_single_chromosome(orf_exons, start_codons):
 def plus_mapping(exons, orf_coord, start_codons, num_cores = 12):
 
     plus_exons = exons[exons['strand'] == '+'].copy()
-    orf_exons = pd.merge(orf_coord, plus_exons, left_on = 'pb_acc', right_on = 'transcript_id', how = 'inner')
-    orf_chromosomes = orf_exons['seqname'].unique()
+    start_codons = start_codons[start_codons['strand'] == '+']
+    
+    orf_chromosomes = plus_exons['seqname'].unique()
     ref_chromosomes = start_codons['seqname'].unique()
-    orf_exon_list = [orf_exons[orf_exons['seqname'] == csome] for csome in orf_chromosomes]
+    
+    accession_map = plus_exons.groupby('seqname')['transcript_id'].apply(list).to_dict()
+    orf_coord_list = [orf_coord[orf_coord['pb_acc'].isin(accession_map[csome])] for csome in orf_chromosomes]
+    exon_list = [plus_exons[plus_exons['seqname'] == csome] for csome in orf_chromosomes]
+    
     start_codon_list = []
     for csome in orf_chromosomes:
         if csome in ref_chromosomes:
@@ -80,42 +79,13 @@ def plus_mapping(exons, orf_coord, start_codons, num_cores = 12):
         else:
             start_codon_list.append(start_codons.head())
                                                  
-#     start_codon_list = [start_codons[start_codons['seqname'] == csome] for csome in chromosomes]
     pool = multiprocessing.Pool(processes = num_cores)
-    iterable = zip(orf_exon_list, start_codon_list)
+    iterable = zip(orf_coord_list, exon_list, start_codon_list)
     plus_orf_list = pool.starmap(plus_mapping_single_chromosome, iterable)
     plus_orfs = pd.concat(plus_orf_list)
     
     return plus_orfs
     
-
-# def plus_mapping_single(exons, orf_coord, start_codon_map):
-#     """
-#     Map plus strand
-#     """
-#     def compare_start_plus(row, start_codon_map):
-#         start = int(row['cds_start'])
-#         start_codons = start_codon_map[row['seqname']]
-#         match = start_codons[start_codons['start_codon_start'] == start]
-#         if len(match) > 0:
-#             return list(match['transcript_id'])
-#         return None
-
-#     plus_exons['current_size'] = plus_exons.sort_values(by = ['transcript_id', 'exon_start']).groupby('transcript_id')['exon_length'].cumsum()
-#     plus_exons['prior_size'] = plus_exons['current_size'] - plus_exons['exon_length']
-
-#     plus_comb = pd.merge(orf_coord, plus_exons, left_on = 'pb_acc', right_on = 'transcript_id', how = 'inner')
-#     if len(plus_comb) ==0:
-#         logging.warning("Plus strands - no matches found between cpat orfs and sample exons")
-#         return plus_comb
-#     plus_comb = plus_comb[(plus_comb['prior_size'] <= plus_comb['orf_start']) &  (plus_comb['orf_start'] <= plus_comb['current_size'])]
-#     logging.info("Plus Strands : finding start ATG in sample...")
-#     plus_comb['start_diff'] = plus_comb['orf_start'] - plus_comb['prior_size']
-#     plus_comb['cds_start'] = plus_comb['exon_start'] + plus_comb['start_diff'] - 1
-#     logging.info("Plus Stands : finding matching transcripts...")
-#     plus_comb['gencode_atg'] = plus_comb.apply(lambda row : compare_start_plus(row, start_codon_map), axis = 1)
-#     plus_comb.drop(columns=['exon_length', 'current_size', 'prior_size', 'start_diff'], inplace = True)
-#     return plus_comb
 
 def compare_start_minus(row, start_codons):
     start = int(row['cds_start'])
@@ -124,71 +94,46 @@ def compare_start_minus(row, start_codons):
         return list(match['transcript_id'])
     return None
 
-def minus_mapping_single_chromosome(orf_exons, start_codons):
-    orf_exons = orf_exons.copy()
-    orf_exons['current_size'] = orf_exons.sort_values(by = ['transcript_id', 'exon_start'], ascending=[True,False]).groupby('transcript_id')['exon_length'].cumsum()
-    orf_exons['prior_size'] = orf_exons['current_size'] - orf_exons['exon_length']
-    orf_exons = orf_exons[orf_exons['orf_start'].between(orf_exons['prior_size'],orf_exons['current_size'])]
+def minus_mapping_single_chromosome(orf_coord, minus_exons, start_codons):
     
+    minus_exons['current_size'] = minus_exons.sort_values(by = ['transcript_id', 'exon_start'], ascending=[True,False]).groupby('transcript_id')['exon_length'].cumsum()
+    minus_exons['prior_size'] = minus_exons['current_size'] - minus_exons['exon_length']
+    orf_exons = pd.merge(orf_coord, minus_exons, left_on = 'pb_acc', right_on = 'transcript_id', how = 'inner')
+    orf_exons = orf_exons[orf_exons['orf_start'].between(orf_exons['prior_size'],orf_exons['current_size'])]
+    if len(orf_exons) == 0:
+        logging.warning("No orf start codons found...")
+        return orf_exons
     orf_exons['start_diff'] = orf_exons['orf_start'] - orf_exons['prior_size']
-    orf_exons['cds_start'] = orf_exons['exon_end'] - orf_exons['start_diff'] + 
+    orf_exons['cds_start'] = orf_exons['exon_end'] - orf_exons['start_diff'] 
     orf_exons['gencode_atg'] = orf_exons.apply(lambda row : compare_start_minus(row, start_codons), axis = 1)
     orf_exons.drop(columns=['exon_length', 'current_size', 'prior_size', 'start_diff'], inplace = True)
     return orf_exons
 
 def minus_mapping(exons, orf_coord, start_codons, num_cores = 12):
     minus_exons = exons[exons['strand'] == '-'].copy()
-    orf_exons = pd.merge(orf_coord, minus_exons, left_on = 'pb_acc', right_on = 'transcript_id', how = 'inner')
-    
-    orf_chromosomes = orf_exons['seqname'].unique()
+    start_codons = start_codons[start_codons['strand'] == '-']
+        
+    orf_chromosomes = minus_exons['seqname'].unique()
     ref_chromosomes = start_codons['seqname'].unique()
-    orf_exon_list = [orf_exons[orf_exons['seqname'] == csome] for csome in orf_chromosomes]
+    
+    accession_map = minus_exons.groupby('seqname')['transcript_id'].apply(list).to_dict()
+    orf_coord_list = [orf_coord[orf_coord['pb_acc'].isin(accession_map[csome])] for csome in orf_chromosomes]
+    exon_list = [minus_exons[minus_exons['seqname'] == csome] for csome in orf_chromosomes]
+    
     start_codon_list = []
     for csome in orf_chromosomes:
         if csome in ref_chromosomes:
             start_codon_list.append(start_codons[start_codons['seqname'] == csome])
         else:
             start_codon_list.append(start_codons.head())
+            
     
-    iterable = zip(orf_exon_list, start_codon_list)
-    
+    iterable = zip(orf_coord_list,exon_list, start_codon_list)    
     pool = multiprocessing.Pool(processes = num_cores)
     minus_orf_list = pool.starmap(minus_mapping_single_chromosome, iterable)
     
     minus_orfs = pd.concat(minus_orf_list)
     return minus_orfs
-    
-    
-
-# def minus_mapping(exons, orf_coord, start_codon_map):
-#     """
-#     Map minus strand
-#     """
-#     def compare_start_minus(row, start_codons):
-#         start = int(row['cds_start'])
-#         start_codons = start_codon_map[row['seqname']]
-#         match = start_codons[(start_codons['start_codon_end'] == start) ]
-#         if len(match) > 0:
-#             return list(match['transcript_id'])
-#         return None
-    
-#     minus_exons = exons[exons['strand'] == '-'].copy()
-    
-#     minus_exons['current_size'] = minus_exons.sort_values(by = ['transcript_id', 'exon_start'], ascending=[True,False]).groupby('transcript_id')['exon_length'].cumsum()
-#     minus_exons['prior_size'] = minus_exons['current_size'] - minus_exons['exon_length']
-#     minus_comb = pd.merge(orf_coord, minus_exons, left_on = 'pb_acc', right_on = 'transcript_id', how = 'inner')
-#     if len(minus_comb) == 0:
-#         logging.warning("Minus Strands - no matches found between cpat orfs and sample exons")
-#         return minus_comb
-#     minus_comb = minus_comb[minus_comb['orf_start'].between(minus_comb['prior_size'],minus_comb['current_size'])]
-    
-#     logging.info("Minus Strands : finding start ATG in sample...")
-#     minus_comb['start_diff'] = minus_comb['orf_start'] - minus_comb['prior_size']
-#     minus_comb['cds_start'] = minus_comb['exon_end'] - minus_comb['start_diff'] + 1
-#     logging.info("Minus Stands : finding matching transcripts...")
-#     minus_comb['gencode_atg'] = minus_comb.apply(lambda row : compare_start_minus(row, start_codon_map), axis = 1)
-#     minus_comb.drop(columns=['exon_length', 'current_size', 'prior_size', 'start_diff'], inplace = True)
-#     return minus_comb
 
 def read_orf(filename):
     """
