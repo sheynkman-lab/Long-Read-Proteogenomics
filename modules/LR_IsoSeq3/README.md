@@ -4,7 +4,7 @@ The PacBio Iso-Seq method produces high-quality, full-length transcripts and can
 ## Input
 - jurkat.codethon_toy.ccs.bam (CCS reads)
 - NEB_primers.fasta (listing of the adapter sequences)
-- hg38.fa (can be retrieved from [here](ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_36/GRCh38.primary_assembly.genome.fa.gz))
+- hg38.fa (can be retrieved from here: ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_36/GRCh38.primary_assembly.genome.fa.gz)
 
 ## Output
 - jurkat.collapsed.fasta
