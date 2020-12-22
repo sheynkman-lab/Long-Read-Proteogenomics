@@ -29,7 +29,7 @@ Note - there are many other outputs of Iso-Seq 3.
 ## Shell
 ```
 # create an index
-pbindex jurkat2.ccs.bam
+pbindex jurkat.codethon_toy.ccs.bam
 
 module load isoseqenv
 lima --isoseq --dump-clips --peek-guess -j 40 jurkat.ccs.bam NEB_primers.fasta jurkat.demult.bam
