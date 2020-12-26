@@ -1,26 +1,26 @@
 # AccessionMapping
-Given several protein databases, map the related isoforms between the databases. Includes the associated genes.
+Given two protein databases, map the related isoforms between the databases.
+Includes the associated genes.
 
 ## Input
-- Uniprot fasta
-- Gencode fasta
+- Gencode fasta (from the GencodeDB module)
 - PacBio fasta (from the RefinedDatabase module)
 
 ## Output
 - an accession mapping file
 
-## Soure Module(s)
+## Source Module(s)
 - RefinedDatabase
+- GencodeDB
 
 ## Target Module(s)
 - ProteinInference
 
 ## Dependencies: 
-- blast
 - python package (pandas, numpy, etc.)
 
 ## Threads
-- 40+ cpus needed for blasting
+- 1-2 cpu 
 
 ## Original Source
 - None
