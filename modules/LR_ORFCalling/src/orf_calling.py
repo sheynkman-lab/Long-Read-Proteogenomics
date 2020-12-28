@@ -8,6 +8,7 @@ from Bio import SeqIO
 import pandas as pd
 import numpy as np
 import logging
+import itertools
 
 def orf_mapping(orf_coord, gencode, sample_gtf, orf_seq, num_cores = 12):
     def get_num_upstream_atgs(row):
@@ -45,7 +46,6 @@ def compare_start_plus(row, start_codons):
     return None
 
 def plus_mapping_single_chromosome(orf_coord, plus_exons, start_codons):
-#     orf_exons = orf_exons.copy()
     plus_exons['current_size'] = plus_exons.sort_values(by = ['transcript_id', 'exon_start']).groupby('transcript_id')['exon_length'].cumsum()
     plus_exons['prior_size'] = plus_exons['current_size'] - plus_exons['exon_length']
     orf_exons = pd.merge(orf_coord, plus_exons, left_on = 'pb_acc', right_on = 'transcript_id', how = 'inner')
@@ -164,7 +164,6 @@ def orf_calling(orf, num_orfs_per_accession = 1):
     def call_orf(group):
         score_threshold = 0.364
         def calling_confidence(row):
-#             highscore = 0.9
             if row['atg_rank'] == 1 and row['score_rank'] == 1:
                 return 'Clear Best ORF'
             elif row['coding_score'] <= score_threshold:
@@ -192,51 +191,17 @@ def orf_calling(orf, num_orfs_per_accession = 1):
     return called_orf
 
 
-
-def orf_calling_v1(orf):
-    """
-    Choose 'best' ORF by examining number of upstream ATG's, match to Gencode Transcript start, and ORF codings
-    """
-    def call_orf(group):
-        def calling_confidence(row):
-            if row['atg_rank'] == 1 and row['score_rank'] == 1:
-                return 'Clear Best ORF'
-            elif row['coding_score'] > highscore and row['atg_rank'] == 1:
-                return 'Nonsense Mediated Decay'
-            elif row['coding_score'] < score_threshold:
-                return 'Low Quality ORF'
-            return 'None'
-
-        score_threshold = 0.364
-
-        good_score = group[group['coding_score'] >= score_threshold]
-        if(len(good_score) >= 1):
-            group = good_score
-            
-        highscore = 0.9
-
-        group['orf_calling_confidence'] = 'None'
-        group['atg_rank'] = group['upstream_atgs'].rank(ascending=True)
-        group['score_rank'] = group['coding_score'].rank(ascending=False)
-
-        group['atg_score'] = group['upstream_atgs'].apply(lambda x : 1/x  if x > 1 else 0.99)
-        group['gencode_score'] = group['gencode_atg'].apply(lambda x : 0 if x == '' else 0.8)
-        group['orf_score'] = group.apply(lambda row: 1 - (1-row['coding_score']*0.99)*(1-row['atg_score'])*(1-row['gencode_score']), axis = 1)
-
-        
-
-        group['orf_calling_confidence'] = group.apply(lambda row : calling_confidence(row), axis = 1)
-        group = group.sort_values(by='atg_rank').reset_index(drop=True)
-        if group.loc[0,'atg_rank'] == group.loc[0,'score_rank']:
-            return group.head(1)
-        
-        group = group.sort_values(by='orf_score', ascending=False).reset_index(drop=True)
-        return group.head(1)
-        
-    called_orf = orf.groupby('pb_acc').apply(call_orf).reset_index(drop=True)
+def orf_calling_multiprocessing(orf, num_orfs_per_accession=1, num_cores = 12):
+    chromosomes = orf['seqname'].unique()
+    orf_split = [orf[orf['seqname'] == csome] for csome in chromosomes]
+    num_orfs_iter = itertools.repeat(num_orfs_per_accession)
+    iterable = zip(orf_split, num_orfs_iter)
+    pool = multiprocessing.Pool(processes = num_cores)
+    called_orf_list = pool.starmap(orf_calling, iterable)
+    called_orf = pd.concat(called_orf_list)
     return called_orf
-    
-    
+
+ 
 def main():
     parser = argparse.ArgumentParser(description='Proccess ORF related file locations')
     parser.add_argument('--orf_coord', '-oc',action='store', dest= 'orf_coord',help='ORF coordinate input file location')
@@ -245,6 +210,7 @@ def main():
     parser.add_argument('--pb_gene','-pg',action='store', dest= 'pb_gene',help='PB Accession/Gencode id mapping input file location')
     parser.add_argument('--classification','-c',action='store', dest= 'classification',help='sample classification input file location')
     parser.add_argument('--sample_fasta','-sf',action='store', dest= 'sample_fasta',help='Sample FASTA input file location')
+    parser.add_argument('--num_cores', action='store', dest='num_cores', type=int, default=12)
     parser.add_argument('--output','-o',action='store', dest= 'output',help='Output file location')
     results = parser.parse_args()
     
@@ -260,10 +226,11 @@ def main():
         orf_seq[pb_id] = str(rec.seq)
 
     logging.info("Mapping orfs to gencode...")
-    all_orfs = orf_mapping(orf_coord, gencode, sample_gtf, orf_seq)
+    all_orfs = orf_mapping(orf_coord, gencode, sample_gtf, orf_seq, results.num_cores)
     
     logging.info("Calling ORFs...")
-    orfs = orf_calling(all_orfs, num_orfs_per_accession = 1)
+    # orfs = orf_calling(all_orfs, num_orfs_per_accession = 1)
+    orfs = orf_calling_multiprocessing(all_orfs, 1, results.num_cores)
     
     logging.info("Adding metadata...")
     classification = classification[['isoform', 'FL']]
