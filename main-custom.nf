@@ -259,13 +259,40 @@ process make_pacbio_6frm_gene_grouped {
     --ensg_gene $ensg_gene \
     --sample_fasta $sample_fasta \
     --output_fasta ${params.name}.6frame.fasta
-    ""
+    """
 }
 
 /*--------------------------------------------------
 Transcriptome Summary 
 ---------------------------------------------------*/
+process transcriptome_summary {
 
+  publishDir "${params.outdir}/transcriptome_summary/", mode: 'copy'
+
+  input:
+  file(sample_classification) from ch_sample_classification
+  file(tpm) from ch_tpm
+  file(ribo) from ch_ribo
+  file(ensg_to_gene) from ch_ensg_gene
+  file(enst_to_isoname) from ch_enst_isoname
+  file(len_stats) from ch_gene_lens
+  
+  
+  output:
+  file("gene_level_tab.tsv") into ch_gene_level
+  file("sqanti_isoform_info.tsv") into ch_sqanti_isoform_info
+  
+  script:
+  """
+  transcriptome_summary.py \
+  --sq_out $sample_classification \
+  --tpm $tpm
+  --ribo $ribo \
+  --ensg_to_gene $ensg_to_gene \
+  --enst_to_isoname $enst_to_isoname \
+  --len_stats $len_stats --odir /
+  """
+}
 /*--------------------------------------------------
 CPAT
 ---------------------------------------------------*/
@@ -302,72 +329,96 @@ process cpat {
 /*--------------------------------------------------
 ORF Calling 
 ---------------------------------------------------*/
-// process orf_calling {
-//   tag "${orf_coord}, ${gencode_gtf}, ${sample_gtf}, ${pb_gene}, ${classification}, ${sample_fasta} "
+process orf_calling {
+  tag "${orf_coord}, ${gencode_gtf}, ${sample_gtf}, ${pb_gene}, ${classification}, ${sample_fasta} "
 
-//   publishDir "${params.outdir}/orf_calling/", mode: 'copy'
+  publishDir "${params.outdir}/orf_calling/", mode: 'copy'
 
-//   input:
-//   file(cpat_orfs) from ch_cpat_orfs
-//   file(gencode_gtf) from ch_gencode_gtf
-//   file(sample_gtf) from ch_sample_gtf
-//   file(sample_fasta) from ch_sample_fasta
-//   file(pb_gene) from ch_pb_gene
-//   file(classification) from ch_classification
+  input:
+  file(cpat_orfs) from ch_cpat_orfs
+  file(gencode_gtf) from ch_gencode_gtf
+  file(sample_gtf) from ch_sample_gtf
+  file(sample_fasta) from ch_sample_fasta
+  file(pb_gene) from ch_pb_gene
+  file(classification) from ch_sample_classification
   
   
-//   output:
-//   file("${params.name}_best_orf.tsv") into ch_best_orf
+  output:
+  file("${params.name}_best_orf.tsv") into ch_best_orf
   
-//   script:
-//   """
-//   orf_calling.py \
-//   --orf_coord $cpat_orfs \
-//   --gencode $gencode_gtf \
-//   --sample_gtf $sample_gtf \
-//   --pb_gene $pb_gene \
-//   --classification $classification \
-//   --sample_fasta $sample_fasta \
-//   --output ${params.name}_best_orf.tsv
-//   """
-// }
+  script:
+  """
+  orf_calling.py \
+  --orf_coord $cpat_orfs \
+  --gencode $gencode_gtf \
+  --sample_gtf $sample_gtf \
+  --pb_gene $pb_gene \
+  --classification $classification \
+  --sample_fasta $sample_fasta \
+  --output ${params.name}_best_orf.tsv
+  """
+}
 
 /*--------------------------------------------------
 Refined DB Generation 
 ---------------------------------------------------*/
-// process generate_refined_database {
-//   tag "${orfs}, ${seq}"
+process generate_refined_database {
+  tag "${orfs}, ${seq}"
 
-//   publishDir "${params.outdir}/refined_database/", mode: 'copy'
+  publishDir "${params.outdir}/refined_database/", mode: 'copy'
 
-//   input:
-//   file(best_orfs) from ch_best_orf
-//   file(sample_fasta) from ch_sample_fasta
-//   file(protein_coding_genes) from ch_protein_coding_genes
+  input:
+  file(best_orfs) from ch_best_orf
+  file(sample_fasta) from ch_sample_fasta
+  file(protein_coding_genes) from ch_protein_coding_genes
   
-//   output:
-//   file("*")
+  output:
+  file("*")
+  file("${params.sample}_orf_aggregated.tsv") into ch_agg_orfs
   
-//   script:
-//   """
-//   refine_orf.py \
-//   --orfs $best_orfs \
-//   --pb_fasta $sample_fasta \
-//   --redundant ${params.sample}_redundant_accessions.txt \
-//   --combined_tsv ${params.sample}_orf_combined.tsv \
-//   --combined_fasta ${params.sample}_orf_combined.fasta \
-//   --agg_tsv ${params.sample}_orf_aggregated.tsv \
-//   --agg_fasta ${params.sample}_orf_aggregated.fasta \
-//   --protein_coding_only ${params.protein_coding_only} \
-//   --protein_coding_genes $ch_protein_coding_genes \
-//   --cutoff ${params.refine_cutoff} \
+  script:
+  """
+  refine_orf.py \
+  --orfs $best_orfs \
+  --pb_fasta $sample_fasta \
+  --redundant ${params.name}_redundant_accessions.txt \
+  --combined_tsv ${params.name}_orf_combined.tsv \
+  --combined_fasta ${params.name}_orf_combined.fasta \
+  --agg_tsv ${params.name}_orf_aggregated.tsv \
+  --agg_fasta ${params.name}_orf_aggregated.fasta \
+  --protein_coding_only ${params.protein_coding_only} \
+  --protein_coding_genes $ch_protein_coding_genes \
+  --cutoff ${params.refine_cutoff} \
   
-//   """
-// }
+  """
+}
 /*--------------------------------------------------
 PacBio CDS GTF 
 ---------------------------------------------------*/
+process make_pacbio_cds_gtf {
+  
 
+  publishDir "${params.outdir}/pacbio_cds/", mode: 'copy'
+
+  input:
+  file(sample_gtf) from ch_sample_gtf
+  file(agg_orfs) from ch_agg_orfs
+  file(refined_orfs) from ch_best_orf
+  file(ch_pb_gene) from ch_pb_gene
+  
+  output:
+  file("${params.name}_cds.gtf") into ch_orf_cds
+  
+  script:
+  """
+  make_pacbio_cds_gtf.py \
+  --sample_gtf $sample_gtf \
+  --agg_orfs $agg_orfs \
+  --refined_orfs $refined_orfs \
+  --pb_gene $pb_gene \
+  --output_cds ${params.name}_cds.gtf
+  """
+}
 
 /*--------------------------------------------------
 MetaMorpheus
