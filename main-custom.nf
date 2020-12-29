@@ -206,23 +206,23 @@ process isoseq3 {
 /*--------------------------------------------------
 SQANTI3
 ---------------------------------------------------*/
-  process sqanti3 {
+process sqanti3 {
     tag "${fl_count}, ${gencode_gtf}, ${gencode_fasta}, ${sample_gtf},"
 
     publishDir "${params.outdir}/sqanti3/", mode: 'copy'
 
     input:
-    
+
     file(fl_count) from ch_fl_count
     file(gencode_gtf) from ch_gencode_gtf
     file(gencode_fasta) from ch_gencode_fasta
     file(sample_gtf) from ch_sample_gtf
-    
-    
+
+
     output:
     file("${params.name}_classification.txt") into ch_sample_classification
     file("*")
-    
+
     script:
     """
     sqanti3_qc.py \
@@ -234,13 +234,33 @@ SQANTI3
     --fl_count $fl_count  \
     --gtf
     """
-    //
-  }
-
+}
+  
+ 
 /*--------------------------------------------------
 Six-Frame Translation
 ---------------------------------------------------*/
+process make_pacbio_6frm_gene_grouped {
+    tag "${classification}, ${ensg_gene}"
+    publishDir "${params.outdir}/pacbio_6frm_gene_grouped/", mode: 'copy'
 
+    input:
+    file(classification) from ch_sample_classification
+    file(ensg_gene) from ch_ensg_gene
+    file(sample_fasta) from ch_sample_fasta
+
+    output:
+    file("${params.name}.6frame.fasta") into ch_6frm
+
+    script:
+    """
+    make_pacbio6frm_gene_grouped.py \
+    --iso_annot $classification \
+    --ensg_gene $ensg_gene \
+    --sample_fasta $sample_fasta \
+    --output_fasta ${params.name}.6frame.fasta
+    ""
+}
 
 /*--------------------------------------------------
 Transcriptome Summary 
