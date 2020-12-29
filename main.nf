@@ -48,40 +48,7 @@ log.info "====================================="
 
 
 
-//   Channel
-//      .value(file(params.cpat_orfs))
-//      .ifEmpty { error "Cannot find orfs file for parameter --cpat_orfs: ${params.cpat_orfs}" }
-//      .set { ch_cpat_orfs }   
-     
-//   Channel
-//      .value(file(params.gencode_gtf))
-//      .ifEmpty { error "Cannot find any seq file for parameter --gencode_gtf: ${params.gencode_gtf}" }
-//      .set { ch_gencode_gtf }  
 
-//   Channel
-//      .value(file(params.sample_gtf))
-//      .ifEmpty { error "Cannot find any file for parameter --sample_gtf: ${params.sample_gtf}" }
-//      .set { ch_sample_gtf } 
-     
-//   Channel
-//      .value(file(params.sample_fasta))
-//      .ifEmpty { error "Cannot find any file for parameter --sample_fasta: ${params.sample_fasta}" }
-//      .set { ch_sample_fasta } 
-  
-//   Channel
-//      .value(file(params.pb_gene))
-//      .ifEmpty { error "Cannot find any file for parameter --pb_gene: ${params.pb_gene}" }
-//      .set { ch_pb_gene } 
-    
-//   Channel
-//      .value(file(params.classification))
-//      .ifEmpty { error "Cannot find any file for parameter --classification: ${params.classification}" }
-//      .set { ch_classification } 
-     
-//   Channel
-//      .value(file(params.protein_coding_genes))
-//      .ifEmpty { error "Cannot find any file for parameter --protein_coding_genes: ${params.protein_coding_genes}" }
-//      .set { ch_protein_coding_genes } 
 
 Channel
     .value(file(params.gencode_gtf))
@@ -93,6 +60,10 @@ Channel
     .ifEmpty { error "Cannot find any gencode_fasta file for parameter --gencode_fasta: ${params.gencode_transcript_fasta}" }
     .set { ch_gencode_transcript_fasta }  
 
+Channel
+    .value(file(params.gencode_translation_fasta))
+    .ifEmpty { error "Cannot find any gencode_fasta file for parameter --gencode_fasta: ${params.gencode_translation_fasta}" }
+    .set { ch_gencode_translation_fasta }  
 
 Channel
     .value(file(params.sample_css))
@@ -114,19 +85,29 @@ Channel
      .ifEmpty { error "Cannot find headmer file for parameter --hexamer: ${params.hexamer}" }
      .set { ch_hexamer }   
      
-  Channel
-     .value(file(params.logit_model))
-     .ifEmpty { error "Cannot find any logit model file for parameter --logit_model: ${params.logit_model}" }
-     .set { ch_logit_model } 
+Channel
+    .value(file(params.logit_model))
+    .ifEmpty { error "Cannot find any logit model file for parameter --logit_model: ${params.logit_model}" }
+    .set { ch_logit_model } 
+
+Channel
+    .value(file(params.sample_kallisto_tpm))
+    .ifEmpty { error "Cannot find any logit model file for parameter --sample_kallisto_tpm: ${params.sample_kallisto_tpm}" }
+    .set { ch_sample_kallisto } 
+  
+Channel
+    .value(file(params.normalized_ribo_kallisto))
+    .ifEmpty { error "Cannot find any logit model file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}" }
+    .set { ch_normalized_ribo_kallisto } 
+
+
 /*--------------------------------------------------
 Reference Tables 
 ---------------------------------------------------*/
-
-
 process generate_reference_tables {
   tag "${gencode_gtf}, ${gencode_transcript_fasta}"
 
-  publishDir "${params.outdir}/PG_ReferenceTables/", mode: 'copy'
+  publishDir "${params.outdir}/reference_tables/", mode: 'copy'
 
   input:
   file(gencode_gtf) from ch_gencode_gtf
@@ -159,7 +140,26 @@ process generate_reference_tables {
 /*--------------------------------------------------
 Gencode Database
 ---------------------------------------------------*/
+process make_gencode_database {
+  tag "${gencode_translation_fasta}"
 
+  publishDir "${params.outdir}/gencode_db/", mode: 'copy'
+
+  input:
+  file(gencode_translation_fasta) from ch_gencode_translation_fasta
+  
+  output:
+  file("gencode.fasta") into ch_gencode_fasta_single
+  file("gencode_isoname_clusters.tsv") into ch_gencode_isoname_clusters
+  
+  script:
+  """
+  make_gencode_database.py \
+  --gencode_fasta $gencode_translation_fasta \
+  --output_fasta gencode.fasta \
+  --output_cluster gencode_isoname_clusters.tsv
+  """
+}
 
 /*--------------------------------------------------
 Accession Mapping 
@@ -168,6 +168,7 @@ Accession Mapping
 /*--------------------------------------------------
 IsoSeq3
 ---------------------------------------------------*/
+/*
 process isoseq3 {
   tag "${sample_css}, ${gencode_fasta}, ${primers_fasta}"
 
@@ -202,49 +203,124 @@ process isoseq3 {
   isoseq3 collapse ${params.name}.aligned.bam ${params.name}.collapsed.gff
   """
 }
+*/
+
+Channel
+  .value(file(params.fl_count))
+  .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.fl_count}" }
+  .set { ch_fl_count }  
+
+Channel
+  .value(file(params.sample_gtf))
+  .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.sample_gtf}" }
+  .set { ch_sample_gtf } 
+Channel
+  .value(file(params.sample_fasta))
+  .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.sample_fasta}" }
+  .set { ch_sample_fasta } 
 
 /*--------------------------------------------------
 SQANTI3
 ---------------------------------------------------*/
-  process sqanti3 {
-    tag "${fl_count}, ${gencode_gtf}, ${gencode_fasta}, ${sample_gtf},"
+/*
+process sqanti3 {
+  tag "${fl_count}, ${gencode_gtf}, ${gencode_fasta}, ${sample_gtf},"
 
-    publishDir "${params.outdir}/sqanti3/", mode: 'copy'
+  publishDir "${params.outdir}/sqanti3/", mode: 'copy'
 
-    input:
-    
-    file(fl_count) from ch_fl_count
-    file(gencode_gtf) from ch_gencode_gtf
-    file(gencode_fasta) from ch_gencode_fasta
-    file(sample_gtf) from ch_sample_gtf
-    
-    
-    output:
-    file("${params.name}_classification.txt") into ch_sample_classification
-    file("*")
-    
-    script:
-    """
-    sqanti3_qc.py \
-    $sample_gtf \
-    $gencode_gtf \
-    $gencode_fasta \
-    --skipORF \
-    -o ${params.name} \
-    --fl_count $fl_count  \
-    --gtf
-    """
-    //
-  }
+  input:
+  
+  file(fl_count) from ch_fl_count
+  file(gencode_gtf) from ch_gencode_gtf
+  file(gencode_fasta) from ch_gencode_fasta
+  file(sample_gtf) from ch_sample_gtf
+  
+  
+  output:
+  file("${params.name}_classification.txt") into ch_sample_classification
+  file("*")
+  
+  script:
+  """
+  sqanti3_qc.py \
+  $sample_gtf \
+  $gencode_gtf \
+  $gencode_fasta \
+  --skipORF \
+  -o ${params.name} \
+  --fl_count $fl_count  \
+  --gtf
+  """
+  //
+}
+*/
+
+Channel
+  .value(file(params.sample_classification))
+  .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.sample_classification}" }
+  .set { ch_sample_classification } 
+
+  
+
 
 /*--------------------------------------------------
 Six-Frame Translation
 ---------------------------------------------------*/
+process make_pacbio_6frm_gene_grouped {
+    tag "${classification}, ${ensg_gene}"
+    publishDir "${params.outdir}/pacbio_6frm_gene_grouped/", mode: 'copy'
+
+    input:
+    file(classification) from ch_sample_classification
+    file(ensg_gene) from ch_ensg_gene
+    file(sample_fasta) from ch_sample_fasta
+
+    output:
+    file("${params.name}.6frame.fasta") into ch_6frm
+
+    script:
+    """
+    make_pacbio6frm_gene_grouped.py \
+    --iso_annot $classification \
+    --ensg_gene $ensg_gene \
+    --sample_fasta $sample_fasta \
+    --output_fasta ${params.name}.6frame.fasta
+    """
+}
 
 
 /*--------------------------------------------------
 Transcriptome Summary 
 ---------------------------------------------------*/
+process transcriptome_summary {
+
+  publishDir "${params.outdir}/transcriptome_summary/", mode: 'copy'
+
+  input:
+  file(sqanti_classification) from ch_sample_classification
+  file(tpm) from ch_sample_kallisto
+  file(ribo) from ch_normalized_ribo_kallisto
+  file(ensg_to_gene) from ch_ensg_gene
+  file(enst_to_isoname) from ch_enst_isoname
+  file(len_stats) from ch_gene_lens
+  
+  
+  output:
+  file("gene_level_tab.tsv") into ch_gene_level
+  file("sqanti_isoform_info.tsv") into ch_sqanti_isoform_info
+  file("pb_gene.tsv") into ch_pb_gene
+  
+  script:
+  """
+  transcriptome_summary.py \
+  --sq_out $sqanti_classification \
+  --tpm $tpm \
+  --ribo $ribo \
+  --ensg_to_gene $ensg_to_gene \
+  --enst_to_isoname $enst_to_isoname \
+  --len_stats $len_stats 
+  """
+}
 
 /*--------------------------------------------------
 CPAT
@@ -276,77 +352,109 @@ process cpat {
   -o ${params.name} \
   1> ${params.name}_cpat.output \
   2> ${params.name}_cpat.error
-
   """
 }
+
 /*--------------------------------------------------
 ORF Calling 
 ---------------------------------------------------*/
-// process orf_calling {
-//   tag "${orf_coord}, ${gencode_gtf}, ${sample_gtf}, ${pb_gene}, ${classification}, ${sample_fasta} "
+process orf_calling {
+  tag "${orf_coord}, ${gencode_gtf}, ${sample_gtf}, ${pb_gene}, ${classification}, ${sample_fasta} "
 
-//   publishDir "${params.outdir}/orf_calling/", mode: 'copy'
+  publishDir "${params.outdir}/orf_calling/", mode: 'copy'
 
-//   input:
-//   file(cpat_orfs) from ch_cpat_orfs
-//   file(gencode_gtf) from ch_gencode_gtf
-//   file(sample_gtf) from ch_sample_gtf
-//   file(sample_fasta) from ch_sample_fasta
-//   file(pb_gene) from ch_pb_gene
-//   file(classification) from ch_classification
+  input:
+  file(cpat_orfs) from ch_cpat_orfs
+  file(gencode_gtf) from ch_gencode_gtf
+  file(sample_gtf) from ch_sample_gtf
+  file(sample_fasta) from ch_sample_fasta
+  file(pb_gene) from ch_pb_gene
+  file(classification) from ch_sample_classification
   
   
-//   output:
-//   file("${params.name}_best_orf.tsv") into ch_best_orf
+  output:
+  file("${params.name}_best_orf.tsv") into ch_best_orf
   
-//   script:
-//   """
-//   orf_calling.py \
-//   --orf_coord $cpat_orfs \
-//   --gencode $gencode_gtf \
-//   --sample_gtf $sample_gtf \
-//   --pb_gene $pb_gene \
-//   --classification $classification \
-//   --sample_fasta $sample_fasta \
-//   --output ${params.name}_best_orf.tsv
-//   """
-// }
+  script:
+  """
+  orf_calling.py \
+  --orf_coord $cpat_orfs \
+  --gencode $gencode_gtf \
+  --sample_gtf $sample_gtf \
+  --pb_gene $pb_gene \
+  --classification $classification \
+  --sample_fasta $sample_fasta \
+  --output ${params.name}_best_orf.tsv
+  """
+}
 
 /*--------------------------------------------------
 Refined DB Generation 
 ---------------------------------------------------*/
-// process generate_refined_database {
-//   tag "${orfs}, ${seq}"
+process generate_refined_database {
+  tag "${best_orfs}, ${sample_fasta}, ${params.protein_coding_only}, ${protein_coding_genes}, ${params.refine_cutoff}" 
 
-//   publishDir "${params.outdir}/refined_database/", mode: 'copy'
+  publishDir "${params.outdir}/refined_database/", mode: 'copy'
 
-//   input:
-//   file(best_orfs) from ch_best_orf
-//   file(sample_fasta) from ch_sample_fasta
-//   file(protein_coding_genes) from ch_protein_coding_genes
+  input:
+  file(best_orfs) from ch_best_orf
+  file(sample_fasta) from ch_sample_fasta
+  file(protein_coding_genes) from ch_protein_coding_genes
   
-//   output:
-//   file("*")
+  output:
+  file("*")
+  file("${params.name}_orf_aggregated.tsv") into ch_agg_orfs
   
-//   script:
-//   """
-//   refine_orf.py \
-//   --orfs $best_orfs \
-//   --pb_fasta $sample_fasta \
-//   --redundant ${params.sample}_redundant_accessions.txt \
-//   --combined_tsv ${params.sample}_orf_combined.tsv \
-//   --combined_fasta ${params.sample}_orf_combined.fasta \
-//   --agg_tsv ${params.sample}_orf_aggregated.tsv \
-//   --agg_fasta ${params.sample}_orf_aggregated.fasta \
-//   --protein_coding_only ${params.protein_coding_only} \
-//   --protein_coding_genes $ch_protein_coding_genes \
-//   --cutoff ${params.refine_cutoff} \
+  script:
+  """
+  refine_orf.py \
+  --orfs $best_orfs \
+  --pb_fasta $sample_fasta \
+  --redundant ${params.name}_redundant_accessions.txt \
+  --combined_tsv ${params.name}_orf_combined.tsv \
+  --combined_fasta ${params.name}_orf_combined.fasta \
+  --agg_tsv ${params.name}_orf_aggregated.tsv \
+  --agg_fasta ${params.name}_orf_aggregated.fasta \
+  --protein_coding_only ${params.protein_coding_only} \
+  --protein_coding_genes $protein_coding_genes \
+  --coding_score_cutoff ${params.refine_cutoff} \
   
-//   """
-// }
+  """
+}
+
 /*--------------------------------------------------
 PacBio CDS GTF 
 ---------------------------------------------------*/
+/*
+Channel
+  .value(file(params.pb_gene))
+  .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.pb_gene}" }
+  .set { ch_pb_gene } 
+process make_pacbio_cds_gtf {
+  
+
+  publishDir "${params.outdir}/pacbio_cds/", mode: 'copy'
+
+  input:
+  file(sample_gtf) from ch_sample_gtf
+  file(agg_orfs) from ch_agg_orfs
+  file(refined_orfs) from ch_best_orf
+  file(pb_gene) from ch_pb_gene
+  
+  output:
+  file("${params.name}_cds.gtf") into ch_orf_cds
+  
+  script:
+  """
+  make_pacbio_cds_gtf.py \
+  --sample_gtf $sample_gtf \
+  --agg_orfs $agg_orfs \
+  --refined_orfs $refined_orfs \
+  --pb_gene $pb_gene \
+  --output_cds ${params.name}_cds.gtf
+  """
+}
+*/
 
 
 /*--------------------------------------------------

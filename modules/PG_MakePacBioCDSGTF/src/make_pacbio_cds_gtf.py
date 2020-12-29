@@ -135,6 +135,7 @@ def main():
     parser.add_argument("--refined_orfs", action="store", dest="refined_orfs")
     parser.add_argument("--pb_gene", action="store", dest="pb_gene")
     parser.add_argument("--output_cds", action="store", dest="output_cds")
+    results = parser.parse_args()
     make_pacbio_cds_gtf(results.sample_gtf, results.agg_orfs, results.refined_orfs, results.pb_gene, results.output_cds)
     
 if __name__ == "__main__":

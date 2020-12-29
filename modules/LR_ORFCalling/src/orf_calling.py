@@ -82,7 +82,11 @@ def plus_mapping(exons, orf_coord, start_codons, num_cores = 12):
     pool = multiprocessing.Pool(processes = num_cores)
     iterable = zip(orf_coord_list, exon_list, start_codon_list)
     plus_orf_list = pool.starmap(plus_mapping_single_chromosome, iterable)
-    plus_orfs = pd.concat(plus_orf_list)
+
+    if len(plus_orf_list) > 0:
+        plus_orfs = pd.concat(plus_orf_list)
+    else:
+        plus_orfs = pd.DataFrame(columns = orf_coord.columns)
     
     return plus_orfs
     
@@ -131,8 +135,10 @@ def minus_mapping(exons, orf_coord, start_codons, num_cores = 12):
     iterable = zip(orf_coord_list,exon_list, start_codon_list)    
     pool = multiprocessing.Pool(processes = num_cores)
     minus_orf_list = pool.starmap(minus_mapping_single_chromosome, iterable)
-    
-    minus_orfs = pd.concat(minus_orf_list)
+    if len(minus_orf_list) > 0:
+        minus_orfs = pd.concat(minus_orf_list)
+    else: 
+        minus_orfs = pd.DataFrame(columns = orf_coord.columns)
     return minus_orfs
 
 def read_orf(filename):
