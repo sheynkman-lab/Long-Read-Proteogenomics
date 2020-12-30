@@ -161,14 +161,11 @@ process make_gencode_database {
   """
 }
 
-/*--------------------------------------------------
-Accession Mapping 
----------------------------------------------------*/
 
 /*--------------------------------------------------
 IsoSeq3
 ---------------------------------------------------*/
-/*
+
 process isoseq3 {
   tag "${sample_css}, ${gencode_fasta}, ${primers_fasta}"
 
@@ -203,8 +200,7 @@ process isoseq3 {
   isoseq3 collapse ${params.name}.aligned.bam ${params.name}.collapsed.gff
   """
 }
-*/
-
+/*
 Channel
   .value(file(params.fl_count))
   .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.fl_count}" }
@@ -218,11 +214,12 @@ Channel
   .value(file(params.sample_fasta))
   .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.sample_fasta}" }
   .set { ch_sample_fasta } 
+*/
 
 /*--------------------------------------------------
 SQANTI3
 ---------------------------------------------------*/
-/*
+
 process sqanti3 {
   tag "${fl_count}, ${gencode_gtf}, ${gencode_fasta}, ${sample_gtf},"
 
@@ -253,14 +250,14 @@ process sqanti3 {
   """
   //
 }
-*/
 
+/*
 Channel
   .value(file(params.sample_classification))
   .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.sample_classification}" }
   .set { ch_sample_classification } 
 
-  
+ */ 
 
 
 /*--------------------------------------------------
@@ -404,6 +401,7 @@ process generate_refined_database {
   output:
   file("*")
   file("${params.name}_orf_aggregated.tsv") into ch_agg_orfs
+  file("${params.name}_orf_aggregated.fasta") into ch_agg_fasta
   
   script:
   """
@@ -425,11 +423,7 @@ process generate_refined_database {
 /*--------------------------------------------------
 PacBio CDS GTF 
 ---------------------------------------------------*/
-/*
-Channel
-  .value(file(params.pb_gene))
-  .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.pb_gene}" }
-  .set { ch_pb_gene } 
+
 process make_pacbio_cds_gtf {
   
 
@@ -454,13 +448,30 @@ process make_pacbio_cds_gtf {
   --output_cds ${params.name}_cds.gtf
   """
 }
-*/
 
 
 /*--------------------------------------------------
 MetaMorpheus
 ---------------------------------------------------*/
+/*
+process metamorpheus {
+  publishDir "${params.outdir}/metamorpheus"
 
+  // input:
+
+  output:
+  file("*")
+
+  script: 
+  """
+  
+  """
+}
+*/
+
+/*--------------------------------------------------
+Accession Mapping 
+---------------------------------------------------*/
 
 /*--------------------------------------------------
 Protein Inference Analysis

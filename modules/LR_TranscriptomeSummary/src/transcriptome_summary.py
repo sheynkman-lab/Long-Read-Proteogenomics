@@ -106,7 +106,7 @@ def main():
 
     # Make PB-Gene reference table
     pb_gene = sq_isotab[['pb_acc','gene']]
-    pb_gene.columns = ['isoform','gene']
+    # pb_gene.columns = ['isoform','gene']
     pb_gene = pb_gene.drop_duplicates()
     pb_gene.to_csv(os.path.join(odir, 'pb_gene.tsv'), sep="\t", index= False, na_rep='0')
 

@@ -243,8 +243,8 @@ def main():
     total = classification['FL'].sum()
     classification['CPM'] = classification['FL'] / total * 1000000
 
-    orfs = pd.merge(orfs, pb_gene, left_on = 'pb_acc', right_on='isoform', how = 'left')
-    orfs = pd.merge(orfs, classification, on = 'isoform', how = 'left')
+    orfs = pd.merge(orfs, pb_gene, on = 'pb_acc', how = 'left')
+    orfs = pd.merge(orfs, classification,left_on = 'pb_acc', right_on='isoform', how = 'left')
     orfs = orfs.drop(columns = ['isoform'])
     logging.info("Saving results...")
     orfs.to_csv(results.output, index = False, sep = "\t")

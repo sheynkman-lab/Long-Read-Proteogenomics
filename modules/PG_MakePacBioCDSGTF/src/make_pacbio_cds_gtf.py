@@ -10,6 +10,7 @@ import pandas as pd
 from collections import defaultdict
 import copy
 import argparse
+import gtfparse
 
 
 
@@ -45,6 +46,8 @@ def ceiling_cpm(cpm):
         return cpm
 
 
+
+
 def make_pacbio_cds_gtf(sample_gtf, agg_orfs, refined_orfs, pb_gene, output_cds):
     """
     sample_gtf : filename
@@ -55,13 +58,11 @@ def make_pacbio_cds_gtf(sample_gtf, agg_orfs, refined_orfs, pb_gene, output_cds)
     """
     # import gtf, only exon info.
     # only move forward with representative pb isoform (for same-protein groups)
-    gtf = pd.read_table(sample_gtf, header=None)
-    gtf['acc'] = gtf[8].apply(lambda x: x.split('gene_id "')[1].split('"')[0])
-    gtf = gtf[[0, 2, 3, 4, 6, 'acc']]
+    gtf = gtfparse.read_gtf('/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/Long-Read-Proteogenomics/results/isoseq3/toy.collapsed.gff')
+
+    gtf = gtf[['seqname', 'feature', 'start', 'end', 'strand', 'gene_id']]
+    gtf = gtf[gtf['feature'] == 'exon']
     gtf.columns = ['chr', 'feat', 'start', 'end', 'strand', 'acc']
-    # NOTE - for testing, uncomment below and only process chr22
-    # gtf = gtf[gtf.chr == 'chr22']
-    gtf = gtf.loc[gtf['feat']=='exon']
     # only move forward with "base accession" (representative pb)
     repr_pbs = pd.read_table(agg_orfs)['base_acc'].to_list()
     gtf = gtf[gtf.acc.isin(repr_pbs)]
