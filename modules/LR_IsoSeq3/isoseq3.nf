@@ -90,19 +90,19 @@ log.info "primers_fasta  : ${params.primers_fasta}"
     """
     # create an index
     pbindex $css_reads
-
-    module load isoseqenv
-    lima --isoseq --dump-clips --peek-guess -j ${params.max_cpus} $css_reads $primers_fasta jurkat.demult.bam
-    isoseq3 refine --require-polya jurkat.demult.NEB_5p--NEB_3p.subreadset.xml $primers_fasta jurkat.flnc.bam
+ 
+    # module load isoseqenv
+    lima --isoseq --dump-clips --peek-guess -j ${params.max_cpus} $css_reads $primers_fasta ${params.name}.demult.bam
+    isoseq3 refine --require-polya ${params.name}.demult.NEB_5p--NEB_3p.subreadset.xml $primers_fasta ${params.name}.flnc.bam
 
     # clustering of reads, can only make faster by putting more cores on machine (cannot parallelize)
-    isoseq3 cluster jurkat.flnc.bam jurkat.polished.bam --verbose --use-qvs
+    isoseq3 cluster ${params.name}.flnc.bam ${params.name}.polished.bam --verbose --use-qvs
 
     # align reads to the genome, takes few minutes (40 core machine)
-    pbmm2 align $gencode_fasta jurkat.polished.transcriptset.xml jurkat.aligned.bam --preset ISOSEQ --sort -j ${params.max_cpus} --log-level INFO
+    pbmm2 align $gencode_fasta ${params.name}.polished.transcriptset.xml ${params.name}.aligned.bam --preset ISOSEQ --sort -j ${params.max_cpus} --log-level INFO
 
     # collapse redundant reads
-    isoseq3 collapse jurkat.aligned.bam jurkat.collapsed.gff
+    isoseq3 collapse ${params.name}.aligned.bam ${params.name}.collapsed.gff
     """
   }
 

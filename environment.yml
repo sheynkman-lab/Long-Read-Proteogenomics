@@ -13,23 +13,28 @@ dependencies:
   - pygments=2.5.2
   - multiqc=1.7
   - biopython
+  - numpy
+  - pandas
+  - gtfparse
+  
+
+  - bioconda:blast
   # Module 1: SMARTLink - CCS
-  - pbccs
-  - pbbam
-  # Module 2: Iso-Seq 3
-  - isoseq3
-  - lima
-  - pbmm2
-  - pbcoretools
-  - bamtools
+  # - pbccs
+  # - pbbam
+  # Module 2: Iso-Seq 3, separate docker image
+  # - isoseq3
+  # - lima
+  # - pbmm2
+  # - pbcoretools
+  # - bamtools
   # Module 3: SQANTI3, separate docker image
   # Module 4: CPAT
   # Module 5: 6 Frame Translation
-  - biopython
   # Module 6: Transcriptome Summary
-  - numpy
-  - pandas
+
   # Module 7: ORF Calling
+ 
   # Module 8: Refined Db Generation
   # Module 9: Db Annotation
   # Module 10: MetaMorpheus

@@ -5,9 +5,9 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  # Module: Make reference tables 
+  # Module: Make 6 frame
   # Note - not using Biopython, but may in future version (to read in fasta)
   - python=3.7.3
   - biopython
   - pandas
-  - gtfparse
+  - blast

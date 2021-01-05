@@ -90,17 +90,25 @@ def main():
     parser.add_argument('--ensg_to_gene', '-gmap', action='store', dest='ensg_to_gene', help='ENSG -> Gene Map file location')
     parser.add_argument('--enst_to_isoname', '-imap', action='store', dest='enst_to_isoname', help='ENST -> Isoname Map file location')
     parser.add_argument('--len_stats', '-l', action='store', dest='gene_len_stats_tab', help='Gene Length Statistics table location')
-    parser.add_argument('--odir', '-o', action='store', dest='odir', help='Output Directory')
+    parser.add_argument('--odir', '-o', action='store', dest='odir', help='Output Directory', default=None)
     results = parser.parse_args()
 
     # If results folder does not exist, make it
     odir = results.odir
-    if not os.path.exists(odir):
+    if odir is not None and not os.path.exists(odir):
         os.mkdir(odir)
+    else:
+        odir = ''
 
     # Make Sqanti Isoform Table and output to a TSV
     sq_isotab = sqtab(results.sqanti_out, results.ensg_to_gene, results.enst_to_isoname)
     sq_isotab.to_csv(os.path.join(odir, 'sqanti_isoform_info.tsv'), sep="\t", index= False, na_rep='0')
+
+    # Make PB-Gene reference table
+    pb_gene = sq_isotab[['pb_acc','gene']]
+    # pb_gene.columns = ['isoform','gene']
+    pb_gene = pb_gene.drop_duplicates()
+    pb_gene.to_csv(os.path.join(odir, 'pb_gene.tsv'), sep="\t", index= False, na_rep='0')
 
     # Make Abundance Table and Merge with Gene_Length_Stats Table 
     ab_tab = abund(sq_isotab, results.tpm_file)
