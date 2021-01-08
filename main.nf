@@ -383,7 +383,8 @@ process orf_calling {
   --pb_gene $pb_gene \
   --classification $classification \
   --sample_fasta $sample_fasta \
-  --output ${params.name}_best_orf.tsv
+  --num_cores $cpus \
+  --output ${params.name}_best_orf.tsv 
   """
 }
 
