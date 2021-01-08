@@ -6,6 +6,12 @@ ARG ENV_NAME="proteogenomics-base"
 # Install r-base for being able to run the install.R script
 RUN conda install -c conda-forge mamba r-base -y
 
+# Install procps so that Nextflow can poll CPU usage and
+# deep clean the apt cache to reduce image/layer size
+RUN apt-get update \
+ && apt-get install -y procps \
+ && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+ 
 # Install the conda environment
 COPY environment.yml /
 RUN mamba env create --quiet --name ${ENV_NAME} --file /environment.yml && conda clean -a
