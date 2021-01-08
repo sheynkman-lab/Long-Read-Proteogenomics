@@ -106,7 +106,7 @@ Reference Tables
 ---------------------------------------------------*/
 process generate_reference_tables {
   tag "${gencode_gtf}, ${gencode_transcript_fasta}"
-
+  cpus 1
   publishDir "${params.outdir}/reference_tables/", mode: 'copy'
 
   input:
@@ -142,7 +142,7 @@ Gencode Database
 ---------------------------------------------------*/
 process make_gencode_database {
   tag "${gencode_translation_fasta}"
-
+  cpus 1
   publishDir "${params.outdir}/gencode_db/", mode: 'copy'
 
   input:
@@ -168,7 +168,7 @@ IsoSeq3
 
 process isoseq3 {
   tag "${sample_css}, ${gencode_fasta}, ${primers_fasta}"
-
+  cpus params.max_cpus
   publishDir "${params.outdir}/isoseq3/", mode: 'copy'
 
   input:
@@ -222,7 +222,7 @@ SQANTI3
 
 process sqanti3 {
   tag "${fl_count}, ${gencode_gtf}, ${gencode_fasta}, ${sample_gtf},"
-
+  cpus params.max_cpus
   publishDir "${params.outdir}/sqanti3/", mode: 'copy'
 
   input:
@@ -264,6 +264,7 @@ Channel
 Six-Frame Translation
 ---------------------------------------------------*/
 process make_pacbio_6frm_gene_grouped {
+    cpus 1
     tag "${classification}, ${ensg_gene}"
     publishDir "${params.outdir}/pacbio_6frm_gene_grouped/", mode: 'copy'
 
@@ -290,7 +291,7 @@ process make_pacbio_6frm_gene_grouped {
 Transcriptome Summary 
 ---------------------------------------------------*/
 process transcriptome_summary {
-
+  cpus 1
   publishDir "${params.outdir}/transcriptome_summary/", mode: 'copy'
 
   input:
@@ -323,6 +324,7 @@ process transcriptome_summary {
 CPAT
 ---------------------------------------------------*/
 process cpat {
+  cpus 1
   tag "${hexamer}, ${logit_model}, ${sample_fasta}"
 
   publishDir "${params.outdir}/cpat/", mode: 'copy'
@@ -357,7 +359,7 @@ ORF Calling
 ---------------------------------------------------*/
 process orf_calling {
   tag "${orf_coord}, ${gencode_gtf}, ${sample_gtf}, ${pb_gene}, ${classification}, ${sample_fasta} "
-
+  cpus params.max_cpus
   publishDir "${params.outdir}/orf_calling/", mode: 'copy'
 
   input:
@@ -389,6 +391,7 @@ process orf_calling {
 Refined DB Generation 
 ---------------------------------------------------*/
 process generate_refined_database {
+  cpus 1
   tag "${best_orfs}, ${sample_fasta}, ${params.protein_coding_only}, ${protein_coding_genes}, ${params.refine_cutoff}" 
 
   publishDir "${params.outdir}/refined_database/", mode: 'copy'
@@ -425,7 +428,7 @@ PacBio CDS GTF
 ---------------------------------------------------*/
 
 process make_pacbio_cds_gtf {
-  
+  cpus 1
 
   publishDir "${params.outdir}/pacbio_cds/", mode: 'copy'
 
