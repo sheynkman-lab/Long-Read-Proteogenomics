@@ -187,14 +187,14 @@ process isoseq3 {
   pbindex $sample_css
 
   # module load isoseqenv
-  lima --isoseq --dump-clips --peek-guess -j ${params.max_cpus} $sample_css $primers_fasta ${params.name}.demult.bam
+  lima --isoseq --dump-clips --peek-guess -j ${task.cpus} $sample_css $primers_fasta ${params.name}.demult.bam
   isoseq3 refine --require-polya ${params.name}.demult.NEB_5p--NEB_3p.subreadset.xml $primers_fasta ${params.name}.flnc.bam
 
   # clustering of reads, can only make faster by putting more cores on machine (cannot parallelize)
   isoseq3 cluster ${params.name}.flnc.bam ${params.name}.polished.bam --verbose --use-qvs
 
   # align reads to the genome, takes few minutes (40 core machine)
-  pbmm2 align $gencode_fasta ${params.name}.polished.transcriptset.xml ${params.name}.aligned.bam --preset ISOSEQ --sort -j ${params.max_cpus} --log-level INFO
+  pbmm2 align $gencode_fasta ${params.name}.polished.transcriptset.xml ${params.name}.aligned.bam --preset ISOSEQ --sort -j ${task.cpus} --log-level INFO
 
   # collapse redundant reads
   isoseq3 collapse ${params.name}.aligned.bam ${params.name}.collapsed.gff
@@ -383,7 +383,7 @@ process orf_calling {
   --pb_gene $pb_gene \
   --classification $classification \
   --sample_fasta $sample_fasta \
-  --num_cores $cpus \
+  --num_cores ${task.cpus} \
   --output ${params.name}_best_orf.tsv 
   """
 }
