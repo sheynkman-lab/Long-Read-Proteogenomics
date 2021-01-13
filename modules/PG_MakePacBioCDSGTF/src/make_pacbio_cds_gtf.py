@@ -58,7 +58,7 @@ def make_pacbio_cds_gtf(sample_gtf, agg_orfs, refined_orfs, pb_gene, output_cds)
     """
     # import gtf, only exon info.
     # only move forward with representative pb isoform (for same-protein groups)
-    gtf = gtfparse.read_gtf('/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/Long-Read-Proteogenomics/results/isoseq3/toy.collapsed.gff')
+    gtf = gtfparse.read_gtf(sample_gtf)
 
     gtf = gtf[['seqname', 'feature', 'start', 'end', 'strand', 'gene_id']]
     gtf = gtf[gtf['feature'] == 'exon']

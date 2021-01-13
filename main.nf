@@ -457,7 +457,7 @@ process make_pacbio_cds_gtf {
 /*--------------------------------------------------
 MetaMorpheus
 ---------------------------------------------------*/
-/*
+
 process metamorpheus {
   publishDir "${params.outdir}/metamorpheus"
 
@@ -468,10 +468,10 @@ process metamorpheus {
 
   script: 
   """
-  
+  dotnet /metamorpheus/CMD.dll --test -v minimal -o metamorpheus
   """
 }
-*/
+
 
 /*--------------------------------------------------
 Accession Mapping 

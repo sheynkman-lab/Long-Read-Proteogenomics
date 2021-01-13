@@ -10,7 +10,7 @@ import numpy as np
 import logging
 import itertools
 
-def orf_mapping(orf_coord, gencode, sample_gtf, orf_seq, num_cores = 12):
+def orf_mapping(orf_coord, gencode, sample_gtf, orf_seq, pool, num_cores = 12):
     def get_num_upstream_atgs(row):
         orf_start = int(row['orf_start'])
         acc = row['pb_acc']
@@ -30,9 +30,9 @@ def orf_mapping(orf_coord, gencode, sample_gtf, orf_seq, num_cores = 12):
     start_codons.rename(columns = {'start' : 'start_codon_start', 'end': 'start_codon_end'}, inplace = True)
         
     logging.info("Mapping plus strands...")
-    plus = plus_mapping(exons, orf_coord, start_codons, num_cores)
+    plus = plus_mapping(exons, orf_coord, start_codons, pool, num_cores)
     logging.info("Mapping minus strands...")
-    minus = minus_mapping(exons, orf_coord, start_codons, num_cores)
+    minus = minus_mapping(exons, orf_coord, start_codons, pool, num_cores)
     all_cds = pd.concat([plus, minus])
     
     all_cds['upstream_atgs'] = all_cds.apply(get_num_upstream_atgs, axis=1)
@@ -59,8 +59,7 @@ def plus_mapping_single_chromosome(orf_coord, plus_exons, start_codons):
     orf_exons.drop(columns=['exon_length', 'current_size', 'prior_size', 'start_diff'], inplace = True)
     return orf_exons
 
-
-def plus_mapping(exons, orf_coord, start_codons, num_cores = 12):
+def plus_mapping(exons, orf_coord, start_codons, pool, num_cores = 12):
 
     plus_exons = exons[exons['strand'] == '+'].copy()
     start_codons = start_codons[start_codons['strand'] == '+']
@@ -69,17 +68,17 @@ def plus_mapping(exons, orf_coord, start_codons, num_cores = 12):
     ref_chromosomes = start_codons['seqname'].unique()
     
     accession_map = plus_exons.groupby('seqname')['transcript_id'].apply(list).to_dict()
-    orf_coord_list = [orf_coord[orf_coord['pb_acc'].isin(accession_map[csome])] for csome in orf_chromosomes]
-    exon_list = [plus_exons[plus_exons['seqname'] == csome] for csome in orf_chromosomes]
+    orf_coord_list = [orf_coord[orf_coord['pb_acc'].isin(accession_map[csome])].copy() for csome in orf_chromosomes]
+    exon_list = [plus_exons[plus_exons['seqname'] == csome].copy() for csome in orf_chromosomes]
     
     start_codon_list = []
     for csome in orf_chromosomes:
         if csome in ref_chromosomes:
-            start_codon_list.append(start_codons[start_codons['seqname'] == csome])
+            start_codon_list.append(start_codons[start_codons['seqname'] == csome].copy())
         else:
             start_codon_list.append(start_codons.head())
                                                  
-    pool = multiprocessing.Pool(processes = num_cores)
+    # pool = multiprocessing.Pool(processes = num_cores)
     iterable = zip(orf_coord_list, exon_list, start_codon_list)
     plus_orf_list = pool.starmap(plus_mapping_single_chromosome, iterable)
 
@@ -90,7 +89,6 @@ def plus_mapping(exons, orf_coord, start_codons, num_cores = 12):
     
     return plus_orfs
     
-
 def compare_start_minus(row, start_codons):
     start = int(row['cds_start'])
     match = start_codons[(start_codons['start_codon_end'] == start) ]
@@ -113,27 +111,27 @@ def minus_mapping_single_chromosome(orf_coord, minus_exons, start_codons):
     orf_exons.drop(columns=['exon_length', 'current_size', 'prior_size', 'start_diff'], inplace = True)
     return orf_exons
 
-def minus_mapping(exons, orf_coord, start_codons, num_cores = 12):
+def minus_mapping(exons, orf_coord, start_codons, pool, num_cores = 12):
     minus_exons = exons[exons['strand'] == '-'].copy()
-    start_codons = start_codons[start_codons['strand'] == '-']
+    start_codons = start_codons[start_codons['strand'] == '-'].copy()
         
     orf_chromosomes = minus_exons['seqname'].unique()
     ref_chromosomes = start_codons['seqname'].unique()
     
     accession_map = minus_exons.groupby('seqname')['transcript_id'].apply(list).to_dict()
-    orf_coord_list = [orf_coord[orf_coord['pb_acc'].isin(accession_map[csome])] for csome in orf_chromosomes]
-    exon_list = [minus_exons[minus_exons['seqname'] == csome] for csome in orf_chromosomes]
+    orf_coord_list = [orf_coord[orf_coord['pb_acc'].isin(accession_map[csome])].copy() for csome in orf_chromosomes]
+    exon_list = [minus_exons[minus_exons['seqname'] == csome].copy() for csome in orf_chromosomes]
     
     start_codon_list = []
     for csome in orf_chromosomes:
         if csome in ref_chromosomes:
-            start_codon_list.append(start_codons[start_codons['seqname'] == csome])
+            start_codon_list.append(start_codons[start_codons['seqname'] == csome].copy())
         else:
             start_codon_list.append(start_codons.head())
             
     
     iterable = zip(orf_coord_list,exon_list, start_codon_list)    
-    pool = multiprocessing.Pool(processes = num_cores)
+    # pool = multiprocessing.Pool(processes = num_cores)
     minus_orf_list = pool.starmap(minus_mapping_single_chromosome, iterable)
     if len(minus_orf_list) > 0:
         minus_orfs = pd.concat(minus_orf_list)
@@ -197,17 +195,17 @@ def orf_calling(orf, num_orfs_per_accession = 1):
     return called_orf
 
 
-def orf_calling_multiprocessing(orf, num_orfs_per_accession=1, num_cores = 12):
+def orf_calling_multiprocessing(orf, pool, num_orfs_per_accession=1, num_cores = 12):
     chromosomes = orf['seqname'].unique()
     orf_split = [orf[orf['seqname'] == csome] for csome in chromosomes]
     num_orfs_iter = itertools.repeat(num_orfs_per_accession)
     iterable = zip(orf_split, num_orfs_iter)
-    pool = multiprocessing.Pool(processes = num_cores)
+    # pool = multiprocessing.Pool(processes = num_cores)
     called_orf_list = pool.starmap(orf_calling, iterable)
     called_orf = pd.concat(called_orf_list)
     return called_orf
 
- 
+
 def main():
     parser = argparse.ArgumentParser(description='Proccess ORF related file locations')
     parser.add_argument('--orf_coord', '-oc',action='store', dest= 'orf_coord',help='ORF coordinate input file location')
@@ -219,6 +217,9 @@ def main():
     parser.add_argument('--num_cores', action='store', dest='num_cores', type=int, default=12)
     parser.add_argument('--output','-o',action='store', dest= 'output',help='Output file location')
     results = parser.parse_args()
+
+    pool = multiprocessing.Pool(processes = results.num_cores)
+
     
     logging.info("Loading data...")
     orf_coord = read_orf(results.orf_coord)
@@ -232,11 +233,11 @@ def main():
         orf_seq[pb_id] = str(rec.seq)
 
     logging.info("Mapping orfs to gencode...")
-    all_orfs = orf_mapping(orf_coord, gencode, sample_gtf, orf_seq, results.num_cores)
+    all_orfs = orf_mapping(orf_coord, gencode, sample_gtf, orf_seq, pool,results.num_cores)
     
     logging.info("Calling ORFs...")
     # orfs = orf_calling(all_orfs, num_orfs_per_accession = 1)
-    orfs = orf_calling_multiprocessing(all_orfs, 1, results.num_cores)
+    orfs = orf_calling_multiprocessing(all_orfs, pool, 1, results.num_cores)
     
     logging.info("Adding metadata...")
     classification = classification[['isoform', 'FL']]
