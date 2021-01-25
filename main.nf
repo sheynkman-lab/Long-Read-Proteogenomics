@@ -178,8 +178,8 @@ process isoseq3 {
   
   output:
   file("*")
-  file("${params.name}.collapsed.gff") into ch_sample_gtf
-  file("${params.name}.collapsed.fasta") into ch_sample_fasta
+  file("${params.name}.collapsed.gff") into ch_isoseq_gtf
+  // file("${params.name}.collapsed.fasta") into ch_isoseq_fasta
   file("${params.name}.collapsed.abundance.txt") into ch_fl_count
   script:
   """
@@ -230,11 +230,13 @@ process sqanti3 {
   file(fl_count) from ch_fl_count
   file(gencode_gtf) from ch_gencode_gtf
   file(gencode_fasta) from ch_gencode_fasta
-  file(sample_gtf) from ch_sample_gtf
+  file(sample_gtf) from ch_isoseq_gtf
   
   
   output:
   file("${params.name}_classification.txt") into ch_sample_classification
+  file("${params.name}_corrected.fasta") into ch_sample_fasta
+  file("${params.name}_corrected.gtf") into ch_sample_gtf
   file("*")
   
   script:
