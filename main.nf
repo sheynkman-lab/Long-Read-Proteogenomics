@@ -66,9 +66,9 @@ Channel
     .set { ch_gencode_translation_fasta }  
 
 Channel
-    .value(file(params.sample_css))
-    .ifEmpty { error "Cannot find file for parameter --sample_css: ${params.sample_css}" }
-    .set { ch_sample_css }   
+    .value(file(params.sample_ccs))
+    .ifEmpty { error "Cannot find file for parameter --sample_ccs: ${params.sample_ccs}" }
+    .set { ch_sample_ccs }   
     
 Channel
     .value(file(params.gencode_fasta))
@@ -167,12 +167,12 @@ IsoSeq3
 ---------------------------------------------------*/
 
 process isoseq3 {
-  tag "${sample_css}, ${gencode_fasta}, ${primers_fasta}"
+  tag "${sample_ccs}, ${gencode_fasta}, ${primers_fasta}"
   cpus params.max_cpus
   publishDir "${params.outdir}/isoseq3/", mode: 'copy'
 
   input:
-  file(sample_css) from ch_sample_css
+  file(sample_ccs) from ch_sample_ccs
   file(gencode_fasta) from ch_gencode_fasta
   file(primers_fasta) from ch_primers_fasta
   
@@ -184,10 +184,10 @@ process isoseq3 {
   script:
   """
   # create an index
-  pbindex $sample_css
+  pbindex $sample_ccs
 
   # module load isoseqenv
-  lima --isoseq --dump-clips --peek-guess -j ${task.cpus} $sample_css $primers_fasta ${params.name}.demult.bam
+  lima --isoseq --dump-clips --peek-guess -j ${task.cpus} $sample_ccs $primers_fasta ${params.name}.demult.bam
   isoseq3 refine --require-polya ${params.name}.demult.NEB_5p--NEB_3p.subreadset.xml $primers_fasta ${params.name}.flnc.bam
 
   # clustering of reads, can only make faster by putting more cores on machine (cannot parallelize)
