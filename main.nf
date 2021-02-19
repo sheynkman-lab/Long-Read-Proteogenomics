@@ -184,11 +184,11 @@ process isoseq3 {
   file("${params.name}.collapsed.abundance.txt") into ch_fl_count
   script:
   """
+  bamtools filter -tag 'rq':'>=0.90' -in $sample_css -out filtered.$sample_css 
   # create an index
-  pbindex $sample_ccs
+  pbindex filtered.$sample_ccs
 
-  
-  lima --isoseq --dump-clips --peek-guess -j ${task.cpus} $sample_ccs $primers_fasta ${params.name}.demult.bam
+  lima --isoseq --dump-clips --peek-guess -j ${task.cpus} filtered.$sample_ccs $primers_fasta ${params.name}.demult.bam
   isoseq3 refine --require-polya ${params.name}.demult.NEB_5p--NEB_3p.bam $primers_fasta ${params.name}.flnc.bam
 
   # clustering of reads, can only make faster by putting more cores on machine (cannot parallelize)
