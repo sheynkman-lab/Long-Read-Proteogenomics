@@ -187,15 +187,15 @@ process isoseq3 {
   # create an index
   pbindex $sample_ccs
 
-  # module load isoseqenv
+  
   lima --isoseq --dump-clips --peek-guess -j ${task.cpus} $sample_ccs $primers_fasta ${params.name}.demult.bam
-  isoseq3 refine --require-polya ${params.name}.demult.NEB_5p--NEB_3p.subreadset.xml $primers_fasta ${params.name}.flnc.bam
+  isoseq3 refine --require-polya ${params.name}.demult.NEB_5p--NEB_3p.bam $primers_fasta ${params.name}.flnc.bam
 
   # clustering of reads, can only make faster by putting more cores on machine (cannot parallelize)
-  isoseq3 cluster ${params.name}.flnc.bam ${params.name}.polished.bam --verbose --use-qvs
+  isoseq3 cluster ${params.name}.flnc.bam ${params.name}.clustered.bam --verbose --use-qvs
 
   # align reads to the genome, takes few minutes (40 core machine)
-  pbmm2 align $gencode_fasta ${params.name}.polished.transcriptset.xml ${params.name}.aligned.bam --preset ISOSEQ --sort -j ${task.cpus} --log-level INFO
+  pbmm2 align $gencode_fasta ${params.name}.clustered.hq.bam ${params.name}.aligned.bam --preset ISOSEQ --sort -j ${task.cpus} --log-level INFO
 
   # collapse redundant reads
   isoseq3 collapse ${params.name}.aligned.bam ${params.name}.collapsed.gff
@@ -235,9 +235,9 @@ process sqanti3 {
   
   
   output:
-  file("${params.name}_classification.txt") into ch_sample_classification
-  file("${params.name}_corrected.fasta") into ch_sample_fasta
-  file("${params.name}_corrected.gtf") into ch_sample_gtf
+  file("${params.name}_classification.txt") into ch_sample_unfiltered_classification
+  file("${params.name}_corrected.fasta") into ch_sample_unfiltered_fasta
+  file("${params.name}_corrected.gtf") into ch_sample_unfiltered_gtf
   file("*")
   
   script:
@@ -252,6 +252,21 @@ process sqanti3 {
   --gtf
   """
   //
+}
+
+process filter_sqanti {
+  input:
+    file(classification) from ch_sample_unfiltered_classification
+    file(sample_fasta) from ch_sample_unfiltered_fasta
+    file(sample_gtf) from ch_sample_unfiltered_gtf
+  output:
+    file("${params.name}_classification.txt") into ch_sample_classification
+    file("${params.name}_corrected.fasta") into ch_sample_fasta
+    file("${params.name}_corrected.gtf") into ch_sample_gtf
+  
+  script:
+    """
+    """
 }
 
 /*
