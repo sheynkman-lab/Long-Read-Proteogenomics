@@ -193,7 +193,7 @@ process isoseq3 {
   file("${params.name}.collapsed.abundance.txt") into ch_fl_count
   script:
   """
-  bamtools filter -tag 'rq':'>=0.90' -in $sample_css -out filtered.$sample_css 
+  bamtools filter -tag 'rq':'>=0.90' -in $sample_ccs -out filtered.$sample_ccs 
   # create an index
   pbindex filtered.$sample_ccs
 
