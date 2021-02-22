@@ -137,6 +137,15 @@ process generate_reference_tables {
   --protein_coding_genes protein_coding_genes.txt
   """
 }
+ch_protein_coding_genes.into{
+  ch_protein_coding_genes_db
+  ch_protein_coding_genes_filter
+}
+
+ch_ensg_gene.into{
+  ch_ensg_gene_filter
+  ch_ensg_gene_six_frame
+}
 
 /*--------------------------------------------------
 Gencode Database
@@ -259,16 +268,28 @@ process filter_sqanti {
     file(classification) from ch_sample_unfiltered_classification
     file(sample_fasta) from ch_sample_unfiltered_fasta
     file(sample_gtf) from ch_sample_unfiltered_gtf
+    file(protein_coding_genes) from ch_protein_coding_genes
+    file(ensg_gene) from ch_ensg_gene_filter
   output:
-    file("${params.name}_classification.txt") into ch_sample_classification
-    file("${params.name}_corrected.fasta") into ch_sample_fasta
-    file("${params.name}_corrected.gtf") into ch_sample_gtf
+    file("filtered_${params.name}_classification.txt") into ch_sample_classification
+    file("filtered_${params.name}_corrected.fasta") into ch_sample_fasta
+    file("filtered_${params.name}_corrected.gtf") into ch_sample_gtf
   
   script:
     """
+    python filter_sqanti.py \
+    --sqanti_classification $classification \
+    --sqanti_corrected_gtf $sample_gtf \
+    --sqanti_corrected_fasta $sample_fasta \
+    --filter_protein_coding yes \
+    --filter_intra_polyA yes \
+    --filter_template_switching yes \
+    --protein_coding_genes $protein_coding_genes \
+    --ensg_gene $ensg_gene \
+    --percent_A_downstream_threshold 0.9 \
+    --structural_categories_level strict \
     """
 }
-
 /*
 Channel
   .value(file(params.sample_classification))
@@ -288,7 +309,7 @@ process make_pacbio_6frm_gene_grouped {
 
     input:
     file(classification) from ch_sample_classification
-    file(ensg_gene) from ch_ensg_gene
+    file(ensg_gene) from ch_ensg_gene_six_frame
     file(sample_fasta) from ch_sample_fasta
 
     output:
@@ -338,6 +359,14 @@ process transcriptome_summary {
   """
 }
 
+ch_pb_gene.into{
+  ch_pb_gene_orf
+  ch_pb_gene_cds
+
+}
+
+
+
 /*--------------------------------------------------
 CPAT
 ---------------------------------------------------*/
@@ -385,7 +414,7 @@ process orf_calling {
   file(gencode_gtf) from ch_gencode_gtf
   file(sample_gtf) from ch_sample_gtf
   file(sample_fasta) from ch_sample_fasta
-  file(pb_gene) from ch_pb_gene
+  file(pb_gene) from ch_pb_gene_orf
   file(classification) from ch_sample_classification
   
   
@@ -418,7 +447,7 @@ process generate_refined_database {
   input:
   file(best_orfs) from ch_best_orf
   file(sample_fasta) from ch_sample_fasta
-  file(protein_coding_genes) from ch_protein_coding_genes
+  file(protein_coding_genes) from ch_protein_coding_genes_db
   
   output:
   file("*")
@@ -455,7 +484,7 @@ process make_pacbio_cds_gtf {
   file(sample_gtf) from ch_sample_gtf
   file(agg_orfs) from ch_agg_orfs
   file(refined_orfs) from ch_best_orf
-  file(pb_gene) from ch_pb_gene
+  file(pb_gene) from ch_pb_gene_cds
   
   output:
   file("${params.name}_cds.gtf") into ch_orf_cds

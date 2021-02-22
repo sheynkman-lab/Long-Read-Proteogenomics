@@ -1,4 +1,5 @@
 import pandas as pd 
+import re 
 import argparse
 import logging
 import gtfparse
@@ -49,7 +50,7 @@ def string_to_boolean(string):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
-def filter_protein_coding(classification, protein_coding_filename, pb_gene_filename):
+def filter_protein_coding(classification, protein_coding_filename, ensg_gene_filename):
     """
     Filter classification to only contain genes that are known to be protein-coding
     per Gencode
@@ -64,10 +65,11 @@ def filter_protein_coding(classification, protein_coding_filename, pb_gene_filen
     logging.info("Filtering for only protein coding genes")
     with open(protein_coding_filename, 'r') as file:
         protein_coding_genes = file.read().splitlines()
-    pb_gene = pd.read_table(pb_gene_filename)
-    pb_gene = pb_gene[pb_gene['gene'].isin(protein_coding_genes)]
-    protein_coding_isoforms = set(pb_gene['pb_acc'])
-    classification = classification[classification['isoform'].isin(protein_coding_isoforms)]
+    ensg_gene = pd.read_table(ensg_gene_filename, header=None)
+    ensg_gene.columns = ['gene_id', 'gene_name']
+    ensg_gene = ensg_gene[ensg_gene['gene_name'].isin(protein_coding_genes)]
+    protein_coding_gene_ids = set(ensg_gene['gene_id'])
+    classification = classification[classification['associated_gene'].isin(protein_coding_gene_ids)]
     return classification
 
 
@@ -83,17 +85,12 @@ def filter_rts_stage(classification):
 
 def save_filtered_sqanti_gtf(gtf_file, filtered_isoforms):
     logging.info("Saving GTF")
-    sqanti_gtf = gtfparse.read_gtf(gtf_file)
-    sqanti_gtf = sqanti_gtf[sqanti_gtf['transcript_id'].isin(filtered_isoforms)]
-    
     base_name = gtf_file.split("/")[-1]
-    with open(f"filtered_{base_name}", "w") as out:
-        for index, row in sqanti_gtf.head().iterrows():
-            save_list = list(row[['seqname', 'source', 'feature', 'start', 'end', 'score', 'strand','frame']])
-            line = "\t".join([str(elem) for elem in save_list])
-            line = f"{line}\ttranscript_id \"{row['transcript_id']}\"; gene_id \"{row['gene_id']}\";\n"
-            out.write(line)
-
+    with open(gtf_file, "r") as ifile, open(f"filtered_{base_name}", "w") as ofile:
+        for line in ifile.readlines():
+            transcript = re.findall('transcript_id "([^"]*)"', line)[0]
+            if transcript in filtered_isoforms:
+                ofile.write(line)
 
 
 def save_filtered_sqanti_fasta(fasta_file, filtered_isoforms):
@@ -105,23 +102,6 @@ def save_filtered_sqanti_fasta(fasta_file, filtered_isoforms):
     base_name = fasta_file.split("/")[-1]
     SeqIO.write(filtered_sequences, f"filtered_{base_name}", "fasta")
 
-# def get_filtered_classification(
-#     classification, 
-#     protein_coding_genes, 
-#     is_protein_coding_filtered, 
-#     is_intra_polyA_filtered,
-#     is_template_switching_filtered, 
-#     structural_categories_level ):
-    
-#     classification = classification[~classification['associated_gene'].isna()]
-#     classification = classification[classification['associated_gene'].str.startswith("ENSG")]
-#     structural_categories_to_keep =['novel_not_in_catalog', 'novel_in_catalog',
-#         'incomplete-splice_match', 'full-splice_match', ]
-#     classification = classification[classification['structural_category'].isin(structural_categories_to_keep)]
-    
-    
-#     classification = classification[classification['perc_A_downstream_TTS'] <= percent_ployA_downstream]
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--sqanti_classification", action='store', dest= 'classification_file',help='SQANTI Classification File')
@@ -131,7 +111,7 @@ def main():
     parser.add_argument("--filter_intra_polyA", action="store", dest="filter_intra_polyA", default="yes")
     parser.add_argument("--filter_template_switching", action="store", dest="filter_template_switching", default="yes")
     parser.add_argument("--protein_coding_genes", action="store", dest="protein_coding_genes", required=False)
-    parser.add_argument("--pb_gene", action="store", dest="pb_gene", required=False)
+    parser.add_argument("--ensg_gene", action="store", dest="ensg_gene", required=False)
     parser.add_argument("--percent_A_downstream_threshold", action="store", dest="percent_A_downstream_threshold", default=0.9,type=float)
     parser.add_argument("--structural_categories_level", action="store", dest="structural_categories_level", default="strict")
     results = parser.parse_args()
@@ -147,7 +127,7 @@ def main():
 
     # Filter classification file
     if is_protein_coding_filtered:
-        classification = filter_protein_coding(classification, results.protein_coding_genes, results.pb_gene)
+        classification = filter_protein_coding(classification, results.protein_coding_genes, results.ensg_gene)
     if is_intra_polyA_filtered:
         classification = filter_intra_polyA(classification, results.percent_A_downstream_threshold)
     if is_template_switching_filtered:
