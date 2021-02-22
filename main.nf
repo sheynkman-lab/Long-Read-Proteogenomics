@@ -473,7 +473,7 @@ process make_pacbio_cds_gtf {
 
 
 /*--------------------------------------------------
-MetaMorpheus
+MetaMorpheus wtih Sample Specific Database
 ---------------------------------------------------*/
 
 // process metamorpheus {
@@ -489,6 +489,10 @@ MetaMorpheus
 //   dotnet /metamorpheus/CMD.dll --test -v minimal -o metamorpheus
 //   """
 // }
+
+/*--------------------------------------------------
+MetaMorpheus wtih Gencode Database
+---------------------------------------------------*/
 
 
 /*--------------------------------------------------

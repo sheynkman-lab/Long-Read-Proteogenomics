@@ -18,74 +18,69 @@ Channel
 
 
 Channel
-    .fromPath("${params.mass_spec}/*.{raw,mzml,mzML}")
-    .set{ch_mass_spec}
+    .fromPath("${params.mass_spec}/*.raw")
+    .set{ch_mass_spec_raw}
 
-for(file in ch_mass_spec){
-    if(file.endsWith(".raw")){
-        println(file)
-    }
-}
-//     
-// Channel
-//     .fromPath('data/test_metamorpheus',type:'dir',relative:true)
-//     .view()
+Channel
+    .fromPath("${params.mass_spec}/*.{mzml,mzML}")
+    .set{ch_mass_spec_mzml}
 
-// print("\n*********************\n")
-// print(ch_mass_spec)
 
-// process raw_convert{
-//     publishDir "${params.outdir}/raw_convert/", mode: 'copy'
-//     input:
-//         file(raw_file) from ch_mass_spec
-//     output:
-//         file("*") into ch_mass_spec_mzml
-//     script:
-//         if(raw_file.endsWith(".raw")){
-//             """
-//             wine msconvert $raw_file --filter "peakPicking true 1-"
-//             """
-//         }
-//         else{
-//             """
-//             cp $raw_file ${params.name}.$raw_file
-//             """
-//         }
-    
-
+process mass_spec_raw_convert{
+    publishDir "${params.outdir}/raw_convert/", mode: 'copy'
+    input:
+        file(raw_file) from ch_mass_spec_raw
+    output:
+        file("*") into ch_mass_spec_converted
+    script:
+        """
+        wine msconvert $raw_file --filter "peakPicking true 1-"
+        """
 }
 
-// process metamorpheus{
-//     tag "$orf_calls, $orf_fasta, $mass_spec_fraction"
-//     publishDir "${params.outdir}/metamorpheus/", mode: 'copy'
+ch_mass_spec_combined = ch_mass_spec_mzml.concat(ch_mass_spec_converted)
 
-//     input:
-//         // file(orf_calls) from ch_orf_calls
-//         file(orf_fasta) from ch_orf_fasta
-//         // file(toml) from ch_toml
-//         file(mass_spec_fraction) from ch_mass_spec_mzml
+process metamorpheus_with_sample_specific_database{
+    tag " $mass_spec"
+    publishDir "${params.outdir}/metamorpheus/", mode: 'copy'
 
-//     output:
-//         file("*")
+    input:
+        // file(orf_calls) from ch_orf_calls
+        file(orf_fasta) from ch_orf_fasta
+        // file(toml) from ch_toml
+        file(mass_spec) from ch_mass_spec_combined.collect()
+
+    output:
+        file("*")
+        file("*/Task1SearchTask/AllPeptides.psmtsv") into ch_sample_specific_peptides
     
-//     script:
+    script:
+        """
+        dotnet /metamorpheus/CMD.dll -g -o ./ --mmsettings settings
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta -s $mass_spec -t SearchTask.toml -v normal --mmsettings settings
+        """
+}
+
+process metamorpheus_with_gencode_database{
+    tag " $mass_spec"
+    publishDir "${params.outdir}/metamorpheus/", mode: 'copy'
+
+    input:
+        // file(orf_calls) from ch_orf_calls
+        file(gencode_fasta) from ch_gencode_fasta
+        // file(toml) from ch_toml
+        file(mass_spec) from ch_mass_spec_combined.collect()
+
+    output:
+        file("*")
+        file("AllPeptides.psmtsv") into ch_gencode_peptides
+    
+    script:
+        """
+        dotnet /metamorpheus/CMD.dll -g -o ./ --mmsettings settings
+        dotnet /metamorpheus/CMD.dll -d $gencode_fasta -s $mass_spec -t SearchTask.toml -v normal --mmsettings settings
+        """
+}
 
 
-//         """
-//         dotnet /metamorpheus/CMD.dll -g -o ./ --mmsettings settings
-//         sed -i 's/false/true/g' settings/settings.toml
 
-//         dotnet /metamorpheus/CMD.dll -d $orf_fasta -s $mass_spec_fraction -t SearchTask.toml -v normal --mmsettings settings
-//         """
-//         // """
-//         // dotnet /metamorpheus/CMD.dll --test -v minimal -o metamorpheus
-//         // """
-
-//         // """
-//         // echo "y" | dotnet /metamorpheus/CMD.dll \
-//         // -d $orf_fasta \
-//         // -s $mass_spec_fraction \
-//         // -t $toml \
-//         // -v normal \
-//         // """
-// } 
