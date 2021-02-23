@@ -277,7 +277,7 @@ process filter_sqanti {
   
   script:
     """
-    python filter_sqanti.py \
+    filter_sqanti.py \
     --sqanti_classification $classification \
     --sqanti_corrected_gtf $sample_gtf \
     --sqanti_corrected_fasta $sample_fasta \
