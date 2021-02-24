@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#%%
 import pandas as pd 
 import re 
 import argparse
@@ -113,7 +114,7 @@ def main():
     parser.add_argument("--filter_template_switching", action="store", dest="filter_template_switching", default="yes")
     parser.add_argument("--protein_coding_genes", action="store", dest="protein_coding_genes", required=False)
     parser.add_argument("--ensg_gene", action="store", dest="ensg_gene", required=False)
-    parser.add_argument("--percent_A_downstream_threshold", action="store", dest="percent_A_downstream_threshold", default=0.9,type=float)
+    parser.add_argument("--percent_A_downstream_threshold", action="store", dest="percent_A_downstream_threshold", default=95,type=float)
     parser.add_argument("--structural_categories_level", action="store", dest="structural_categories_level", default="strict")
     results = parser.parse_args()
     # Get boolean filtering decisions
@@ -147,6 +148,7 @@ def main():
     save_filtered_sqanti_gtf(results.corrected_gtf,filtered_isoforms )
     save_filtered_sqanti_fasta(results.corrected_fasta, filtered_isoforms)
 
+#%%
     
 
 if __name__=="__main__":
@@ -172,5 +174,9 @@ if __name__=="__main__":
 #             if chromisome in canonical_chromisomes:
 #                 gencode_out.write(line)
 
+
+# %%
+import pandas as pd
+classification = pd.read_table("/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/Long-Read-Proteogenomics/data/results/jurkat/jurkat_classification.txt")
 
 # %%

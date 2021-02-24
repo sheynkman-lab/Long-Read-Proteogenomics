@@ -210,6 +210,11 @@ process isoseq3 {
   isoseq3 collapse ${params.name}.aligned.bam ${params.name}.collapsed.gff
   """
 }
+
+
+
+
+
 /*
 Channel
   .value(file(params.fl_count))
@@ -264,6 +269,7 @@ process sqanti3 {
 }
 
 process filter_sqanti {
+  publishDir "${params.outdir}/sqanti3-filtered/", mode: 'copy'
   input:
     file(classification) from ch_sample_unfiltered_classification
     file(sample_fasta) from ch_sample_unfiltered_fasta
@@ -286,7 +292,7 @@ process filter_sqanti {
     --filter_template_switching yes \
     --protein_coding_genes $protein_coding_genes \
     --ensg_gene $ensg_gene \
-    --percent_A_downstream_threshold 0.9 \
+    --percent_A_downstream_threshold 95 \
     --structural_categories_level strict \
     """
 }
