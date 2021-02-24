@@ -181,7 +181,7 @@ def make_peptide_gtf(name, gtf, pbs, pb_gene, pep, seqs):
     
     pep['num_prots'] = pep.apply(get_number_of_mapping_proteins, axis = 1)
     pep = pep.apply(find_start_end_pep_index, axis=1)
-    
+    pep = pep.drop_duplicates()
     write_peptide_gtf(name, pep, pbs, gene_pb, seqs)
 
 
