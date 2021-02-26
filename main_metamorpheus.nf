@@ -51,36 +51,37 @@ process metamorpheus_with_sample_specific_database{
         file(mass_spec) from ch_mass_spec_combined.collect()
 
     output:
-        file("*")
-        file("*/Task1SearchTask/AllPeptides.psmtsv") into ch_sample_specific_peptides
+        file("toml/*")
+        file("search_results/*")
+        file("search_reseults/Task1SearchTask/AllPeptides.psmtsv") into ch_sample_specific_peptides
     
     script:
         """
-        dotnet /metamorpheus/CMD.dll -g -o ./ --mmsettings settings
-        dotnet /metamorpheus/CMD.dll -d $orf_fasta -s $mass_spec -t SearchTask.toml -v normal --mmsettings settings
+        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings settings 
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
         """
 }
 
-process metamorpheus_with_gencode_database{
-    tag " $mass_spec"
-    publishDir "${params.outdir}/metamorpheus/", mode: 'copy'
+// process metamorpheus_with_gencode_database{
+//     tag " $mass_spec"
+//     publishDir "${params.outdir}/metamorpheus/", mode: 'copy'
 
-    input:
-        // file(orf_calls) from ch_orf_calls
-        file(gencode_fasta) from ch_gencode_fasta
-        // file(toml) from ch_toml
-        file(mass_spec) from ch_mass_spec_combined.collect()
+//     input:
+//         // file(orf_calls) from ch_orf_calls
+//         file(gencode_fasta) from ch_gencode_fasta
+//         // file(toml) from ch_toml
+//         file(mass_spec) from ch_mass_spec_combined.collect()
 
-    output:
-        file("*")
-        file("AllPeptides.psmtsv") into ch_gencode_peptides
+//     output:
+//         file("*")
+//         file("AllPeptides.psmtsv") into ch_gencode_peptides
     
-    script:
-        """
-        dotnet /metamorpheus/CMD.dll -g -o ./ --mmsettings settings
-        dotnet /metamorpheus/CMD.dll -d $gencode_fasta -s $mass_spec -t SearchTask.toml -v normal --mmsettings settings
-        """
-}
+//     script:
+//         """
+//         dotnet /metamorpheus/CMD.dll -g -o ./ --mmsettings settings
+//         dotnet /metamorpheus/CMD.dll -d $gencode_fasta -s $mass_spec -t SearchTask.toml -v normal --mmsettings settings
+//         """
+// }
 
 
 

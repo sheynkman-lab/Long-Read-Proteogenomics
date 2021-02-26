@@ -19,6 +19,7 @@ dependencies:
   
 
   - bioconda:blast
+  - bioconda:star
   # Module 1: SMARTLink - CCS
   # - pbccs
   # - pbbam

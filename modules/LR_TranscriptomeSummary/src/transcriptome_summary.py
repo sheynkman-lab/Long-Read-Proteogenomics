@@ -20,6 +20,7 @@ Outputs:
 
 """
 
+
 # Import Modules 
 import numpy as np 
 import pandas as pd
@@ -102,6 +103,7 @@ def main():
 
     # Make Sqanti Isoform Table and output to a TSV
     sq_isotab = sqtab(results.sqanti_out, results.ensg_to_gene, results.enst_to_isoname)
+    sq_isotab['gene'] = sq_isotab['gene'].str.replace('_','-')
     sq_isotab.to_csv(os.path.join(odir, 'sqanti_isoform_info.tsv'), sep="\t", index= False, na_rep='0')
 
     # Make PB-Gene reference table

@@ -165,7 +165,7 @@ def orf_calling(orf, num_orfs_per_accession = 1):
     """
     Choose 'best' ORF by examining number of upstream ATG's, match to Gencode Transcript start, and ORF codings
     """
-    def call_orf(group):
+    def call_orf(acc_orfs):
         score_threshold = 0.364
         def calling_confidence(row):
             if row['atg_rank'] == 1 and row['score_rank'] == 1:
@@ -175,23 +175,27 @@ def orf_calling(orf, num_orfs_per_accession = 1):
             else:
                 return 'Plausable ORF'
         
-        group['atg_rank'] = group['upstream_atgs'].rank(ascending=True)
-        group['score_rank'] = group['coding_score'].rank(ascending=False)
-        group['orf_calling_confidence'] = group.apply(lambda row : calling_confidence(row), axis = 1)
+        acc_orfs['atg_rank'] = acc_orfs['upstream_atgs'].rank(ascending=True)
+        acc_orfs['score_rank'] = acc_orfs['coding_score'].rank(ascending=False)
+        acc_orfs['orf_calling_confidence'] = acc_orfs.apply(lambda row : calling_confidence(row), axis = 1)
         
-        with_gencode = group.dropna(subset=['gencode_atg'])
+        with_gencode = acc_orfs.dropna(subset=['gencode_atg'])
         if len(with_gencode) >=1:
-            group = with_gencode
+            acc_orfs = with_gencode
         
         atg_shift = 5       # how much to shift sigmoid for atg score
         atg_growth = 0.5    # how quickly the slope of the sigmoid changes 
-        group['atg_score'] = group['upstream_atgs'].apply(lambda x : 1 - 1/( 1+ np.exp(-atg_growth*(x - atg_shift))))
-        group['orf_score'] = group.apply(lambda row: 1 - (1-row['coding_score']*0.99)*(1-row['atg_score']), axis = 1)
+        acc_orfs['atg_score'] = acc_orfs['upstream_atgs'].apply(lambda x : 1 - 1/( 1+ np.exp(-atg_growth*(x - atg_shift))))
+        acc_orfs['orf_score'] = acc_orfs.apply(lambda row: 1 - (1-row['coding_score']*0.99)*(1-row['atg_score']), axis = 1)
         
-        group = group.sort_values(by='orf_score', ascending=False).reset_index(drop=True)
-        return group.head(num_orfs_per_accession)
+        acc_orfs = acc_orfs.sort_values(by='orf_score', ascending=False).reset_index(drop=True)
+        return acc_orfs.head(num_orfs_per_accession)
         
     called_orf = orf.groupby('pb_acc').apply(call_orf).reset_index(drop=True)
+
+    called_orf = called_orf[['pb_acc','len','orf_frame', 'orf_start', 'orf_end', 'orf_len',
+       'fickett', 'hexamer', 'coding_score', 'orf_rank', 'seqname','strand','gencode_atg',
+       'upstream_atgs', 'atg_rank', 'score_rank', 'orf_calling_confidence','atg_score', 'orf_score', 'gene', 'FL', 'CPM']]
     return called_orf
 
 

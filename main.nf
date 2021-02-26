@@ -101,6 +101,11 @@ Channel
     .ifEmpty { error "Cannot find any logit model file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}" }
     .set { ch_normalized_ribo_kallisto } 
 
+Channel
+    .from(params.fastq_read_1, params.fastq_read_2)
+    .filter(String)
+    .flatMap{ files(it) }
+   .set{ ch_fastq_reads }
 
 /*--------------------------------------------------
 Reference Tables 
@@ -159,8 +164,8 @@ process make_gencode_database {
   file(gencode_translation_fasta) from ch_gencode_translation_fasta
   
   output:
-  file("gencode.fasta") into ch_gencode_fasta_single
-  file("gencode_isoname_clusters.tsv") into ch_gencode_isoname_clusters
+  file("gencode_protein.fasta") into ch_genome_protein_fasta
+  file("gencode_isoname_clusters.tsv")
   
   script:
   """
@@ -235,6 +240,73 @@ Channel
 SQANTI3
 ---------------------------------------------------*/
 
+
+
+   
+if(params.star_genome_dir != false){
+    Channel
+    .fromPath(params.star_genome_dir, type:'dir')
+    .set{ch_genome_dir}
+}
+else{
+    process star_generate_genome{
+        cpus params.max_cpus
+        publishDir "${params.outdir}/star", mode: "copy"
+        when:
+        (params.fastq_read_1 != false | params.fastq_read_2 !=false) & params.star_genome_dir == false
+        input :
+            file(gencode_gtf) from ch_gencode_gtf
+            file(gencode_fasta) from ch_gencode_fasta
+
+        output:
+            path("star_genome") into ch_genome_dir
+
+        script:
+        """
+        mkdir star_genome
+        STAR --runThreadN  ${task.cpus} \
+        --runMode genomeGenerate \
+        --genomeDir star_genome \
+        --genomeFastaFiles $gencode_fasta \
+        --sjdbGTFfile $gencode_gtf \
+        --genomeSAindexNbases 11
+        """
+    }
+
+}
+
+if(params.fastq_read_1 != false | params.fastq_read_2 !=false){
+    process star_alignment{
+        cpus params.max_cpus
+        publishDir "${params.outdir}/star", mode: "copy"
+        when:
+            params.fastq_read_1 != false | params.fastq_read_2 !=false
+        input :
+            file(fastq_reads) from ch_fastq_reads.collect()
+            path(genome_dir) from ch_genome_dir
+
+        output:
+            file("*")
+            file("*SJ.out.tab") into ch_star_junction
+
+        script:
+        """
+        STAR --runThreadN ${task.cpus} \
+        --genomeDir $genome_dir \
+        --outFileNamePrefix ./${params.name} \
+        --readFilesIn $fastq_reads \
+        --readFilesCommand zcat
+        """
+    }
+}
+else{
+    Channel
+        .from('none')
+        .set{ch_star_junction}
+}
+
+
+
 process sqanti3 {
   tag "${fl_count}, ${gencode_gtf}, ${gencode_fasta}, ${sample_gtf},"
   cpus params.max_cpus
@@ -246,6 +318,7 @@ process sqanti3 {
   file(gencode_gtf) from ch_gencode_gtf
   file(gencode_fasta) from ch_gencode_fasta
   file(sample_gtf) from ch_isoseq_gtf
+  file(star_junction) from ch_star_junction
   
   
   output:
@@ -255,16 +328,29 @@ process sqanti3 {
   file("*")
   
   script:
-  """
-  sqanti3_qc.py \
-  $sample_gtf \
-  $gencode_gtf \
-  $gencode_fasta \
-  --skipORF \
-  -o ${params.name} \
-  --fl_count $fl_count  \
-  --gtf
-  """
+  if(params.fastq_read_1 == false & params.fastq_read_2 ==false)
+    """
+    sqanti3_qc.py \
+    $sample_gtf \
+    $gencode_gtf \
+    $gencode_fasta \
+    --skipORF \
+    -o ${params.name} \
+    --fl_count $fl_count  \
+    --gtf
+    """
+  else
+    """
+    sqanti3_qc.py \
+    $sample_gtf \
+    $gencode_gtf \
+    $gencode_fasta \
+    --skipORF \
+    -o ${params.name} \
+    --fl_count $fl_count  \
+    --gtf \
+    -c $star_junction
+    """
   //
 }
 
@@ -319,7 +405,7 @@ process make_pacbio_6frm_gene_grouped {
     file(sample_fasta) from ch_sample_fasta
 
     output:
-    file("${params.name}.6frame.fasta") into ch_6frm
+    file("${params.name}.6frame.fasta") into ch_six_frame
 
     script:
     """
@@ -368,6 +454,7 @@ process transcriptome_summary {
 ch_pb_gene.into{
   ch_pb_gene_orf
   ch_pb_gene_cds
+  ch_pb_gene_peptide
 
 }
 
@@ -390,9 +477,11 @@ process cpat {
   
   
   output:
-  file("${params.name}.ORF_prob.tsv") into ch_cpat_orfs
+  file("${params.name}.ORF_prob.tsv") into ch_cpat_all_orfs
+  file("${params.name}.ORF_prob.best.tsv") into ch_cpat_best_orf
+  file("${params.name}.ORF_seqs.fa") into ch_cpat_protein_fasta
   file("*")
-  
+
   script:
   """
   cpat.py \
@@ -407,6 +496,12 @@ process cpat {
   """
 }
 
+ch_cpat_all_orfs.into{
+  ch_cpat_all_orfs_for_orf_calling
+  ch_cpat_all_orfs_for_peptide_analysis
+}
+
+
 /*--------------------------------------------------
 ORF Calling 
 ---------------------------------------------------*/
@@ -416,7 +511,7 @@ process orf_calling {
   publishDir "${params.outdir}/orf_calling/", mode: 'copy'
 
   input:
-  file(cpat_orfs) from ch_cpat_orfs
+  file(cpat_orfs) from ch_cpat_all_orfs_for_orf_calling
   file(gencode_gtf) from ch_gencode_gtf
   file(sample_gtf) from ch_sample_gtf
   file(sample_fasta) from ch_sample_fasta
@@ -457,8 +552,8 @@ process generate_refined_database {
   
   output:
   file("*")
-  file("${params.name}_orf_aggregated.tsv") into ch_agg_orfs
-  file("${params.name}_orf_aggregated.fasta") into ch_agg_fasta
+  file("${params.name}_orf_aggregated.tsv") into ch_refined_info
+  file("${params.name}_orf_aggregated.fasta") into ch_refined_fasta
   
   script:
   """
@@ -488,7 +583,7 @@ process make_pacbio_cds_gtf {
 
   input:
   file(sample_gtf) from ch_sample_gtf
-  file(agg_orfs) from ch_agg_orfs
+  file(agg_orfs) from ch_refined_info
   file(refined_orfs) from ch_best_orf
   file(pb_gene) from ch_pb_gene_cds
   
@@ -507,27 +602,122 @@ process make_pacbio_cds_gtf {
 }
 
 
+if params.mass_spec != false{
+  Channel
+    .fromPath("${params.mass_spec}/*.raw")
+    .set{ch_mass_spec_raw}
+
+  Channel
+      .fromPath("${params.mass_spec}/*.{mzml,mzML}")
+      .set{ch_mass_spec_mzml}
+}
+
+
 /*--------------------------------------------------
 MetaMorpheus wtih Sample Specific Database
 ---------------------------------------------------*/
+process mass_spec_raw_convert{
+    publishDir "${params.outdir}/raw_convert/", mode: 'copy'
+    when:
+      params.mass_spec != false
 
-// process metamorpheus {
-//   publishDir "${params.outdir}/metamorpheus"
+    input:
+        file(raw_file) from ch_mass_spec_raw
+    output:
+        file("*") into ch_mass_spec_converted
+    script:
+        """
+        wine msconvert $raw_file --filter "peakPicking true 1-"
+        """
+}
 
-//   // input:
-
-//   output:
-//   file("*")
-
-//   script: 
-//   """
-//   dotnet /metamorpheus/CMD.dll --test -v minimal -o metamorpheus
-//   """
-// }
+ch_mass_spec_combined = ch_mass_spec_mzml.concat(ch_mass_spec_converted)
 
 /*--------------------------------------------------
-MetaMorpheus wtih Gencode Database
+MetaMorpheus wtih Sample Specific Database
 ---------------------------------------------------*/
+process metamorpheus_with_sample_specific_database{
+    tag " $mass_spec"
+    publishDir "${params.outdir}/metamorpheus/", mode: 'copy'
+    when:
+      params.mass_spec != false
+
+    input:
+        // file(orf_calls) from ch_orf_calls
+        file(orf_fasta) from ch_orf_fasta
+        // file(toml) from ch_toml
+        file(mass_spec) from ch_mass_spec_combined.collect()
+
+    output:
+        file("toml/*")
+        file("search_results/*")
+        file("search_results/Task1SearchTask/AllPeptides.psmtsv") into ch_sample_specific_peptides
+    
+    script:
+        """
+        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings settings
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        """
+}
+
+process metamorpheus_with_gencode_database{
+    tag " $mass_spec"
+    publishDir "${params.outdir}/metamorpheus/", mode: 'copy'
+    when:
+      params.mass_spec != false
+
+    input:
+        // file(orf_calls) from ch_orf_calls
+        file(gencode_fasta) from ch_genome_protein_fasta
+        // file(toml) from ch_toml
+        file(mass_spec) from ch_mass_spec_combined.collect()
+
+    output:
+        file("toml/*")
+        file("search_results/*")
+        file("search_results/Task1SearchTask/AllPeptides.psmtsv") into ch_gencode_peptides
+    
+    script:
+        """
+        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings settings
+        dotnet /metamorpheus/CMD.dll -d $gencode_fasta -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        """
+}
+
+/*--------------------------------------------------
+Peptide Analysis
+---------------------------------------------------*/
+process peptide_analysis{
+  publishDir "${params.outdir}/metamorpheus/", mode: 'copy'
+    when:
+      params.mass_spec != false
+    
+    input:
+      file(gencode_peptides) from ch_gencode_peptides
+      file(gene_isoname) from ch_gene_isoname
+      file(refined_fasta) from ch_refined_fasta
+      file(six_frame) from ch_six_frame
+      file(pb_gene) from ch_pb_gene_peptide
+      file(cpat_all_orfs) from ch_cpat_all_orfs_for_peptide_analysis
+      file(cpat_best_orf) from ch_cpat_best_orf
+      file(cpat_protein_fasta) from ch_cpat_protein_fasta
+    output:
+      file("*")
+    script:
+      """
+      peptide_analysis.py \
+      -gmap $gene_isoname \
+      -gc $gencode_peptides \
+      -pb $refined_fasta \
+      -sft $six_frame \
+      --pb_gene $pb_gene \
+      --cpat_all_orfs $cpat_all_orfs \
+      --cpat_best_orf $cpat_best_orf \
+      --cpat_orf_protein_fasta $cpat_protein_fasta \
+      -odir ./
+      """
+}
+
 
 
 /*--------------------------------------------------
@@ -538,9 +728,7 @@ Accession Mapping
 Protein Inference Analysis
 ---------------------------------------------------*/
 
-/*--------------------------------------------------
-Peptide Analysis
----------------------------------------------------*/
+
 
 
 def logHeader() {

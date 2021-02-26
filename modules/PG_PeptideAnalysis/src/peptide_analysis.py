@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 """ 
-This module prepares a table comparing mass spec MM peptide results using different databases
+This module prepares a table comparing mass spec MM peptide results from gencode 
+against the fasta sequences of various orf calling methods
 
     Inputs:
     ------------------------------------------------------------------------------------------
@@ -30,14 +31,14 @@ from Bio import SeqIO
 #%%
 # Import Files
 parser = argparse.ArgumentParser(description='Process peptide related input file locations')
-parser.add_argument('--gene_to_isoname', '-gmap', action='store', dest='gene_isoname_file', help = 'Gene names to transcript names file location')
 parser.add_argument('--gc_pep', '-gc', action='store', dest='gc_pep_file', help='Genecode AllPeptides file location')
-parser.add_argument('--pb_pep', '-pb', action='store', dest='pb_ref_file', help='Pacbio AllPeptides file location')
+parser.add_argument('--gene_to_isoname', '-gmap', action='store', dest='gene_isoname_file', help = 'Gene names to transcript names file location')
+parser.add_argument('--pb_refined_fasta', '-pb', action='store', dest='pb_ref_file', help='Pacbio refined database fasta file location')
 parser.add_argument('--pb_6frm', '-sft', action='store', dest='pb_6frm_file', help='Pacbio Six Frame Translation file location')
 parser.add_argument('--pb_gene', action='store', dest='pb_gene', help='PB to Gene file')
 parser.add_argument("--cpat_all_orfs", action='store', dest='cpat_all_orfs')
 parser.add_argument("--cpat_best_orf", action='store', dest='cpat_best_orf')
-parser.add_argument("cpat_orf_protein_fasta", action='store', dest='cpat_protein_fasta')
+parser.add_argument("--cpat_orf_protein_fasta", action='store', dest='cpat_protein_fasta')
 parser.add_argument('-odir', '--output_directory', action='store', dest='odir', help = 'ouput directory')
 results = parser.parse_args()
 
@@ -51,14 +52,14 @@ cpat_all_orfs_file = results.cpat_all_orfs
 cpat_protein_sequence_file = results.cpat_protein_fasta
 #%%
 # Input Filepaths 
-gene_isoname_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/gene_isoname.tsv'
-gc_pep_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/AllPeptides_Gencode.psmtsv'
-pb_refined_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/jurkat_orf_aggregated.fasta'
-pb_6frm_file ='/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/jurkat.6frame.fasta'
-pb_gene_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/pb_gene.tsv'
-cpat_best_orf_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/jurkat.ORF_prob.best.tsv'
-cpat_protein_sequence_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/jurkat.ORF_seqs.fa'
-cpat_all_orfs_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/jurkat.ORF_prob.tsv'
+# gene_isoname_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/gene_isoname.tsv'
+# gc_pep_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/AllPeptides_Gencode.psmtsv'
+# pb_refined_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/jurkat_orf_aggregated.fasta'
+# pb_6frm_file ='/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/jurkat.6frame.fasta'
+# pb_gene_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/pb_gene.tsv'
+# cpat_best_orf_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/jurkat.ORF_prob.best.tsv'
+# cpat_protein_sequence_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/jurkat.ORF_seqs.fa'
+# cpat_all_orfs_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/jurkat.ORF_prob.tsv'
 #%%
 
 # loading gencode peptide data, initiate a dataframe
