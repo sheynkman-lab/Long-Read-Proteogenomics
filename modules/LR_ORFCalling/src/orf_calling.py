@@ -173,7 +173,7 @@ def orf_calling(orf, num_orfs_per_accession = 1):
             elif row['coding_score'] <= score_threshold:
                 return 'Low Quality ORF'
             else:
-                return 'Plausable ORF'
+                return 'Plausible ORF'
         
         acc_orfs['atg_rank'] = acc_orfs['upstream_atgs'].rank(ascending=True)
         acc_orfs['score_rank'] = acc_orfs['coding_score'].rank(ascending=False)

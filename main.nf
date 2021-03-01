@@ -145,7 +145,8 @@ process generate_reference_tables {
   --protein_coding_genes protein_coding_genes.txt
   """
 }
-// TODO - explain what into does here? Multiple copies into different variable names?
+
+// partition channels for use by multiple modules
 ch_protein_coding_genes.into{
   ch_protein_coding_genes_db
   ch_protein_coding_genes_filter
@@ -207,6 +208,7 @@ process isoseq3 {
   // TODO - no longer needed because getting fasta from sqanti?
   // file("${params.name}.collapsed.fasta") into ch_isoseq_fasta
   file("${params.name}.collapsed.abundance.txt") into ch_fl_count
+  file("${params.name}")
   script:
   """
   # ensure that only qv10 reads from ccs are input
@@ -254,7 +256,7 @@ Channel
 
 
 /*--------------------------------------------------
-SQANTI3
+STAR Alignment
 ---------------------------------------------------*/
 
 // TODO - "== true" ?   
@@ -266,7 +268,7 @@ if(params.star_genome_dir != false){
 else{
     process star_generate_genome{
         cpus params.max_cpus
-        publishDir "${params.outdir}/star", mode: "copy"
+        
         when:
         (params.fastq_read_1 != false | params.fastq_read_2 !=false) & params.star_genome_dir == false
 
@@ -303,8 +305,8 @@ if(params.fastq_read_1 != false | params.fastq_read_2 !=false){
 
         output:
             // TODO - don't recommend keeping all files, the BAM/SAM files are large
-            file("*")
             file("*SJ.out.tab") into ch_star_junction
+            file("*Log.final.out")
 
         script:
         """
@@ -323,6 +325,9 @@ else{
 }
 
 
+/*--------------------------------------------------
+SQANTI3
+---------------------------------------------------*/
 
 process sqanti3 {
   tag "${fl_count}, ${gencode_gtf}, ${gencode_fasta}, ${sample_gtf},"
@@ -576,6 +581,7 @@ process generate_refined_database {
   file(protein_coding_genes) from ch_protein_coding_genes_db
   
   output:
+  // TODO - Ben will modify python script so output is only <sample>_orf_refined.tsv (previously *_orf_aggregated.tsv), same for fasta
   file("*")
   file("${params.name}_orf_aggregated.tsv") into ch_refined_info
   file("${params.name}_orf_aggregated.fasta") into ch_refined_fasta
@@ -660,15 +666,13 @@ process mass_spec_raw_convert{
 ch_mass_spec_combined = ch_mass_spec_mzml.concat(ch_mass_spec_converted)
 
 process metamorpheus_with_sample_specific_database{
-    tag " $mass_spec"
+    tag "${mass_spec}"
     publishDir "${params.outdir}/metamorpheus/", mode: 'copy'
     when:
       params.mass_spec != false
 
     input:
-        // file(orf_calls) from ch_orf_calls
         file(orf_fasta) from ch_orf_fasta
-        // file(toml) from ch_toml
         file(mass_spec) from ch_mass_spec_combined.collect()
 
     output:
@@ -684,15 +688,13 @@ process metamorpheus_with_sample_specific_database{
 }
 
 process metamorpheus_with_gencode_database{
-    tag " $mass_spec"
+    tag "${mass_spec}"
     publishDir "${params.outdir}/metamorpheus/", mode: 'copy'
     when:
       params.mass_spec != false
 
     input:
-        // file(orf_calls) from ch_orf_calls
         file(gencode_fasta) from ch_genome_protein_fasta
-        // file(toml) from ch_toml
         file(mass_spec) from ch_mass_spec_combined.collect()
 
     output:
