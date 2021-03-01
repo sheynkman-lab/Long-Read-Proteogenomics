@@ -7,7 +7,7 @@ CPAT finds the most likely ORF from a full-length transcript, and outputs all po
 - jurkat_corrected.fasta (from SQANTI3 module)
 
 ## Output
-- table of call orf calls and their scores (e.g., jurkat_cpat.ORF_prob.tsv)
+- Table of orf calls and their scores (e.g., jurkat_cpat.ORF_prob.tsv)
 
 ## Soure Module(s)
 - SQANTI3

@@ -1,5 +1,5 @@
 # Iso-Seq 3 processing of CCS reads
-The PacBio Iso-Seq method produces high-quality, full-length transcripts and can characterize a whole transcriptome with a single SMRT Cell 8M.
+The PacBio Iso-Seq method produces high-quality, full-length transcripts and can characterize a whole transcriptome with a single SMRT Cell.
 
 ## Input
 - jurkat.codethon_toy.ccs.bam (CCS reads)
