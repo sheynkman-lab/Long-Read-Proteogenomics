@@ -1,0 +1,5 @@
+chr1	PacBio	transcript	14361	29347		-	0	PB.1.1	PB.1	"transcript_id ""PB.1.1""; gene_id ""PB.1"";"
+chr1	PacBio	exon	14361	14829		-	0	PB.1.1	PB.1	"transcript_id ""PB.1.1""; gene_id ""PB.1"";"
+chr1	PacBio	exon	14970	15038		-	0	PB.1.1	PB.1	"transcript_id ""PB.1.1""; gene_id ""PB.1"";"
+chr1	PacBio	exon	15796	16765		-	0	PB.1.1	PB.1	"transcript_id ""PB.1.1""; gene_id ""PB.1"";"
+chr1	PacBio	exon	16858	17055		-	0	PB.1.1	PB.1	"transcript_id ""PB.1.1""; gene_id ""PB.1"";"
