@@ -43,7 +43,8 @@ def make_pacbio6fm_gene_grouped(iso_annot, ensg_gene, sample_fasta, output_fasta
     gene_seqs = defaultdict(lambda: set()) # gene -> pacbio sequences as list
 
     for rec in SeqIO.parse(sample_fasta, 'fasta'):
-        gene = pb_gene[rec.id]
+        pb_id = rec.id.split('|')[0] 
+        gene = pb_gene[pb_id]
         F1 = rec.seq.translate()
         F2 = rec.seq[1:].translate()
         F3 = rec.seq[2:].translate()

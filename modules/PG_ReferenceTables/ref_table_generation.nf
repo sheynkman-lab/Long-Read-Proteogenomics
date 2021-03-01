@@ -68,9 +68,19 @@ log.info "gencode_fasta  : ${params.gencode_fasta}"
     file("gene_isoname.tsv") into ch_gene_isoname
     file("isoname_lens.tsv") into ch_isoname_lens
     file("gene_lens.tsv") into ch_gene_lens
+    file("protein_coding_genes.txt") into ch_protein_coding_genes
     
     script:
     """
-    prepare_reference_table.py --gtf $gencode_gtf --fa $gencode_fasta --ensg_gene ensg_gene.tsv --enst_isoname enst_isoname.tsv --gene_ensp gene_ensp.tsv --gene_isoname gene_isoname.tsv --isoname_lens isoname_lens.tsv --gen_lens gene_lens.tsv
+    prepare_reference_tables.py \
+    --gtf $gencode_gtf \
+    --fa $gencode_fasta \
+    --ensg_gene ensg_gene.tsv \
+    --enst_isoname enst_isoname.tsv \
+    --gene_ensp gene_ensp.tsv \
+    --gene_isoname gene_isoname.tsv \
+    --isoname_lens isoname_lens.tsv \
+    --gen_lens gene_lens.tsv \
+    --protein_coding_genes protein_coding_genes.txt
     """
   }

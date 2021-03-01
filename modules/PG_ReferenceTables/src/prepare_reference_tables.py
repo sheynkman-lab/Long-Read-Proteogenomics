@@ -27,7 +27,7 @@ import argparse
 import csv
 import os
 from collections import defaultdict
-gtfparse
+import gtfparse
 
 # Define Functions
 def GenMap(gtf_file, results):
@@ -124,8 +124,8 @@ def GeneLenTab(IsolenFile, results):
     print('Prepared the gene length statistics table')
 
     
-def protein_coding_genes(gtf_file, results):
-    df_gtf = gtfparse.read_gtf(gtf_file)
+def protein_coding_genes(results):
+    df_gtf = gtfparse.read_gtf(results.gtf_file)
     df_gtf = df_gtf[df_gtf['feature'] == 'gene']
     df_gtf = df_gtf[df_gtf['gene_type'] == 'protein_coding']
     protein_coding_genes = df_gtf['gene_name'].unique()
@@ -151,7 +151,7 @@ def main():
     parser.add_argument('--gene_ensp', '-oge', action='store', dest='gene_ensp', help='Gene to ensp output file location')
     parser.add_argument('--gene_isoname', '-ogi', action='store', dest='gene_isoname', help="Gene to isoname output file location") 
     parser.add_argument('--isoname_lens', '-oigl', action='store', dest='isoname_lens', help='Isoname length table output location')
-    parser.add_argument('--gen_lens', '-ogls', action='store', dest='gene_lens', help='Gene Length statistics output location')
+    parser.add_argument('--gene_lens', '-ogls', action='store', dest='gene_lens', help='Gene Length statistics output location')
     parser.add_argument('--protein_coding_genes', '-pcg', action='store', dest='pc_genes', help='Protein Coding genes output location')
     results = parser.parse_args()
 
@@ -164,7 +164,7 @@ def main():
     # Prepare Gene Length Table 
     GeneLenTab(df, results)
     
-    protein_coding_genes(results.gtf_file)
+    protein_coding_genes(results)
     
     
 

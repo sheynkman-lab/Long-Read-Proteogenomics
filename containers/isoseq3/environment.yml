@@ -10,4 +10,5 @@ dependencies:
   - bioconda::isoseq3
   - bioconda::pbbam
   - bioconda::pbmm2
+  - bioconda::bamtools 
   

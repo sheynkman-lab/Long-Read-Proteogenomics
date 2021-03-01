@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 """ 
-This module prepares a table comparing mass spec MM peptide results using different databases
+This module prepares a table comparing mass spec MM peptide results from gencode 
+against the fasta sequences of various orf calling methods
 
     Inputs:
     ------------------------------------------------------------------------------------------
@@ -16,7 +17,7 @@ This module prepares a table comparing mass spec MM peptide results using differ
     - table comparing pacbio coverage of Gencode peptide results from MM
     ------------------------------------------------------------------------------------------
 """
-
+#%%
 # Import Modules
 import pandas as pd 
 import re
@@ -27,26 +28,39 @@ from collections import defaultdict
 from builtins import any  
 from Bio import SeqIO
 
+#%%
 # Import Files
 parser = argparse.ArgumentParser(description='Process peptide related input file locations')
-parser.add_argument('--gene_to_isoname', '-gmap', action='store', dest='gene_isoname_file', help = 'Gene names to transcript names file location')
 parser.add_argument('--gc_pep', '-gc', action='store', dest='gc_pep_file', help='Genecode AllPeptides file location')
-parser.add_argument('--pb_pep', '-pb', action='store', dest='pb_ref_file', help='Pacbio AllPeptides file location')
+parser.add_argument('--gene_to_isoname', '-gmap', action='store', dest='gene_isoname_file', help = 'Gene names to transcript names file location')
+parser.add_argument('--pb_refined_fasta', '-pb', action='store', dest='pb_ref_file', help='Pacbio refined database fasta file location')
 parser.add_argument('--pb_6frm', '-sft', action='store', dest='pb_6frm_file', help='Pacbio Six Frame Translation file location')
+parser.add_argument('--pb_gene', action='store', dest='pb_gene', help='PB to Gene file')
+parser.add_argument("--cpat_all_orfs", action='store', dest='cpat_all_orfs')
+parser.add_argument("--cpat_best_orf", action='store', dest='cpat_best_orf')
+parser.add_argument("--cpat_orf_protein_fasta", action='store', dest='cpat_protein_fasta')
 parser.add_argument('-odir', '--output_directory', action='store', dest='odir', help = 'ouput directory')
 results = parser.parse_args()
-
-# Input Filepaths 
-"""gene_isoname_file = '../../results/PG_ReferenceTables/gene_to_isoname.tsv'
-gc_pep_file = '../../data/AllPeptides_Gencode.psmtsv'
-pb_6frm_file = '../../data/pacbio_6frm_database_gene_grouped.fasta'
-pb_refined_file = '../../data/jurkat_orf_refined.fasta'"""
 
 gene_isoname_file = results.gene_isoname_file
 gc_pep_file = results.gc_pep_file
 pb_refined_file = results.pb_ref_file 
 pb_6frm_file = results.pb_6frm_file
-
+pb_gene_file = results.pb_gene
+cpat_best_orf_file = results.cpat_best_orf 
+cpat_all_orfs_file = results.cpat_all_orfs 
+cpat_protein_sequence_file = results.cpat_protein_fasta
+#%%
+# Input Filepaths 
+# gene_isoname_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/gene_isoname.tsv'
+# gc_pep_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/AllPeptides_Gencode.psmtsv'
+# pb_refined_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/jurkat_orf_aggregated.fasta'
+# pb_6frm_file ='/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/jurkat.6frame.fasta'
+# pb_gene_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/pb_gene.tsv'
+# cpat_best_orf_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/jurkat.ORF_prob.best.tsv'
+# cpat_protein_sequence_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/jurkat.ORF_seqs.fa'
+# cpat_all_orfs_file = '/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/LRPG-Visualization/data/jurkat/jurkat.ORF_prob.tsv'
+#%%
 
 # loading gencode peptide data, initiate a dataframe
 df = pd.read_table(gene_isoname_file, header=None)
@@ -59,6 +73,13 @@ g_data = pd.read_table(gc_pep_file, usecols = g_cols)
 g_data.columns = ['pep_seq', 'acc', 'dct', 'qval']
 g_tdata = g_data[(g_data['qval'] <= 0.01) & (g_data['dct']=='T')].reset_index(drop=True)
 gc = g_tdata
+
+
+
+
+# pb to gene map
+df_pb_gene = pd.read_table(pb_gene_file)
+pb_gene = pd.Series(df_pb_gene.gene.values, index=df_pb_gene.pb_acc).to_dict()
 
 # replace each isoname with its gene name, explode distinct genes
 def get_gene_name(row):
@@ -82,14 +103,16 @@ gc['genes'] = gc.apply(get_gene_name, axis=1)
 # found 282 peptides with no matched gene, Rob troubleshooting issue (with parsing of lowercase chars)
 #gc[(gc['genes'] == 'no_match')]
 
-gc = gc.explode('genes')
+
 
 # ~5K peptides duplicated in the allpeptides file, due to peptides with diff. mods identified
 # gc[gc.duplicated(keep=False)]
 
-gc = gc.drop_duplicates()
+
 
 gc = gc[['genes', 'pep_seq']]
+gc = gc.explode('genes')
+gc = gc.drop_duplicates()
 gc.columns = ['gene', 'pep_seq']
 gc_gene = gc.groupby('gene')['pep_seq'].apply(list).reset_index(name='gc_peps')
 gc_gene['peps_in_gc'] = gc_gene['gc_peps'].apply(len)
@@ -121,9 +144,6 @@ gc_gene[['in_{}'.format(db[0]),
          'frac_peps_in_{}'.format(db[0])]] \
          = gc_gene.apply(lambda x: get_pb_pep_coverage_stats(x, db[1]), axis=1, result_type='expand')
 
-# pb to gene map
-df_pb_gene = pd.read_table('../../data/pb_to_gene.tsv')
-pb_gene = pd.Series(df_pb_gene.gene.values, index=df_pb_gene.isoform).to_dict()
 
 ## add in info for orf refined (ben) 
 pb_refined = {}
@@ -140,15 +160,20 @@ gc_gene[['in_{}'.format(db[0]),
          = gc_gene.apply(lambda x: get_pb_pep_coverage_stats(x, db[1]), axis=1, result_type='expand')
 
 
+#%%
+
 ## add in info for best cpat orfs
-df_best_orfs = pd.read_table('../../data/jurkat_cpat.ORF_prob.best.tsv')[['ORF_ID', 'Hexamer']]
+df_best_orfs = pd.read_table(cpat_best_orf_file)
+#%%
+df_best_orfs = df_best_orfs[['ID', 'Hexamer']]
 df_best_orfs.columns = ['orf', 'coding_score']
 df_best_orfs['pb_acc'] = df_best_orfs['orf'].str.split('_').str[0]
 df_best_orfs['gene'] = df_best_orfs['pb_acc'].map(pb_gene)
 
+#%%
 # load in cpat prot seqs
 pb_seq = defaultdict()
-for rec in SeqIO.parse('../../data/jurkat_cpat.ORF_seqs.fa', 'fasta'):
+for rec in SeqIO.parse(cpat_protein_sequence_file, 'fasta'):
     pb_seq[rec.id] = str(rec.seq.translate())
 
 # ...continuted cpat best orf
@@ -162,7 +187,7 @@ gc_gene[['in_{}'.format(db[0]),
          = gc_gene.apply(lambda x: get_pb_pep_coverage_stats(x, db[1]), axis=1, result_type='expand')
 
 ## add in info for longest pb orf
-cpat = pd.read_table('../../data/jurkat_cpat.ORF_prob.tsv')
+cpat = pd.read_table(cpat_all_orfs_file)
 cpat['pb_acc'] = cpat['ID'].str.split('_').str[0]
 cpat = cpat.loc[cpat.groupby('pb_acc')['ORF'].idxmax()][['pb_acc', 'ID']]
 cpat.columns = ['pb_acc', 'orf']
@@ -182,5 +207,7 @@ odir = results.odir
 if not os.path.exists(odir):
     os.mkdir(odir)
 
+#%%
 ## write out file
 gc_gene.to_csv(os.path.join(odir, 'gc_pb_overlap_peptides.tsv'), sep='\t', index=None)
+# %%

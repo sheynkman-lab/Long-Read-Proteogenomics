@@ -1,0 +1,19 @@
+# You can use this file to create a conda environment for this pipeline:
+#   conda env create -f environment.yml
+name: proteogenomics-base
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # General utils
+  - python=3.7.3
+  - biopython
+  - numpy
+  - pandas
+  - gtfparse
+
+  - bioconda:bedtools
+  - bioconda:ucsc-gtftogenepred
+  - bioconda:ucsc-genepredtobed
+

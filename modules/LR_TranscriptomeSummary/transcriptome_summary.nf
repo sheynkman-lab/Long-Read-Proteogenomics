@@ -95,9 +95,10 @@ sqanti_classification = false
     output:
     file("gene_level_tab.tsv") into ch_gene_level
     file("sqanti_isoform_info.tsv") into ch_sqanti_isoform_info
+    file("*")
     
     script:
     """
-    transcriptome_summary.py --sq_out $sqanti_classification --tpm $tpm --ribo $ribo --ensg_to_gene $ensg_to_gene --enst_to_isoname $enst_to_isoname --len_stats $len_stats --odir /
+    transcriptome_summary.py --sq_out $sqanti_classification --tpm $tpm --ribo $ribo --ensg_to_gene $ensg_to_gene --enst_to_isoname $enst_to_isoname --len_stats $len_stats 
     """
   }

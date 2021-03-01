@@ -10,3 +10,4 @@ dependencies:
   - python=3.7.3
   - biopython
   - pandas
+  - gtfparse
