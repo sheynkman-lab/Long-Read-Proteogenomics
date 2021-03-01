@@ -2,6 +2,7 @@
 
 # derive a same-protein-sequence gencode file
 
+
 import pandas as pd
 from collections import defaultdict
 from Bio import SeqIO
@@ -32,15 +33,14 @@ def make_gencode_database(gencode_fasta, output_fasta, output_cluster):
 def main():
     parser = argparse.ArgumentParser("Makes Gencode Clusters of same protein sequence entries")
     parser.add_argument('--gencode_fasta', '-if', action='store', dest='gencode_fasta', help = 'gencode fasta file to group')
-    parser.add_argument('--output_fasta', '-of', action='store', dest='output_fasta', help = 'output file location of fasta file')
+    parser.add_argument('--output_fasta', '-of', action='store',dest='output_fasta', help = 'output file location of fasta file')
     parser.add_argument('--output_cluster', '-oc', action='store', dest='output_cluster', help = 'output cluster tsv file location')
     results = parser.parse_args()
-    print("parsed args")
+
     gencode_fasta = results.gencode_fasta
     output_fasta = results.output_fasta
     output_cluster = results.output_cluster
     make_gencode_database(gencode_fasta, output_fasta, output_cluster)
-    print("done")
 
 if __name__ == "__main__":
     main()
