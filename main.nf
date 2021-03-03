@@ -694,8 +694,8 @@ process metamorpheus_with_sample_specific_database{
     
     script:
         """
-        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings settings
-        dotnet /metamorpheus/CMD.dll -d $orf_fasta -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
         """
 }
 
@@ -716,8 +716,8 @@ process metamorpheus_with_gencode_database{
     
     script:
         """
-        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings settings
-        dotnet /metamorpheus/CMD.dll -d $gencode_fasta -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
+        dotnet /metamorpheus/CMD.dll -d $gencode_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
         """
 }
 
