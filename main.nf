@@ -292,8 +292,7 @@ else{
         --runMode genomeGenerate \
         --genomeDir star_genome \
         --genomeFastaFiles $genome_fasta \
-        --sjdbGTFfile $gencode_gtf \
-        --genomeSAindexNbases 11
+        --sjdbGTFfile $gencode_gtf 
         """
     }
 }
