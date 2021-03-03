@@ -180,9 +180,14 @@ process make_gencode_database {
   """
   make_gencode_database.py \
   --gencode_fasta $gencode_translation_fasta \
-  --output_fasta gencode.fasta \
+  --output_fasta gencode_protein.fasta \
   --output_cluster gencode_isoname_clusters.tsv
   """
+}
+
+ch_genome_fasta.into{
+  ch_genome_protein_fasta_metamorpheus
+  ch_genome_protein_fasta_mapping
 }
 
 
@@ -614,6 +619,7 @@ ch_refined_fasta.into{
   ch_refined_fasta_metamorpheus
   ch_refined_fasta_pep_analysis
   ch_refined_fasta_peptide_gtf
+  ch_refined_fasta_mapping
 }
 
 
@@ -676,7 +682,8 @@ process metamorpheus_with_sample_specific_database{
     output:
         file("toml/*")
         file("search_results/*")
-        file("search_results/Task1SearchTask/AllPeptides.psmtsv") into ch_sample_specific_peptides
+        file("search_results/Task1SearchTask/AllPeptides.psmtsv") into ch_pacbio_peptides
+        file("search_results/Task1SearchTask/AllProteinGroups.tsv") into ch_pacbio_protein_groups
     
     script:
         """
@@ -692,13 +699,14 @@ process metamorpheus_with_gencode_database{
       params.mass_spec != false
 
     input:
-        file(gencode_fasta) from ch_genome_protein_fasta
+        file(gencode_fasta) from ch_genome_protein_fasta_metamorpheus
         file(mass_spec) from ch_mass_spec_for_reference.collect()
 
     output:
         file("toml/*")
         file("search_results/*")
         file("search_results/Task1SearchTask/AllPeptides.psmtsv") into ch_gencode_peptides
+        file("search_results/Task1SearchTask/AllProteinGroups.tsv") into ch_gencode_protein_groups
     
     script:
         """
@@ -857,7 +865,7 @@ process make_peptide_gtf{
 
   input:
     file(sample_gtf) from ch_pb_cds_peptide_gtf
-    file(peptides) from ch_sample_specific_peptides
+    file(peptides) from ch_pacbio_peptides
     file(pb_gene) from ch_pb_gene_peptide_gtf
     file(refined_fasta) from ch_refined_fasta_peptide_gtf
   output:
@@ -913,12 +921,49 @@ Accession Mapping
 ---------------------------------------------------*/
 // Have "exact" sequence accession mapping (simple py script)
 // Other option is blast-based or fuzzy-matching-based sequence comparisons
+process accession_mapping{
+  publishDir "${params.outdir}/accession_mapping/", mode: 'copy'
 
+  input:
+    file(pacbio_fasta) from ch_refined_fasta_mapping
+    file(gencode_fasta) from ch_genome_protein_fasta_mapping
+  
+  output:
+    file("*_map_atlenseq.tsv") into ch_mapped_accessions_gencode_pacbio
+  
+  script:
+    """
+    accession_mapping.py \
+    --ref_fasta $gencode_fasta \
+    --other_fasta $pacbio_fasta \
+    --ref_name gencode \
+    --other_name pacbio
+    """
+}
 
 
 /*--------------------------------------------------
 Protein Inference Analysis
 ---------------------------------------------------*/
+process protein_inference_analysis{
+    publishDir "${params.outdir}/protein_inference_analysis/", mode: 'copy'
+    input: 
+      file(pacbio_protein_groups) from ch_pacbio_protein_groups
+      file(gencode_protein_groups) from ch_gencode_protein_groups
+    output:
+      file("*")
+    script:
+      """
+      protein_inference_analysis.py \
+      pg_fileOne $gencode_protein_groups \
+      pg_fileTwo $pacbio_protein_groups \
+      mapping $mapping \
+      output ./
+
+      """
+
+  
+}
 // TODO - implement Rachel's code that does a cross-comparison of protein groups
 // NOTE - her code requires a map from the accession mapping module
 
