@@ -173,10 +173,3 @@ if __name__=="__main__":
 #             chromisome = line.split("\t")[0].strip()
 #             if chromisome in canonical_chromisomes:
 #                 gencode_out.write(line)
-
-
-# %%
-import pandas as pd
-classification = pd.read_table("/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/Long-Read-Proteogenomics/data/results/jurkat/jurkat_classification.txt")
-
-# %%

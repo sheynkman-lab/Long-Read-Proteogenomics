@@ -193,9 +193,6 @@ def orf_calling(orf, num_orfs_per_accession = 1):
         
     called_orf = orf.groupby('pb_acc').apply(call_orf).reset_index(drop=True)
 
-    called_orf = called_orf[['pb_acc','len','orf_frame', 'orf_start', 'orf_end', 'orf_len',
-       'fickett', 'hexamer', 'coding_score', 'orf_rank', 'seqname','strand','gencode_atg',
-       'upstream_atgs', 'atg_rank', 'score_rank', 'orf_calling_confidence','atg_score', 'orf_score', 'gene', 'FL', 'CPM']]
     return called_orf
 
 
@@ -252,6 +249,9 @@ def main():
     orfs = pd.merge(orfs, classification,left_on = 'pb_acc', right_on='isoform', how = 'left')
     orfs = orfs.drop(columns = ['isoform'])
     logging.info("Saving results...")
+    orfs = orfs[['pb_acc','len','orf_frame', 'orf_start', 'orf_end', 'orf_len',
+       'fickett', 'hexamer', 'coding_score', 'orf_rank', 'seqname','strand','gencode_atg',
+       'upstream_atgs', 'atg_rank', 'score_rank', 'orf_calling_confidence','atg_score', 'orf_score', 'gene', 'FL', 'CPM']]
     orfs.to_csv(results.output, index = False, sep = "\t")
 
 

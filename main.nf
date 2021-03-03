@@ -292,7 +292,8 @@ else{
         --runMode genomeGenerate \
         --genomeDir star_genome \
         --genomeFastaFiles $genome_fasta \
-        --sjdbGTFfile $gencode_gtf 
+        --sjdbGTFfile $gencode_gtf \
+        --genomeSAindexNbases 11
         """
     }
 }
@@ -775,7 +776,7 @@ process make_pacbio_cds_gtf {
   make_pacbio_cds_gtf.py \
   --name ${params.name} \
   --sample_gtf $sample_gtf \
-  --refined_orfs $refined_info \
+  --refined_database $refined_info \
   --called_orfs $called_orfs \
   --pb_gene $pb_gene \
   --include_transcript yes
@@ -783,7 +784,7 @@ process make_pacbio_cds_gtf {
   make_pacbio_cds_gtf.py \
   --name ${params.name}_no_transcript \
   --sample_gtf $sample_gtf \
-  --refined_orfs $refined_info \
+  --refined_database $refined_info \
   --called_orfs $called_orfs \
   --pb_gene $pb_gene \
   --include_transcript no
