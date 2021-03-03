@@ -58,12 +58,12 @@ Channel
     
 Channel
     .value(file(params.gencode_transcript_fasta))
-    .ifEmpty { error "Cannot find any gencode_fasta file for parameter --gencode_transcript_fasta: ${params.gencode_transcript_fasta}" }
+    .ifEmpty { error "Cannot find any file for parameter --gencode_transcript_fasta: ${params.gencode_transcript_fasta}" }
     .set { ch_gencode_transcript_fasta }  
 
 Channel
     .value(file(params.gencode_translation_fasta))
-    .ifEmpty { error "Cannot find any gencode_fasta file for parameter --gencode_translation_fasta: ${params.gencode_translation_fasta}" }
+    .ifEmpty { error "Cannot find any file for parameter --gencode_translation_fasta: ${params.gencode_translation_fasta}" }
     .set { ch_gencode_translation_fasta }  
 
 Channel
@@ -73,9 +73,9 @@ Channel
 
 // TODO - rename this to "--genome_fasta"
 Channel
-    .value(file(params.gencode_fasta))
-    .ifEmpty { error "Cannot find any seq file for parameter --gencode_fasta: ${params.gencode_fasta}" }
-    .set { ch_gencode_fasta }  
+    .value(file(params.genome_fasta))
+    .ifEmpty { error "Cannot find any seq file for parameter --genome_fasta: ${params.genome_fasta}" }
+    .set { ch_genome_fasta }  
 
 Channel
     .value(file(params.primers_fasta))
@@ -198,7 +198,7 @@ process isoseq3 {
   input:
   file(sample_ccs) from ch_sample_ccs
   // TODO - rename ch_genome_fasta
-  file(gencode_fasta) from ch_gencode_fasta
+  file(genome_fasta) from ch_genome_fasta
   file(primers_fasta) from ch_primers_fasta
   
   output:
@@ -228,7 +228,7 @@ process isoseq3 {
   isoseq3 cluster ${params.name}.flnc.bam ${params.name}.clustered.bam --verbose --use-qvs
 
   # align reads to the genome, takes few minutes (40 core machine)
-  pbmm2 align $gencode_fasta ${params.name}.clustered.hq.bam ${params.name}.aligned.bam --preset ISOSEQ --sort -j ${task.cpus} --log-level INFO
+  pbmm2 align $genome_fasta ${params.name}.clustered.hq.bam ${params.name}.aligned.bam --preset ISOSEQ --sort -j ${task.cpus} --log-level INFO
 
   # collapse redundant reads
   isoseq3 collapse ${params.name}.aligned.bam ${params.name}.collapsed.gff
@@ -275,7 +275,7 @@ else{
 
         input :
             file(gencode_gtf) from ch_gencode_gtf
-            file(gencode_fasta) from ch_gencode_fasta
+            file(genome_fasta) from ch_genome_fasta
 
         output:
             path("star_genome") into ch_genome_dir
@@ -286,7 +286,7 @@ else{
         STAR --runThreadN  ${task.cpus} \
         --runMode genomeGenerate \
         --genomeDir star_genome \
-        --genomeFastaFiles $gencode_fasta \
+        --genomeFastaFiles $genome_fasta \
         --sjdbGTFfile $gencode_gtf \
         --genomeSAindexNbases 11
         """
@@ -305,7 +305,6 @@ if(params.fastq_read_1 != false | params.fastq_read_2 !=false){
             path(genome_dir) from ch_genome_dir
 
         output:
-            // TODO - don't recommend keeping all files, the BAM/SAM files are large
             file("*SJ.out.tab") into ch_star_junction
             file("*Log.final.out")
 
@@ -338,8 +337,7 @@ process sqanti3 {
   input:
   file(fl_count) from ch_fl_count
   file(gencode_gtf) from ch_gencode_gtf
-  // TODO - change to ch_genome_fasta, also need to change in commands below
-  file(gencode_fasta) from ch_gencode_fasta
+  file(genome_fasta) from ch_genome_fasta
   file(sample_gtf) from ch_isoseq_gtf
   file(star_junction) from ch_star_junction
   
@@ -358,7 +356,7 @@ process sqanti3 {
     sqanti3_qc.py \
     $sample_gtf \
     $gencode_gtf \
-    $gencode_fasta \
+    $genome_fasta \
     --skipORF \
     -o ${params.name} \
     --fl_count $fl_count  \
@@ -369,7 +367,7 @@ process sqanti3 {
     sqanti3_qc.py \
     $sample_gtf \
     $gencode_gtf \
-    $gencode_fasta \
+    $genome_fasta \
     --skipORF \
     -o ${params.name} \
     --fl_count $fl_count  \
@@ -429,15 +427,6 @@ ch_sample_gtf.into{
   ch_sample_gtf_orf
   ch_sample_gtf_cds
 }
-
-
-// TODO - does this need to stay?
-/*
-Channel
-  .value(file(params.sample_classification))
-  .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.sample_classification}" }
-  .set { ch_sample_classification } 
- */ 
 
 
 /*--------------------------------------------------
@@ -502,7 +491,6 @@ process transcriptome_summary {
   """
 }
 
-// TODO - why put into different channel names versus using the same channel?
 ch_pb_gene.into{
   ch_pb_gene_orf
   ch_pb_gene_cds
@@ -526,7 +514,6 @@ process cpat {
   file(logit_model) from ch_logit_model
   file(sample_fasta) from ch_sample_fasta_cpat
 
-  // TODO - do we use "jurkat.ORF_seqs.fa"? downstream, potentially not output? 
   output:
   file("${params.name}.ORF_prob.tsv") into ch_cpat_all_orfs
   file("${params.name}.ORF_prob.best.tsv") into ch_cpat_best_orf
@@ -609,10 +596,9 @@ process refine_orf_database {
   file(protein_coding_genes) from ch_protein_coding_genes_db
   
   output:
-  // TODO - Ben will modify python script so output is only <sample>_orf_refined.tsv (previously *_orf_aggregated.tsv), same for fasta
   file("*")
-  file("${params.name}_orf_aggregated.tsv") into ch_refined_info
-  file("${params.name}_orf_aggregated.fasta") into ch_refined_fasta
+  file("${params.name}_orf_refined.tsv") into ch_refined_info
+  file("${params.name}_orf_refined.fasta") into ch_refined_fasta
   
   script:
   """
@@ -928,22 +914,6 @@ Accession Mapping
 // Have "exact" sequence accession mapping (simple py script)
 // Other option is blast-based or fuzzy-matching-based sequence comparisons
 
-
-/*--------------------------------------------------
-Visualization Tracks
----------------------------------------------------*/
-// TODO - implement this module
-// make cds gtf (already done in other module)
-// make peptide gtf
-// make custom ranges -> option to do this for:
-//  1) gencode + pacbio cds ranges
-//  2) gencode + pacbio exon/cds ranges
-//  3) pacbio cds ranges only
-//  4) pacbio exon/cds ranges
-// additional options for:
-//  1) color by abundance
-//  2) color peptides by uniqueness
-//  3) color pacbio transcripts by novelty
 
 
 /*--------------------------------------------------
