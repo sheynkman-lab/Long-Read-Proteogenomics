@@ -9,6 +9,9 @@
 //     .set { ch_orf_calls } 
 
 
+// TODO - is orf_fasta the refined database? If so, can we call this parameter --refined_protein_db or somethign like that?
+// TODO cont. - orf typically means the nt sequence underlying the protein
+
 Channel
     .value(file(params.orf_fasta))
     .ifEmpty { error "Cannot find gtf file for parameter --orf_fasta: ${params.orf_fasta}" }
@@ -28,16 +31,20 @@ Channel
 
 process mass_spec_raw_convert{
     publishDir "${params.outdir}/raw_convert/", mode: 'copy'
+
     input:
         file(raw_file) from ch_mass_spec_raw
+
     output:
         file("*") into ch_mass_spec_converted
+
     script:
         """
         wine msconvert $raw_file --filter "peakPicking true 1-"
         """
 }
 
+// TODO - can you explain to me why this was needed?
 ch_mass_spec_combined = ch_mass_spec_mzml.concat(ch_mass_spec_converted)
 
 process metamorpheus_with_sample_specific_database{
@@ -53,7 +60,7 @@ process metamorpheus_with_sample_specific_database{
     output:
         file("toml/*")
         file("search_results/*")
-        file("search_reseults/Task1SearchTask/AllPeptides.psmtsv") into ch_sample_specific_peptides
+        file("search_results/Task1SearchTask/AllPeptides.psmtsv") into ch_sample_specific_peptides
     
     script:
         """
@@ -68,6 +75,7 @@ process metamorpheus_with_sample_specific_database{
 
 //     input:
 //         // file(orf_calls) from ch_orf_calls
+           // TODO - is the below variable specific enough? e.g., ch_gencode_translations_fasta
 //         file(gencode_fasta) from ch_gencode_fasta
 //         // file(toml) from ch_toml
 //         file(mass_spec) from ch_mass_spec_combined.collect()

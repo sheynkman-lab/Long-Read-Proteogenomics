@@ -3,14 +3,14 @@
  * Copyright (c) 2020, Sheynkman Lab and the authors.
  *
  *   This file is part of 'proteogenomics-nf' a pipeline repository to run
- *   Gloria Sheynkman, Mike Shortreed and author's proteogenomics pipeline.
+ *   the "long read proteogenomics" pipeline.
  *
- *   In this portion of the pipeline, LR_ORFCalling, the open reading frames are
- *   called, analyzed and filtered.
  *
  * @authors
- * Gloria Sheynkman
  * Ben Jordan
+ * Rachel Miller
+ * Gloria Sheynkman
+ * Christina Chatzipantsiou
  * Anne Deslattes Mays (adeslat@scitechcon.org)
  */
 
@@ -58,23 +58,24 @@ Channel
     
 Channel
     .value(file(params.gencode_transcript_fasta))
-    .ifEmpty { error "Cannot find any gencode_fasta file for parameter --gencode_fasta: ${params.gencode_transcript_fasta}" }
+    .ifEmpty { error "Cannot find any file for parameter --gencode_transcript_fasta: ${params.gencode_transcript_fasta}" }
     .set { ch_gencode_transcript_fasta }  
 
 Channel
     .value(file(params.gencode_translation_fasta))
-    .ifEmpty { error "Cannot find any gencode_fasta file for parameter --gencode_fasta: ${params.gencode_translation_fasta}" }
+    .ifEmpty { error "Cannot find any file for parameter --gencode_translation_fasta: ${params.gencode_translation_fasta}" }
     .set { ch_gencode_translation_fasta }  
 
 Channel
     .value(file(params.sample_ccs))
     .ifEmpty { error "Cannot find file for parameter --sample_ccs: ${params.sample_ccs}" }
     .set { ch_sample_ccs }   
-    
+
+// TODO - rename this to "--genome_fasta"
 Channel
-    .value(file(params.gencode_fasta))
-    .ifEmpty { error "Cannot find any seq file for parameter --gencode_fasta: ${params.gencode_fasta}" }
-    .set { ch_gencode_fasta }  
+    .value(file(params.genome_fasta))
+    .ifEmpty { error "Cannot find any seq file for parameter --genome_fasta: ${params.genome_fasta}" }
+    .set { ch_genome_fasta }  
 
 Channel
     .value(file(params.primers_fasta))
@@ -105,11 +106,13 @@ Channel
     .from(params.fastq_read_1, params.fastq_read_2)
     .filter(String)
     .flatMap{ files(it) }
-   .set{ ch_fastq_reads }
+    .set{ ch_fastq_reads }
+
 
 /*--------------------------------------------------
 Reference Tables 
 ---------------------------------------------------*/
+
 process generate_reference_tables {
   tag "${gencode_gtf}, ${gencode_transcript_fasta}"
   cpus 1
@@ -142,6 +145,8 @@ process generate_reference_tables {
   --protein_coding_genes protein_coding_genes.txt
   """
 }
+
+// partition channels for use by multiple modules
 ch_protein_coding_genes.into{
   ch_protein_coding_genes_db
   ch_protein_coding_genes_filter
@@ -152,9 +157,11 @@ ch_ensg_gene.into{
   ch_ensg_gene_six_frame
 }
 
+
 /*--------------------------------------------------
 Gencode Database
 ---------------------------------------------------*/
+
 process make_gencode_database {
   tag "${gencode_translation_fasta}"
   cpus 1
@@ -164,16 +171,23 @@ process make_gencode_database {
   file(gencode_translation_fasta) from ch_gencode_translation_fasta
   
   output:
+  // TODO - change to ch_gencode_protein_fasta
   file("gencode_protein.fasta") into ch_genome_protein_fasta
+  // TODO - what happens when a file doesn't go into a variable - does it get output to results?
   file("gencode_isoname_clusters.tsv")
   
   script:
   """
   make_gencode_database.py \
   --gencode_fasta $gencode_translation_fasta \
-  --output_fasta gencode.fasta \
+  --output_fasta gencode_protein.fasta \
   --output_cluster gencode_isoname_clusters.tsv
   """
+}
+
+ch_genome_fasta.into{
+  ch_genome_protein_fasta_metamorpheus
+  ch_genome_protein_fasta_mapping
 }
 
 
@@ -188,28 +202,38 @@ process isoseq3 {
 
   input:
   file(sample_ccs) from ch_sample_ccs
-  file(gencode_fasta) from ch_gencode_fasta
+  // TODO - rename ch_genome_fasta
+  file(genome_fasta) from ch_genome_fasta
   file(primers_fasta) from ch_primers_fasta
   
   output:
-  file("*")
   file("${params.name}.collapsed.gff") into ch_isoseq_gtf
-  // file("${params.name}.collapsed.fasta") into ch_isoseq_fasta
   file("${params.name}.collapsed.abundance.txt") into ch_fl_count
+  file("${params.name}.collapsed.fasta")
+  file("${params.name}.collapsed.report.json")
+  file("${params.name}.demult.lima.summary")
+  file("${params.name}.flnc.bam")
+  file("${params.name}.flnc.bam.pbi")
+  file("${params.name}.flnc.filter_summary.json")
   script:
   """
+  # ensure that only qv10 reads from ccs are input
   bamtools filter -tag 'rq':'>=0.90' -in $sample_ccs -out filtered.$sample_ccs 
-  # create an index
+
+  # create an index for the ccs bam
   pbindex filtered.$sample_ccs
 
+  # find and remove adapters/barcodes
   lima --isoseq --dump-clips --peek-guess -j ${task.cpus} filtered.$sample_ccs $primers_fasta ${params.name}.demult.bam
+
+  # filter for non-concatamer, polya containing reads
   isoseq3 refine --require-polya ${params.name}.demult.NEB_5p--NEB_3p.bam $primers_fasta ${params.name}.flnc.bam
 
   # clustering of reads, can only make faster by putting more cores on machine (cannot parallelize)
   isoseq3 cluster ${params.name}.flnc.bam ${params.name}.clustered.bam --verbose --use-qvs
 
   # align reads to the genome, takes few minutes (40 core machine)
-  pbmm2 align $gencode_fasta ${params.name}.clustered.hq.bam ${params.name}.aligned.bam --preset ISOSEQ --sort -j ${task.cpus} --log-level INFO
+  pbmm2 align $genome_fasta ${params.name}.clustered.hq.bam ${params.name}.aligned.bam --preset ISOSEQ --sort -j ${task.cpus} --log-level INFO
 
   # collapse redundant reads
   isoseq3 collapse ${params.name}.aligned.bam ${params.name}.collapsed.gff
@@ -219,7 +243,7 @@ process isoseq3 {
 
 
 
-
+// TODO - what was this code snippet for? runnning partially?
 /*
 Channel
   .value(file(params.fl_count))
@@ -236,13 +260,12 @@ Channel
   .set { ch_sample_fasta } 
 */
 
+
 /*--------------------------------------------------
-SQANTI3
+STAR Alignment
 ---------------------------------------------------*/
 
-
-
-   
+// TODO - "== true" ?   
 if(params.star_genome_dir != false){
     Channel
     .fromPath(params.star_genome_dir, type:'dir')
@@ -251,12 +274,13 @@ if(params.star_genome_dir != false){
 else{
     process star_generate_genome{
         cpus params.max_cpus
-        publishDir "${params.outdir}/star", mode: "copy"
+        
         when:
         (params.fastq_read_1 != false | params.fastq_read_2 !=false) & params.star_genome_dir == false
+
         input :
             file(gencode_gtf) from ch_gencode_gtf
-            file(gencode_fasta) from ch_gencode_fasta
+            file(genome_fasta) from ch_genome_fasta
 
         output:
             path("star_genome") into ch_genome_dir
@@ -267,12 +291,11 @@ else{
         STAR --runThreadN  ${task.cpus} \
         --runMode genomeGenerate \
         --genomeDir star_genome \
-        --genomeFastaFiles $gencode_fasta \
+        --genomeFastaFiles $genome_fasta \
         --sjdbGTFfile $gencode_gtf \
         --genomeSAindexNbases 11
         """
     }
-
 }
 
 if(params.fastq_read_1 != false | params.fastq_read_2 !=false){
@@ -281,13 +304,14 @@ if(params.fastq_read_1 != false | params.fastq_read_2 !=false){
         publishDir "${params.outdir}/star", mode: "copy"
         when:
             params.fastq_read_1 != false | params.fastq_read_2 !=false
+
         input :
             file(fastq_reads) from ch_fastq_reads.collect()
             path(genome_dir) from ch_genome_dir
 
         output:
-            file("*")
             file("*SJ.out.tab") into ch_star_junction
+            file("*Log.final.out")
 
         script:
         """
@@ -306,6 +330,9 @@ else{
 }
 
 
+/*--------------------------------------------------
+SQANTI3
+---------------------------------------------------*/
 
 process sqanti3 {
   tag "${fl_count}, ${gencode_gtf}, ${gencode_fasta}, ${sample_gtf},"
@@ -313,10 +340,9 @@ process sqanti3 {
   publishDir "${params.outdir}/sqanti3/", mode: 'copy'
 
   input:
-  
   file(fl_count) from ch_fl_count
   file(gencode_gtf) from ch_gencode_gtf
-  file(gencode_fasta) from ch_gencode_fasta
+  file(genome_fasta) from ch_genome_fasta
   file(sample_gtf) from ch_isoseq_gtf
   file(star_junction) from ch_star_junction
   
@@ -325,7 +351,9 @@ process sqanti3 {
   file("${params.name}_classification.txt") into ch_sample_unfiltered_classification
   file("${params.name}_corrected.fasta") into ch_sample_unfiltered_fasta
   file("${params.name}_corrected.gtf") into ch_sample_unfiltered_gtf
-  file("*")
+  file("${params.name}_junctions.txt")
+  file("${params.name}_sqanti_report.pdf")
+  file("${params.name}.params.txt")
   
   script:
   if(params.fastq_read_1 == false & params.fastq_read_2 ==false)
@@ -333,7 +361,7 @@ process sqanti3 {
     sqanti3_qc.py \
     $sample_gtf \
     $gencode_gtf \
-    $gencode_fasta \
+    $genome_fasta \
     --skipORF \
     -o ${params.name} \
     --fl_count $fl_count  \
@@ -344,7 +372,7 @@ process sqanti3 {
     sqanti3_qc.py \
     $sample_gtf \
     $gencode_gtf \
-    $gencode_fasta \
+    $genome_fasta \
     --skipORF \
     -o ${params.name} \
     --fl_count $fl_count  \
@@ -354,62 +382,78 @@ process sqanti3 {
   //
 }
 
+// TODO - add an additional filter for only nnc with illumina coverage
 process filter_sqanti {
   publishDir "${params.outdir}/sqanti3-filtered/", mode: 'copy'
+
   input:
     file(classification) from ch_sample_unfiltered_classification
     file(sample_fasta) from ch_sample_unfiltered_fasta
     file(sample_gtf) from ch_sample_unfiltered_gtf
     file(protein_coding_genes) from ch_protein_coding_genes
     file(ensg_gene) from ch_ensg_gene_filter
+
   output:
     file("filtered_${params.name}_classification.txt") into ch_sample_classification
     file("filtered_${params.name}_corrected.fasta") into ch_sample_fasta
     file("filtered_${params.name}_corrected.gtf") into ch_sample_gtf
-  
+
   script:
     """
     filter_sqanti.py \
     --sqanti_classification $classification \
-    --sqanti_corrected_gtf $sample_gtf \
     --sqanti_corrected_fasta $sample_fasta \
+    --sqanti_corrected_gtf $sample_gtf \
+    --protein_coding_genes $protein_coding_genes \
+    --ensg_gene $ensg_gene \
     --filter_protein_coding yes \
     --filter_intra_polyA yes \
     --filter_template_switching yes \
-    --protein_coding_genes $protein_coding_genes \
-    --ensg_gene $ensg_gene \
     --percent_A_downstream_threshold 95 \
     --structural_categories_level strict \
     """
 }
-/*
-Channel
-  .value(file(params.sample_classification))
-  .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.sample_classification}" }
-  .set { ch_sample_classification } 
 
- */ 
+ch_sample_classification.into{
+  ch_sample_classification_six_frame
+  ch_sample_classification_transcriptome
+  ch_sample_classification_orf
+
+}
+
+ch_sample_fasta.into{
+  ch_sample_fasta_cpat
+  ch_sample_fasta_six_frame
+  ch_sample_fasta_orf
+  ch_sample_fasta_refine
+}
+
+ch_sample_gtf.into{
+  ch_sample_gtf_orf
+  ch_sample_gtf_cds
+}
 
 
 /*--------------------------------------------------
 Six-Frame Translation
 ---------------------------------------------------*/
-process make_pacbio_6frm_gene_grouped {
+
+process six_frame_translation {
     cpus 1
     tag "${classification}, ${ensg_gene}"
     publishDir "${params.outdir}/pacbio_6frm_gene_grouped/", mode: 'copy'
 
     input:
-    file(classification) from ch_sample_classification
+    file(classification) from ch_sample_classification_six_frame
     file(ensg_gene) from ch_ensg_gene_six_frame
-    file(sample_fasta) from ch_sample_fasta
+    file(sample_fasta) from ch_sample_fasta_six_frame
 
     output:
     file("${params.name}.6frame.fasta") into ch_six_frame
 
     script:
     """
-    make_pacbio6frm_gene_grouped.py \
+    six_frame_translation.py \
     --iso_annot $classification \
     --ensg_gene $ensg_gene \
     --sample_fasta $sample_fasta \
@@ -421,19 +465,20 @@ process make_pacbio_6frm_gene_grouped {
 /*--------------------------------------------------
 Transcriptome Summary 
 ---------------------------------------------------*/
+
 process transcriptome_summary {
   cpus 1
   publishDir "${params.outdir}/transcriptome_summary/", mode: 'copy'
 
   input:
-  file(sqanti_classification) from ch_sample_classification
+  file(sqanti_classification) from ch_sample_classification_transcriptome
   file(tpm) from ch_sample_kallisto
   file(ribo) from ch_normalized_ribo_kallisto
   file(ensg_to_gene) from ch_ensg_gene
   file(enst_to_isoname) from ch_enst_isoname
   file(len_stats) from ch_gene_lens
   
-  
+  // TODO - sqanti_isoform_info.tsv outputs isonames with underscores, convert back to hyphens
   output:
   file("gene_level_tab.tsv") into ch_gene_level
   file("sqanti_isoform_info.tsv") into ch_sqanti_isoform_info
@@ -454,15 +499,15 @@ process transcriptome_summary {
 ch_pb_gene.into{
   ch_pb_gene_orf
   ch_pb_gene_cds
-  ch_pb_gene_peptide
-
+  ch_pb_gene_peptide_analysis
+  ch_pb_gene_peptide_gtf
 }
-
 
 
 /*--------------------------------------------------
 CPAT
 ---------------------------------------------------*/
+
 process cpat {
   cpus 1
   tag "${hexamer}, ${logit_model}, ${sample_fasta}"
@@ -470,12 +515,10 @@ process cpat {
   publishDir "${params.outdir}/cpat/", mode: 'copy'
 
   input:
-  
   file(hexamer) from ch_hexamer
   file(logit_model) from ch_logit_model
-  file(sample_fasta) from ch_sample_fasta
-  
-  
+  file(sample_fasta) from ch_sample_fasta_cpat
+
   output:
   file("${params.name}.ORF_prob.tsv") into ch_cpat_all_orfs
   file("${params.name}.ORF_prob.best.tsv") into ch_cpat_best_orf
@@ -505,6 +548,7 @@ ch_cpat_all_orfs.into{
 /*--------------------------------------------------
 ORF Calling 
 ---------------------------------------------------*/
+
 process orf_calling {
   tag "${orf_coord}, ${gencode_gtf}, ${sample_gtf}, ${pb_gene}, ${classification}, ${sample_fasta} "
   cpus params.max_cpus
@@ -513,11 +557,10 @@ process orf_calling {
   input:
   file(cpat_orfs) from ch_cpat_all_orfs_for_orf_calling
   file(gencode_gtf) from ch_gencode_gtf
-  file(sample_gtf) from ch_sample_gtf
-  file(sample_fasta) from ch_sample_fasta
+  file(sample_gtf) from ch_sample_gtf_orf
+  file(sample_fasta) from ch_sample_fasta_orf
   file(pb_gene) from ch_pb_gene_orf
-  file(classification) from ch_sample_classification
-  
+  file(classification) from ch_sample_classification_orf
   
   output:
   file("${params.name}_best_orf.tsv") into ch_best_orf
@@ -536,86 +579,75 @@ process orf_calling {
   """
 }
 
+ch_best_orf.into{
+  ch_best_orf_refine
+  ch_best_orf_cds
+}
+
 /*--------------------------------------------------
 Refined DB Generation 
 ---------------------------------------------------*/
-process generate_refined_database {
+
+process refine_orf_database {
   cpus 1
   tag "${best_orfs}, ${sample_fasta}, ${params.protein_coding_only}, ${protein_coding_genes}, ${params.refine_cutoff}" 
 
   publishDir "${params.outdir}/refined_database/", mode: 'copy'
 
   input:
-  file(best_orfs) from ch_best_orf
-  file(sample_fasta) from ch_sample_fasta
+  // TODO - would short params go here too? or do they get called within the script line (as it is now)
+  file(best_orfs) from ch_best_orf_refine
+  file(sample_fasta) from ch_sample_fasta_refine
   file(protein_coding_genes) from ch_protein_coding_genes_db
   
   output:
   file("*")
-  file("${params.name}_orf_aggregated.tsv") into ch_refined_info
-  file("${params.name}_orf_aggregated.fasta") into ch_refined_fasta
+  file("${params.name}_orf_refined.tsv") into ch_refined_info
+  file("${params.name}_orf_refined.fasta") into ch_refined_fasta
   
   script:
   """
-  refine_orf.py \
+  refine_orf_database.py \
+  --name ${params.name} \
   --orfs $best_orfs \
   --pb_fasta $sample_fasta \
-  --redundant ${params.name}_redundant_accessions.txt \
-  --combined_tsv ${params.name}_orf_combined.tsv \
-  --combined_fasta ${params.name}_orf_combined.fasta \
-  --agg_tsv ${params.name}_orf_aggregated.tsv \
-  --agg_fasta ${params.name}_orf_aggregated.fasta \
-  --protein_coding_only ${params.protein_coding_only} \
-  --protein_coding_genes $protein_coding_genes \
   --coding_score_cutoff ${params.refine_cutoff} \
-  
   """
 }
 
-/*--------------------------------------------------
-PacBio CDS GTF 
----------------------------------------------------*/
-
-process make_pacbio_cds_gtf {
-  cpus 1
-
-  publishDir "${params.outdir}/pacbio_cds/", mode: 'copy'
-
-  input:
-  file(sample_gtf) from ch_sample_gtf
-  file(agg_orfs) from ch_refined_info
-  file(refined_orfs) from ch_best_orf
-  file(pb_gene) from ch_pb_gene_cds
-  
-  output:
-  file("${params.name}_cds.gtf") into ch_orf_cds
-  
-  script:
-  """
-  make_pacbio_cds_gtf.py \
-  --sample_gtf $sample_gtf \
-  --agg_orfs $agg_orfs \
-  --refined_orfs $refined_orfs \
-  --pb_gene $pb_gene \
-  --output_cds ${params.name}_cds.gtf
-  """
+ch_refined_fasta.into{
+  ch_refined_fasta_metamorpheus
+  ch_refined_fasta_pep_analysis
+  ch_refined_fasta_peptide_gtf
+  ch_refined_fasta_mapping
 }
 
 
-if params.mass_spec != false{
+
+
+if(params.mass_spec != false){
   Channel
     .fromPath("${params.mass_spec}/*.raw")
     .set{ch_mass_spec_raw}
-
   Channel
       .fromPath("${params.mass_spec}/*.{mzml,mzML}")
       .set{ch_mass_spec_mzml}
+}
+else{
+  Channel
+    .from("no mass spec")
+    .set{ch_mass_spec_raw}
+  Channel
+    .from("no mass spec")
+    .set{ch_mass_spec_mzml}
+
 }
 
 
 /*--------------------------------------------------
 MetaMorpheus wtih Sample Specific Database
 ---------------------------------------------------*/
+
 process mass_spec_raw_convert{
     publishDir "${params.outdir}/raw_convert/", mode: 'copy'
     when:
@@ -632,77 +664,79 @@ process mass_spec_raw_convert{
 }
 
 ch_mass_spec_combined = ch_mass_spec_mzml.concat(ch_mass_spec_converted)
+ch_mass_spec_combined.into{
+  ch_mass_spec_for_sample
+  ch_mass_spec_for_reference
+}
 
-/*--------------------------------------------------
-MetaMorpheus wtih Sample Specific Database
----------------------------------------------------*/
 process metamorpheus_with_sample_specific_database{
-    tag " $mass_spec"
+    tag "${mass_spec}"
     publishDir "${params.outdir}/metamorpheus/", mode: 'copy'
     when:
       params.mass_spec != false
 
     input:
-        // file(orf_calls) from ch_orf_calls
-        file(orf_fasta) from ch_orf_fasta
-        // file(toml) from ch_toml
-        file(mass_spec) from ch_mass_spec_combined.collect()
+        file(orf_fasta) from ch_refined_fasta_metamorpheus
+        file(mass_spec) from ch_mass_spec_for_sample.collect()
 
     output:
         file("toml/*")
         file("search_results/*")
-        file("search_results/Task1SearchTask/AllPeptides.psmtsv") into ch_sample_specific_peptides
+        file("search_results/Task1SearchTask/AllPeptides.psmtsv") into ch_pacbio_peptides
+        file("search_results/Task1SearchTask/AllProteinGroups.tsv") into ch_pacbio_protein_groups
     
     script:
         """
-        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings settings
-        dotnet /metamorpheus/CMD.dll -d $orf_fasta -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
         """
 }
 
 process metamorpheus_with_gencode_database{
-    tag " $mass_spec"
+    tag "${mass_spec}"
     publishDir "${params.outdir}/metamorpheus/", mode: 'copy'
     when:
       params.mass_spec != false
 
     input:
-        // file(orf_calls) from ch_orf_calls
-        file(gencode_fasta) from ch_genome_protein_fasta
-        // file(toml) from ch_toml
-        file(mass_spec) from ch_mass_spec_combined.collect()
+        file(gencode_fasta) from ch_genome_protein_fasta_metamorpheus
+        file(mass_spec) from ch_mass_spec_for_reference.collect()
 
     output:
         file("toml/*")
         file("search_results/*")
         file("search_results/Task1SearchTask/AllPeptides.psmtsv") into ch_gencode_peptides
+        file("search_results/Task1SearchTask/AllProteinGroups.tsv") into ch_gencode_protein_groups
     
     script:
         """
-        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings settings
-        dotnet /metamorpheus/CMD.dll -d $gencode_fasta -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
+        dotnet /metamorpheus/CMD.dll -d $gencode_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
         """
 }
 
 /*--------------------------------------------------
 Peptide Analysis
 ---------------------------------------------------*/
+
 process peptide_analysis{
-  publishDir "${params.outdir}/metamorpheus/", mode: 'copy'
+  publishDir "${params.outdir}/peptide_analysis/", mode: 'copy'
     when:
       params.mass_spec != false
     
     input:
       file(gencode_peptides) from ch_gencode_peptides
       file(gene_isoname) from ch_gene_isoname
-      file(refined_fasta) from ch_refined_fasta
+      file(refined_fasta) from ch_refined_fasta_pep_analysis
       file(six_frame) from ch_six_frame
-      file(pb_gene) from ch_pb_gene_peptide
+      file(pb_gene) from ch_pb_gene_peptide_analysis
       file(cpat_all_orfs) from ch_cpat_all_orfs_for_peptide_analysis
       file(cpat_best_orf) from ch_cpat_best_orf
       file(cpat_protein_fasta) from ch_cpat_protein_fasta
+
     output:
       file("*")
+
     script:
       """
       peptide_analysis.py \
@@ -718,17 +752,220 @@ process peptide_analysis{
       """
 }
 
+/*--------------------------------------------------
+PacBio CDS GTF 
+---------------------------------------------------*/
+
+process make_pacbio_cds_gtf {
+  cpus 1
+
+  publishDir "${params.outdir}/pacbio_cds/", mode: 'copy'
+
+  input:
+    file(sample_gtf) from ch_sample_gtf_cds
+    file(refined_info) from ch_refined_info
+    file(called_orfs) from ch_best_orf_cds
+    file(pb_gene) from ch_pb_gene_cds
+  
+  output:
+    file("${params.name}_with_cds.gtf") into ch_pb_cds
+    file("*")
+  
+  script:
+  """
+  make_pacbio_cds_gtf.py \
+  --name ${params.name} \
+  --sample_gtf $sample_gtf \
+  --refined_orfs $refined_info \
+  --called_orfs $called_orfs \
+  --pb_gene $pb_gene \
+  --include_transcript yes
+
+  make_pacbio_cds_gtf.py \
+  --name ${params.name}_no_transcript \
+  --sample_gtf $sample_gtf \
+  --refined_orfs $refined_info \
+  --called_orfs $called_orfs \
+  --pb_gene $pb_gene \
+  --include_transcript no
+  """
+}
+ch_pb_cds.into{
+  ch_pb_cds_bed
+  ch_pb_cds_multiregion
+  ch_pb_cds_peptide_gtf
+  
+}
+
+/*--------------------------------------------------
+Convert PacBio CDS to Bed12
+---------------------------------------------------*/
+process pb_cds_to_bed12 {
+  publishDir "${params.outdir}/pacbio_cds/", mode: 'copy'
+
+  input:
+    file(pb_cds) from ch_pb_cds_bed
+  output:
+    file("${params.name}_with_cds.bed12") into ch_cds_bed
+  
+  script:
+    """
+    gtfToGenePred $pb_cds ${params.name}_with_cds.genePred
+    genePredToBed ${params.name}_with_cds.genePred ${params.name}_with_cds.bed12
+    """
+}
+
+/*--------------------------------------------------
+Add RGB shading to tracks
+---------------------------------------------------*/
+process add_shading_to_cds{
+  publishDir "${params.outdir}/pacbio_cds/", mode: 'copy'
+
+  input:
+    file(cds_bed) from ch_cds_bed
+  output:
+    file("${params.name}_cds_shaded.bed12") into ch_cds_shaded
+
+  script:
+  """
+  add_rgb_shading_to_pb_track.py \
+  --name ${params.name} \
+  --bed_file $cds_bed
+  """
+}
+
+/*--------------------------------------------------
+Make Region Bed for UCSC Browser
+---------------------------------------------------*/
+process make_multiregion{
+  input:
+    file(sample_gtf) from ch_pb_cds_multiregion
+    file(reference_gtf) from ch_gencode_gtf
+  output:
+    file("*")
+
+  script:
+  """
+  make_region_bed_for_ucsc.py \
+  --name ${params.name} \
+  --sample_gtf $sample_gtf \
+  --reference_gtf $reference_gtf
+  """
+}
+
+/*--------------------------------------------------
+Make Peptide GTF 
+---------------------------------------------------*/
+process make_peptide_gtf{
+  publishDir "${params.outdir}/peptide_track/", mode: 'copy'
+
+  when:
+    params.mass_spec != false
+
+
+  input:
+    file(sample_gtf) from ch_pb_cds_peptide_gtf
+    file(peptides) from ch_pacbio_peptides
+    file(pb_gene) from ch_pb_gene_peptide_gtf
+    file(refined_fasta) from ch_refined_fasta_peptide_gtf
+  output:
+    file("${params.name}_peptides.gtf") into ch_peptide_gtf
+
+  script:
+  """
+  make_peptide_gtf_file.py \
+  --name ${params.name} \
+  --sample_gtf $sample_gtf \
+  --peptides $peptides \
+  --pb_gene $pb_gene \
+  --refined_fasta $refined_fasta
+  """
+}
+
+/*--------------------------------------------------
+Convert Peptide GTF to BED and Add RGB
+---------------------------------------------------*/
+process peptide_gtf_to_bed{
+  publishDir "${params.outdir}/peptide_track/", mode: 'copy'
+
+  when:
+    params.mass_spec != false
+
+  input:
+    file(peptide_gtf) from ch_peptide_gtf
+    
+  output:
+    file("${params.name}_peptides.bed12") into ch_peptide_bed
+
+  script:
+  """
+  gtfToGenePred $peptide_gtf ${params.name}_peptides.genePred
+  genePredToBed ${params.name}_peptides.genePred ${params.name}_peptides.bed12
+
+  # add rgb to colorize specific peptides 
+  echo 'track name=peptide_w_specificity itemRgb=On' > ${params.name}_peptide_rgb.bed12
+  cat ${params.name}_peptides.bed12 | awk '{ if (\$4 ~ /-1\$/) {\$9="0,102,0"; print \$0} else {\$9="0,51,0"; print \$0} }' >> ${params.name}_peptide_rgb.bed12
+  """
+  
+}
+
+
+/*--------------------------------------------------
+Novel Peptides
+---------------------------------------------------*/
+// TODO - proposed module to list all peptides from sample search and mark novel peptides
 
 
 /*--------------------------------------------------
 Accession Mapping 
 ---------------------------------------------------*/
+// Have "exact" sequence accession mapping (simple py script)
+// Other option is blast-based or fuzzy-matching-based sequence comparisons
+// process accession_mapping{
+//   publishDir "${params.outdir}/accession_mapping/", mode: 'copy'
+
+//   input:
+//     file(pacbio_fasta) from ch_refined_fasta_mapping
+//     file(gencode_fasta) from ch_genome_protein_fasta_mapping
+  
+//   output:
+//     file("*_map_atlenseq.tsv") into ch_mapped_accessions_gencode_pacbio
+  
+//   script:
+//     """
+//     accession_mapping.py \
+//     --ref_fasta $gencode_fasta \
+//     --other_fasta $pacbio_fasta \
+//     --ref_name gencode \
+//     --other_name pacbio
+//     """
+// }
+
 
 /*--------------------------------------------------
 Protein Inference Analysis
 ---------------------------------------------------*/
-
-
+// process protein_inference_analysis{
+//     publishDir "${params.outdir}/protein_inference_analysis/", mode: 'copy'
+//     when:
+//       params.mass_spec != false
+//     input: 
+//       file(pacbio_protein_groups) from ch_pacbio_protein_groups
+//       file(gencode_protein_groups) from ch_gencode_protein_groups
+//       file(mapping) from ch_mapped_accessions_gencode_pacbio
+//     output:
+//       file("*")
+//     script:
+//       """
+//       protein_inference_analysis.py \
+//       pg_fileOne $gencode_protein_groups \
+//       pg_fileTwo $pacbio_protein_groups \
+//       mapping $mapping \
+//       output ./
+//       """
+// }
+// TODO - implement Rachel's code that does a cross-comparison of protein groups
+// NOTE - her code requires a map from the accession mapping module
 
 
 def logHeader() {

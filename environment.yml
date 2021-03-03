@@ -20,6 +20,7 @@ dependencies:
 
   - bioconda:blast
   - bioconda:star
+  # TODO - do we need the info below, or are they located within the modules?
   # Module 1: SMARTLink - CCS
   # - pbccs
   # - pbbam
