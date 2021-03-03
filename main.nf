@@ -921,51 +921,49 @@ Accession Mapping
 ---------------------------------------------------*/
 // Have "exact" sequence accession mapping (simple py script)
 // Other option is blast-based or fuzzy-matching-based sequence comparisons
-process accession_mapping{
-  publishDir "${params.outdir}/accession_mapping/", mode: 'copy'
+// process accession_mapping{
+//   publishDir "${params.outdir}/accession_mapping/", mode: 'copy'
 
-  input:
-    file(pacbio_fasta) from ch_refined_fasta_mapping
-    file(gencode_fasta) from ch_genome_protein_fasta_mapping
+//   input:
+//     file(pacbio_fasta) from ch_refined_fasta_mapping
+//     file(gencode_fasta) from ch_genome_protein_fasta_mapping
   
-  output:
-    file("*_map_atlenseq.tsv") into ch_mapped_accessions_gencode_pacbio
+//   output:
+//     file("*_map_atlenseq.tsv") into ch_mapped_accessions_gencode_pacbio
   
-  script:
-    """
-    accession_mapping.py \
-    --ref_fasta $gencode_fasta \
-    --other_fasta $pacbio_fasta \
-    --ref_name gencode \
-    --other_name pacbio
-    """
-}
+//   script:
+//     """
+//     accession_mapping.py \
+//     --ref_fasta $gencode_fasta \
+//     --other_fasta $pacbio_fasta \
+//     --ref_name gencode \
+//     --other_name pacbio
+//     """
+// }
 
 
 /*--------------------------------------------------
 Protein Inference Analysis
 ---------------------------------------------------*/
-process protein_inference_analysis{
-    publishDir "${params.outdir}/protein_inference_analysis/", mode: 'copy'
-    when:
-      params.mass_spec != false
-    input: 
-      file(pacbio_protein_groups) from ch_pacbio_protein_groups
-      file(gencode_protein_groups) from ch_gencode_protein_groups
-    output:
-      file("*")
-    script:
-      """
-      protein_inference_analysis.py \
-      pg_fileOne $gencode_protein_groups \
-      pg_fileTwo $pacbio_protein_groups \
-      mapping $mapping \
-      output ./
-
-      """
-
-  
-}
+// process protein_inference_analysis{
+//     publishDir "${params.outdir}/protein_inference_analysis/", mode: 'copy'
+//     when:
+//       params.mass_spec != false
+//     input: 
+//       file(pacbio_protein_groups) from ch_pacbio_protein_groups
+//       file(gencode_protein_groups) from ch_gencode_protein_groups
+//       file(mapping) from ch_mapped_accessions_gencode_pacbio
+//     output:
+//       file("*")
+//     script:
+//       """
+//       protein_inference_analysis.py \
+//       pg_fileOne $gencode_protein_groups \
+//       pg_fileTwo $pacbio_protein_groups \
+//       mapping $mapping \
+//       output ./
+//       """
+// }
 // TODO - implement Rachel's code that does a cross-comparison of protein groups
 // NOTE - her code requires a map from the accession mapping module
 
