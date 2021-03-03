@@ -947,6 +947,8 @@ Protein Inference Analysis
 ---------------------------------------------------*/
 process protein_inference_analysis{
     publishDir "${params.outdir}/protein_inference_analysis/", mode: 'copy'
+    when:
+      params.mass_spec != false
     input: 
       file(pacbio_protein_groups) from ch_pacbio_protein_groups
       file(gencode_protein_groups) from ch_gencode_protein_groups
