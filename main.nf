@@ -411,6 +411,26 @@ process filter_sqanti {
     """
 }
 
+ch_sample_classification.into{
+  ch_sample_classification_six_frame
+  ch_sample_classification_transcriptome
+  ch_sample_classification_orf
+
+}
+
+ch_sample_fasta.into{
+  ch_sample_fasta_cpat
+  ch_sample_fasta_six_frame
+  ch_sample_fasta_orf
+  ch_sample_fasta_refine
+}
+
+ch_sample_gtf.into{
+  ch_sample_gtf_orf
+  ch_sample_gtf_cds
+}
+
+
 // TODO - does this need to stay?
 /*
 Channel
@@ -430,9 +450,9 @@ process six_frame_translation {
     publishDir "${params.outdir}/pacbio_6frm_gene_grouped/", mode: 'copy'
 
     input:
-    file(classification) from ch_sample_classification
+    file(classification) from ch_sample_classification_six_frame
     file(ensg_gene) from ch_ensg_gene_six_frame
-    file(sample_fasta) from ch_sample_fasta
+    file(sample_fasta) from ch_sample_fasta_six_frame
 
     output:
     file("${params.name}.6frame.fasta") into ch_six_frame
@@ -457,7 +477,7 @@ process transcriptome_summary {
   publishDir "${params.outdir}/transcriptome_summary/", mode: 'copy'
 
   input:
-  file(sqanti_classification) from ch_sample_classification
+  file(sqanti_classification) from ch_sample_classification_transcriptome
   file(tpm) from ch_sample_kallisto
   file(ribo) from ch_normalized_ribo_kallisto
   file(ensg_to_gene) from ch_ensg_gene
@@ -486,7 +506,8 @@ process transcriptome_summary {
 ch_pb_gene.into{
   ch_pb_gene_orf
   ch_pb_gene_cds
-  ch_pb_gene_peptide
+  ch_pb_gene_peptide_analysis
+  ch_pb_gene_peptide_gtf
 }
 
 
@@ -503,7 +524,7 @@ process cpat {
   input:
   file(hexamer) from ch_hexamer
   file(logit_model) from ch_logit_model
-  file(sample_fasta) from ch_sample_fasta
+  file(sample_fasta) from ch_sample_fasta_cpat
 
   // TODO - do we use "jurkat.ORF_seqs.fa"? downstream, potentially not output? 
   output:
@@ -544,10 +565,10 @@ process orf_calling {
   input:
   file(cpat_orfs) from ch_cpat_all_orfs_for_orf_calling
   file(gencode_gtf) from ch_gencode_gtf
-  file(sample_gtf) from ch_sample_gtf
-  file(sample_fasta) from ch_sample_fasta
+  file(sample_gtf) from ch_sample_gtf_orf
+  file(sample_fasta) from ch_sample_fasta_orf
   file(pb_gene) from ch_pb_gene_orf
-  file(classification) from ch_sample_classification
+  file(classification) from ch_sample_classification_orf
   
   output:
   file("${params.name}_best_orf.tsv") into ch_best_orf
@@ -566,6 +587,10 @@ process orf_calling {
   """
 }
 
+ch_best_orf.into{
+  ch_best_orf_refine
+  ch_best_orf_cds
+}
 
 /*--------------------------------------------------
 Refined DB Generation 
@@ -579,8 +604,8 @@ process refine_orf_database {
 
   input:
   // TODO - would short params go here too? or do they get called within the script line (as it is now)
-  file(best_orfs) from ch_best_orf
-  file(sample_fasta) from ch_sample_fasta
+  file(best_orfs) from ch_best_orf_refine
+  file(sample_fasta) from ch_sample_fasta_refine
   file(protein_coding_genes) from ch_protein_coding_genes_db
   
   output:
@@ -599,17 +624,31 @@ process refine_orf_database {
   """
 }
 
+ch_refined_fasta.into{
+  ch_refined_fasta_metamorpheus
+  ch_refined_fasta_pep_analysis
+  ch_refined_fasta_peptide_gtf
+}
 
 
 
-if params.mass_spec != false{
+
+if(params.mass_spec != false){
   Channel
     .fromPath("${params.mass_spec}/*.raw")
     .set{ch_mass_spec_raw}
-
   Channel
       .fromPath("${params.mass_spec}/*.{mzml,mzML}")
       .set{ch_mass_spec_mzml}
+}
+else{
+  Channel
+    .from("no mass spec")
+    .set{ch_mass_spec_raw}
+  Channel
+    .from("no mass spec")
+    .set{ch_mass_spec_mzml}
+
 }
 
 
@@ -633,6 +672,10 @@ process mass_spec_raw_convert{
 }
 
 ch_mass_spec_combined = ch_mass_spec_mzml.concat(ch_mass_spec_converted)
+ch_mass_spec_combined.into{
+  ch_mass_spec_for_sample
+  ch_mass_spec_for_reference
+}
 
 process metamorpheus_with_sample_specific_database{
     tag "${mass_spec}"
@@ -641,8 +684,8 @@ process metamorpheus_with_sample_specific_database{
       params.mass_spec != false
 
     input:
-        file(orf_fasta) from ch_orf_fasta
-        file(mass_spec) from ch_mass_spec_combined.collect()
+        file(orf_fasta) from ch_refined_fasta_metamorpheus
+        file(mass_spec) from ch_mass_spec_for_sample.collect()
 
     output:
         file("toml/*")
@@ -664,7 +707,7 @@ process metamorpheus_with_gencode_database{
 
     input:
         file(gencode_fasta) from ch_genome_protein_fasta
-        file(mass_spec) from ch_mass_spec_combined.collect()
+        file(mass_spec) from ch_mass_spec_for_reference.collect()
 
     output:
         file("toml/*")
@@ -690,9 +733,9 @@ process peptide_analysis{
     input:
       file(gencode_peptides) from ch_gencode_peptides
       file(gene_isoname) from ch_gene_isoname
-      file(refined_fasta) from ch_refined_fasta
+      file(refined_fasta) from ch_refined_fasta_pep_analysis
       file(six_frame) from ch_six_frame
-      file(pb_gene) from ch_pb_gene_peptide
+      file(pb_gene) from ch_pb_gene_peptide_analysis
       file(cpat_all_orfs) from ch_cpat_all_orfs_for_peptide_analysis
       file(cpat_best_orf) from ch_cpat_best_orf
       file(cpat_protein_fasta) from ch_cpat_protein_fasta
@@ -725,9 +768,9 @@ process make_pacbio_cds_gtf {
   publishDir "${params.outdir}/pacbio_cds/", mode: 'copy'
 
   input:
-    file(sample_gtf) from ch_sample_gtf
+    file(sample_gtf) from ch_sample_gtf_cds
     file(refined_info) from ch_refined_info
-    file(called_orfs) from ch_best_orf
+    file(called_orfs) from ch_best_orf_cds
     file(pb_gene) from ch_pb_gene_cds
   
   output:
@@ -753,6 +796,12 @@ process make_pacbio_cds_gtf {
   --include_transcript no
   """
 }
+ch_pb_cds.into{
+  ch_pb_cds_bed
+  ch_pb_cds_multiregion
+  ch_pb_cds_peptide_gtf
+  
+}
 
 /*--------------------------------------------------
 Convert PacBio CDS to Bed12
@@ -761,7 +810,7 @@ process pb_cds_to_bed12 {
   publishDir "${params.outdir}/pacbio_cds/", mode: 'copy'
 
   input:
-    file(pb_cds) from ch_pb_cds
+    file(pb_cds) from ch_pb_cds_bed
   output:
     file("${params.name}_with_cds.bed12") into ch_cds_bed
   
@@ -796,7 +845,7 @@ Make Region Bed for UCSC Browser
 ---------------------------------------------------*/
 process make_multiregion{
   input:
-    file(sample_gtf) from ch_pb_cds
+    file(sample_gtf) from ch_pb_cds_multiregion
     file(reference_gtf) from ch_gencode_gtf
   output:
     file("*")
@@ -821,10 +870,10 @@ process make_peptide_gtf{
 
 
   input:
-    file(sample_gtf) from ch_pb_cds
-    file(peptides) from ch_peptides
-    file(pb_gene) from ch_pb_gene
-    file(refined_fasta) from ch_refined_db_fasta
+    file(sample_gtf) from ch_pb_cds_peptide_gtf
+    file(peptides) from ch_sample_specific_peptides
+    file(pb_gene) from ch_pb_gene_peptide_gtf
+    file(refined_fasta) from ch_refined_fasta_peptide_gtf
   output:
     file("${params.name}_peptides.gtf") into ch_peptide_gtf
 
