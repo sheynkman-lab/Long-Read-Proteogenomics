@@ -1,10 +1,14 @@
-#dependencies
+# determine the relationship between protein groups identified using gencode, uniprot, and/or pacbio databases
+
+# %%
+
 import pandas as pd
 import numpy as np
 from collections import defaultdict
 import argparse
 
-#function to remove decoy protein groups and those above the 1% FDR cutoff, as well as remove columns we do not need to carry forward
+
+# function to remove decoy protein groups, protein groups above a 1% FDR cutoff, and extraneous columns 
 def tsv_filter(tsv, col_to_keep=['Protein Accession', 'Gene', 'Unique Peptides','Shared Peptides','Sequence Coverage Fraction','Number of PSMs','Protein QValue']):
     """
     Filters the dataframe for FDR, target proteins and removes columns which are not pertainant
@@ -62,9 +66,9 @@ def format_accession_mapping_table(conversionKey):
     imap: pandas DataFrame 
     """
     isomap = conversionKey
-    isomap['un'] = isomap['uniprot_acc'].str.split('|').str[1]
+    isomap['un'] = isomap['uniprot_acc']
     isomap['pb'] = isomap['pacbio_acc']
-    isomap['gc'] = isomap['gencode_acc_y'].str.split('|').str[0]
+    isomap['gc'] = isomap['gencode_acc']
     imap = isomap[['pb', 'un', 'gc']].dropna(how="all")
     imap['idx'] = np.arange(len(imap))
 
