@@ -172,7 +172,7 @@ process make_gencode_database {
   
   output:
   // TODO - change to ch_gencode_protein_fasta
-  file("gencode_protein.fasta") into ch_genome_protein_fasta
+  file("gencode_protein.fasta") into ch_gencode_protein_fasta
   // TODO - what happens when a file doesn't go into a variable - does it get output to results?
   file("gencode_isoname_clusters.tsv")
   
@@ -185,9 +185,9 @@ process make_gencode_database {
   """
 }
 
-ch_genome_fasta.into{
-  ch_genome_protein_fasta_metamorpheus
-  ch_genome_protein_fasta_mapping
+ch_gencode_protein_fasta.into{
+  ch_gencode_protein_fasta_metamorpheus
+  ch_gencode_protein_fasta_mapping
 }
 
 
@@ -699,7 +699,7 @@ process metamorpheus_with_gencode_database{
       params.mass_spec != false
 
     input:
-        file(gencode_fasta) from ch_genome_protein_fasta_metamorpheus
+        file(gencode_fasta) from ch_gencode_protein_fasta_metamorpheus
         file(mass_spec) from ch_mass_spec_for_reference.collect()
 
     output:
@@ -926,7 +926,7 @@ Accession Mapping
 
 //   input:
 //     file(pacbio_fasta) from ch_refined_fasta_mapping
-//     file(gencode_fasta) from ch_genome_protein_fasta_mapping
+//     file(gencode_fasta) from ch_gencode_protein_fasta_mapping
   
 //   output:
 //     file("*_map_atlenseq.tsv") into ch_mapped_accessions_gencode_pacbio
