@@ -976,10 +976,10 @@ process protein_group_compare{
     script:
       """
       protein_groups_compare.py \
-      pg_fileOne $gencode_protein_groups \
-      pg_fileTwo $pacbio_protein_groups \
-      mapping $mapping \
-      output ./
+      --pg_fileOne $gencode_protein_groups \
+      --pg_fileTwo $pacbio_protein_groups \
+      --mapping $mapping \
+      --output ./
       """
 }
 // TODO - implement Rachel's code that does a cross-comparison of protein groups
