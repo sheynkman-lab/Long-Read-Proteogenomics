@@ -691,13 +691,16 @@ process metamorpheus_with_sample_specific_database{
     output:
         file("toml/*")
         file("search_results/*")
-        file("search_results/Task1SearchTask/AllPeptides.psmtsv") into ch_pacbio_peptides
-        file("search_results/Task1SearchTask/AllProteinGroups.tsv") into ch_pacbio_protein_groups
+        file("search_results/Task1SearchTask/AllPeptides.Gencode.psmtsv") into ch_pacbio_peptides
+        file("search_results/Task1SearchTask/AllProteinGroups.Gencode.tsv") into ch_pacbio_protein_groups
     
     script:
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
         dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+
+        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.Gencode.psmtsv
+        mv search_results/Task1SearchTask/AllProteinGroups.tsv search_results/Task1SearchTask/AllProteinGroups.Gencode.tsv
         """
 }
 
@@ -715,13 +718,16 @@ process metamorpheus_with_gencode_database{
     output:
         file("toml/*")
         file("search_results/*")
-        file("search_results/Task1SearchTask/AllPeptides.psmtsv") into ch_gencode_peptides
-        file("search_results/Task1SearchTask/AllProteinGroups.tsv") into ch_gencode_protein_groups
+        file("search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv") into ch_gencode_peptides
+        file("search_results/Task1SearchTask/AllProteinGroups.${params.name}.tsv") into ch_gencode_protein_groups
     
     script:
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
         dotnet /metamorpheus/CMD.dll -d $gencode_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+
+        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv
+        mv search_results/Task1SearchTask/AllProteinGroups.tsv search_results/Task1SearchTask/AllProteinGroups.${params.name}.tsv
         """
 }
 
