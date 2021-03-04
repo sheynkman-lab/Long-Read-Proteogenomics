@@ -747,8 +747,8 @@ process metamorpheus_with_uniprot_database{
     output:
         file("toml/*")
         file("search_results/*")
-        file("search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv") into ch_gencode_peptides
-        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv") into ch_gencode_protein_groups
+        file("search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv") into ch_uniprot_peptides
+        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv") into ch_uniprot_protein_groups
     
     script:
         """
