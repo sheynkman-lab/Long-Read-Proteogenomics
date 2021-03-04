@@ -85,6 +85,28 @@ def filter_rts_stage(classification):
     classification = classification[classification['RTS_stage'] == False]
     return classification
 
+def filter_illumina_coverage(classification, min_coverage):
+    """filters accessions that are not FSM,ISM,NIC to only include accessions where 
+    the minimum coverage of all junctions is at least min_coverage. If illumina data is 
+    not provided then returns original classification
+
+    Args:
+        classification (pandas DataFrame): sqanti classification file
+        min_coverage (int): minimum coverage all junctions must meet if not FSM,ISM,NIC
+
+    Returns:
+        pandas DataFrame: filtered classification
+    """
+    structural_categories_to_not_filter = ['novel_in_catalog','incomplete-splice_match', 'full-splice_match', ]
+    if classification['min_cov'].isnull().values.all():
+        return classification
+    else:
+        classification = classification[
+            (classification['structural_category'].isin(structural_categories_to_not_filter)) | 
+            (classification['min_cov'] >= min_coverage)]
+
+        return classification
+
 def save_filtered_sqanti_gtf(gtf_file, filtered_isoforms):
     logging.info("Saving GTF")
     base_name = gtf_file.split("/")[-1]
@@ -116,6 +138,7 @@ def main():
     parser.add_argument("--ensg_gene", action="store", dest="ensg_gene", required=False)
     parser.add_argument("--percent_A_downstream_threshold", action="store", dest="percent_A_downstream_threshold", default=95,type=float)
     parser.add_argument("--structural_categories_level", action="store", dest="structural_categories_level", default="strict")
+    parser.add_argument("--minimum_illumina_coverage", action="store", dest="min_illumina_coverage", type=int, default=3)
     results = parser.parse_args()
     # Get boolean filtering decisions
     is_protein_coding_filtered = string_to_boolean(results.filter_protein_coding)
@@ -134,6 +157,8 @@ def main():
         classification = filter_intra_polyA(classification, results.percent_A_downstream_threshold)
     if is_template_switching_filtered:
         classification = filter_rts_stage(classification)
+    
+    classification = filter_illumina_coverage(classification, results.min_illumina_coverage)
 
     if results.structural_categories_level in structural_categories.keys():
         classification = classification[classification['structural_category'].isin(structural_categories[results.structural_categories_level])]

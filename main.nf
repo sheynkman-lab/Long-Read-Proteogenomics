@@ -102,6 +102,13 @@ Channel
     .ifEmpty { error "Cannot find any logit model file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}" }
     .set { ch_normalized_ribo_kallisto } 
 
+
+Channel
+    .value(file(params.uniprot_protein_fasta))
+    .ifEmpty { error "Cannot find any file for parameter --uniprot_protein_fasta: ${params.uniprot_protein_fasta}" }
+    .set { ch_uniprot_protein_fasta } 
+
+
 Channel
     .from(params.fastq_read_1, params.fastq_read_2)
     .filter(String)
@@ -672,7 +679,7 @@ ch_mass_spec_combined.into{
 
 process metamorpheus_with_sample_specific_database{
     tag "${mass_spec}"
-    publishDir "${params.outdir}/metamorpheus/", mode: 'copy'
+    publishDir "${params.outdir}/metamorpheus/pacbio", mode: 'copy'
     when:
       params.mass_spec != false
 
@@ -695,7 +702,7 @@ process metamorpheus_with_sample_specific_database{
 
 process metamorpheus_with_gencode_database{
     tag "${mass_spec}"
-    publishDir "${params.outdir}/metamorpheus/", mode: 'copy'
+    publishDir "${params.outdir}/metamorpheus/gencode", mode: 'copy'
     when:
       params.mass_spec != false
 
@@ -920,51 +927,51 @@ Novel Peptides
 /*--------------------------------------------------
 Accession Mapping 
 ---------------------------------------------------*/
-// Have "exact" sequence accession mapping (simple py script)
-// Other option is blast-based or fuzzy-matching-based sequence comparisons
-// process accession_mapping{
-//   publishDir "${params.outdir}/accession_mapping/", mode: 'copy'
 
-//   input:
-//     file(pacbio_fasta) from ch_refined_fasta_mapping
-//     file(gencode_fasta) from ch_gencode_protein_fasta_mapping
+process accession_mapping{
+  publishDir "${params.outdir}/accession_mapping/", mode: 'copy'
+
+  input:
+    file(pacbio_fasta) from ch_refined_fasta_mapping
+    file(gencode_fasta) from ch_gencode_protein_fasta_mapping
+    file(uniprot_fasta) from ch_uniprot_protein_fasta
   
-//   output:
-//     file("*_map_atlenseq.tsv") into ch_mapped_accessions_gencode_pacbio
+  output:
+    file("accession_map_gencode_uniprot_pacbio.tsv") into ch_accession_map
+    file("*")
   
-//   script:
-//     """
-//     accession_mapping.py \
-//     --ref_fasta $gencode_fasta \
-//     --other_fasta $pacbio_fasta \
-//     --ref_name gencode \
-//     --other_name pacbio
-//     """
-// }
+  script:
+    """
+    accession_mapping.py \
+    --gencode_fasta $gencode_fasta \
+    --pacbio_fasta $pacbio_fasta \
+    --uniprot_fasta $uniprot_fasta \
+    """
+}
 
 
 /*--------------------------------------------------
-Protein Inference Analysis
+Protein Group Comparison
 ---------------------------------------------------*/
-// process protein_inference_analysis{
-//     publishDir "${params.outdir}/protein_inference_analysis/", mode: 'copy'
-//     when:
-//       params.mass_spec != false
-//     input: 
-//       file(pacbio_protein_groups) from ch_pacbio_protein_groups
-//       file(gencode_protein_groups) from ch_gencode_protein_groups
-//       file(mapping) from ch_mapped_accessions_gencode_pacbio
-//     output:
-//       file("*")
-//     script:
-//       """
-//       protein_inference_analysis.py \
-//       pg_fileOne $gencode_protein_groups \
-//       pg_fileTwo $pacbio_protein_groups \
-//       mapping $mapping \
-//       output ./
-//       """
-// }
+process protein_group_compare{
+    publishDir "${params.outdir}/protein_group_compare/", mode: 'copy'
+    when:
+      params.mass_spec != false
+    input: 
+      file(pacbio_protein_groups) from ch_pacbio_protein_groups
+      file(gencode_protein_groups) from ch_gencode_protein_groups
+      file(mapping) from ch_accession_map
+    output:
+      file("*")
+    script:
+      """
+      protein_groups_compare.py \
+      pg_fileOne $gencode_protein_groups \
+      pg_fileTwo $pacbio_protein_groups \
+      mapping $mapping \
+      output ./
+      """
+}
 // TODO - implement Rachel's code that does a cross-comparison of protein groups
 // NOTE - her code requires a map from the accession mapping module
 
