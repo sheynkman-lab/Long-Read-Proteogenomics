@@ -377,3 +377,4 @@ results
 # ignore large output files saved to local
 *fasta
 *tsv
+*xlsx
