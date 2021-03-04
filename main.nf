@@ -688,7 +688,7 @@ process metamorpheus_with_sample_specific_database{
 
     input:
         file(orf_fasta) from ch_refined_fasta_metamorpheus
-        file(mass_spec) from ch_mass_spec_for_sample.collect()
+        file(mass_spec) from ch_mass_spec_for_pacbio.collect()
 
     output:
         file("toml/*")
