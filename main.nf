@@ -673,8 +673,10 @@ process mass_spec_raw_convert{
 
 ch_mass_spec_combined = ch_mass_spec_mzml.concat(ch_mass_spec_converted)
 ch_mass_spec_combined.into{
-  ch_mass_spec_for_sample
-  ch_mass_spec_for_reference
+  ch_mass_spec_for_pacbio
+  ch_mass_spec_for_gencode
+  ch_mass_spec_for_uniprot
+  ch_mass_spec_for_pacbio_rescue_resolve
 }
 
 process metamorpheus_with_sample_specific_database{
@@ -713,7 +715,7 @@ process metamorpheus_with_gencode_database{
 
     input:
         file(gencode_fasta) from ch_gencode_protein_fasta_metamorpheus
-        file(mass_spec) from ch_mass_spec_for_reference.collect()
+        file(mass_spec) from ch_mass_spec_for_gencode.collect()
 
     output:
         file("toml/*")
@@ -728,6 +730,33 @@ process metamorpheus_with_gencode_database{
 
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv
+        """
+}
+
+process metamorpheus_with_uniprot_database{
+    tag "${mass_spec}"
+    cpus params.max_cpus
+    publishDir "${params.outdir}/metamorpheus/uniprot", mode: 'copy'
+    when:
+      params.mass_spec != false
+
+    input:
+        file(uniprot_fasta) from ch_uniprot_protein_fasta
+        file(mass_spec) from ch_mass_spec_for_uniprot.collect()
+
+    output:
+        file("toml/*")
+        file("search_results/*")
+        file("search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv") into ch_gencode_peptides
+        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv") into ch_gencode_protein_groups
+    
+    script:
+        """
+        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
+        dotnet /metamorpheus/CMD.dll -d $uniprot_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+
+        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.UniProt.psmtsv
+        mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.UniProt.tsv
         """
 }
 
@@ -963,25 +992,25 @@ process accession_mapping{
 /*--------------------------------------------------
 Protein Group Comparison
 ---------------------------------------------------*/
-process protein_group_compare{
-    publishDir "${params.outdir}/protein_group_compare/", mode: 'copy'
-    when:
-      params.mass_spec != false
-    input: 
-      file(pacbio_protein_groups) from ch_pacbio_protein_groups
-      file(gencode_protein_groups) from ch_gencode_protein_groups
-      file(mapping) from ch_accession_map
-    output:
-      file("*")
-    script:
-      """
-      protein_groups_compare.py \
-      --pg_fileOne $gencode_protein_groups \
-      --pg_fileTwo $pacbio_protein_groups \
-      --mapping $mapping \
-      --output ./
-      """
-}
+// process protein_group_compare{
+//     publishDir "${params.outdir}/protein_group_compare/", mode: 'copy'
+//     when:
+//       params.mass_spec != false
+//     input: 
+//       file(pacbio_protein_groups) from ch_pacbio_protein_groups
+//       file(gencode_protein_groups) from ch_gencode_protein_groups
+//       file(mapping) from ch_accession_map
+//     output:
+//       file("*")
+//     script:
+//       """
+//       protein_groups_compare.py \
+//       --pg_fileOne $gencode_protein_groups \
+//       --pg_fileTwo $pacbio_protein_groups \
+//       --mapping $mapping \
+//       --output ./
+//       """
+// }
 // TODO - implement Rachel's code that does a cross-comparison of protein groups
 // NOTE - her code requires a map from the accession mapping module
 
