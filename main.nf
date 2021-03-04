@@ -411,6 +411,7 @@ process filter_sqanti {
     --filter_template_switching yes \
     --percent_A_downstream_threshold 95 \
     --structural_categories_level strict \
+    --minimum_illumina_coverage 3 \
     """
 }
 
@@ -853,61 +854,61 @@ process make_multiregion{
   """
 }
 
-/*--------------------------------------------------
-Make Peptide GTF 
----------------------------------------------------*/
-process make_peptide_gtf{
-  publishDir "${params.outdir}/peptide_track/", mode: 'copy'
+// /*--------------------------------------------------
+// Make Peptide GTF 
+// ---------------------------------------------------*/
+// process make_peptide_gtf{
+//   publishDir "${params.outdir}/peptide_track/", mode: 'copy'
 
-  when:
-    params.mass_spec != false
+//   when:
+//     params.mass_spec != false
 
 
-  input:
-    file(sample_gtf) from ch_pb_cds_peptide_gtf
-    file(peptides) from ch_pacbio_peptides
-    file(pb_gene) from ch_pb_gene_peptide_gtf
-    file(refined_fasta) from ch_refined_fasta_peptide_gtf
-  output:
-    file("${params.name}_peptides.gtf") into ch_peptide_gtf
+//   input:
+//     file(sample_gtf) from ch_pb_cds_peptide_gtf
+//     file(peptides) from ch_pacbio_peptides
+//     file(pb_gene) from ch_pb_gene_peptide_gtf
+//     file(refined_fasta) from ch_refined_fasta_peptide_gtf
+//   output:
+//     file("${params.name}_peptides.gtf") into ch_peptide_gtf
 
-  script:
-  """
-  make_peptide_gtf_file.py \
-  --name ${params.name} \
-  --sample_gtf $sample_gtf \
-  --peptides $peptides \
-  --pb_gene $pb_gene \
-  --refined_fasta $refined_fasta
-  """
-}
+//   script:
+//   """
+//   make_peptide_gtf_file.py \
+//   --name ${params.name} \
+//   --sample_gtf $sample_gtf \
+//   --peptides $peptides \
+//   --pb_gene $pb_gene \
+//   --refined_fasta $refined_fasta
+//   """
+// }
 
-/*--------------------------------------------------
-Convert Peptide GTF to BED and Add RGB
----------------------------------------------------*/
-process peptide_gtf_to_bed{
-  publishDir "${params.outdir}/peptide_track/", mode: 'copy'
+// /*--------------------------------------------------
+// Convert Peptide GTF to BED and Add RGB
+// ---------------------------------------------------*/
+// process peptide_gtf_to_bed{
+//   publishDir "${params.outdir}/peptide_track/", mode: 'copy'
 
-  when:
-    params.mass_spec != false
+//   when:
+//     params.mass_spec != false
 
-  input:
-    file(peptide_gtf) from ch_peptide_gtf
+//   input:
+//     file(peptide_gtf) from ch_peptide_gtf
     
-  output:
-    file("${params.name}_peptides.bed12") into ch_peptide_bed
+//   output:
+//     file("${params.name}_peptides.bed12") into ch_peptide_bed
 
-  script:
-  """
-  gtfToGenePred $peptide_gtf ${params.name}_peptides.genePred
-  genePredToBed ${params.name}_peptides.genePred ${params.name}_peptides.bed12
+//   script:
+//   """
+//   gtfToGenePred $peptide_gtf ${params.name}_peptides.genePred
+//   genePredToBed ${params.name}_peptides.genePred ${params.name}_peptides.bed12
 
-  # add rgb to colorize specific peptides 
-  echo 'track name=peptide_w_specificity itemRgb=On' > ${params.name}_peptide_rgb.bed12
-  cat ${params.name}_peptides.bed12 | awk '{ if (\$4 ~ /-1\$/) {\$9="0,102,0"; print \$0} else {\$9="0,51,0"; print \$0} }' >> ${params.name}_peptide_rgb.bed12
-  """
+//   # add rgb to colorize specific peptides 
+//   echo 'track name=peptide_w_specificity itemRgb=On' > ${params.name}_peptide_rgb.bed12
+//   cat ${params.name}_peptides.bed12 | awk '{ if (\$4 ~ /-1\$/) {\$9="0,102,0"; print \$0} else {\$9="0,51,0"; print \$0} }' >> ${params.name}_peptide_rgb.bed12
+//   """
   
-}
+// }
 
 
 /*--------------------------------------------------
