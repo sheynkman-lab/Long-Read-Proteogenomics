@@ -684,11 +684,11 @@ process metamorpheus_with_sample_specific_database{
         file("search_results/*")
         file("search_results/Task1SearchTask/AllPeptides.psmtsv") into ch_pacbio_peptides
         file("search_results/Task1SearchTask/AllProteinGroups.tsv") into ch_pacbio_protein_groups
-        file("*")
+    
     script:
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
-        dotnet /metamorpheus/CMD.dll -d $orf_fasta -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
         """
 }
 
@@ -707,12 +707,11 @@ process metamorpheus_with_gencode_database{
         file("search_results/*")
         file("search_results/Task1SearchTask/AllPeptides.psmtsv") into ch_gencode_peptides
         file("search_results/Task1SearchTask/AllProteinGroups.tsv") into ch_gencode_protein_groups
-        file("*")
     
     script:
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
-        dotnet /metamorpheus/CMD.dll -d $gencode_fasta -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        dotnet /metamorpheus/CMD.dll -d $gencode_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
         """
 }
 
