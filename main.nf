@@ -679,6 +679,7 @@ ch_mass_spec_combined.into{
 
 process metamorpheus_with_sample_specific_database{
     tag "${mass_spec}"
+    cpus params.max_cpus
     publishDir "${params.outdir}/metamorpheus/pacbio", mode: 'copy'
     when:
       params.mass_spec != false
@@ -702,6 +703,7 @@ process metamorpheus_with_sample_specific_database{
 
 process metamorpheus_with_gencode_database{
     tag "${mass_spec}"
+    cpus params.max_cpus
     publishDir "${params.outdir}/metamorpheus/gencode", mode: 'copy'
     when:
       params.mass_spec != false
@@ -930,6 +932,8 @@ Accession Mapping
 
 process accession_mapping{
   publishDir "${params.outdir}/accession_mapping/", mode: 'copy'
+  when:
+    params.mass_spec != false
 
   input:
     file(pacbio_fasta) from ch_refined_fasta_mapping

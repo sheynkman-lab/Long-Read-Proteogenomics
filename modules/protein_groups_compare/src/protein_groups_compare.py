@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # determine the relationship between protein groups identified using gencode, uniprot, and/or pacbio databases
 
 # %%

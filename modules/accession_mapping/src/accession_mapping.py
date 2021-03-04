@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # given protein fasta files for gencode, uniprot, and pacbio databases, map accessions based on sequence similarity
 # two sequences are considered a match if both protein sequences match end-to-end (same length) and contain no more than 2 AA mismatches
 # however, mapping will first be attempted as perfect matches or 1 AA mismatch
