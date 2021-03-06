@@ -163,6 +163,12 @@ ch_ensg_gene.into{
   ch_ensg_gene_six_frame
 }
 
+ch_genome_fasta.into{
+  ch_genome_fasta_star
+  ch_genome_fasta_isoseq
+  ch_genome_fasta_sqanti
+}
+
 
 /*--------------------------------------------------
 Gencode Database
@@ -206,7 +212,7 @@ process isoseq3 {
 
   input:
   file(sample_ccs) from ch_sample_ccs
-  file(genome_fasta) from ch_genome_fasta
+  file(genome_fasta) from ch_genome_fasta_isoseq
   file(primers_fasta) from ch_primers_fasta
   
   output:
@@ -286,7 +292,7 @@ else{
 
         input :
             file(gencode_gtf) from ch_gencode_gtf
-            file(genome_fasta) from ch_genome_fasta
+            file(genome_fasta) from ch_genome_fasta_star
 
         output:
             path("star_genome") into ch_genome_dir
@@ -348,7 +354,7 @@ process sqanti3 {
   input:
   file(fl_count) from ch_fl_count
   file(gencode_gtf) from ch_gencode_gtf
-  file(genome_fasta) from ch_genome_fasta
+  file(genome_fasta) from ch_genome_fasta_sqanti
   file(sample_gtf) from ch_isoseq_gtf
   file(star_junction) from ch_star_junction
   
