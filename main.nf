@@ -71,7 +71,6 @@ Channel
     .ifEmpty { error "Cannot find file for parameter --sample_ccs: ${params.sample_ccs}" }
     .set { ch_sample_ccs }   
 
-// TODO - rename this to "--genome_fasta"
 Channel
     .value(file(params.genome_fasta))
     .ifEmpty { error "Cannot find any seq file for parameter --genome_fasta: ${params.genome_fasta}" }
@@ -178,9 +177,7 @@ process make_gencode_database {
   file(gencode_translation_fasta) from ch_gencode_translation_fasta
   
   output:
-  // TODO - change to ch_gencode_protein_fasta
   file("gencode_protein.fasta") into ch_gencode_protein_fasta
-  // TODO - what happens when a file doesn't go into a variable - does it get output to results?
   file("gencode_isoname_clusters.tsv")
   
   script:
@@ -209,7 +206,6 @@ process isoseq3 {
 
   input:
   file(sample_ccs) from ch_sample_ccs
-  // TODO - rename ch_genome_fasta
   file(genome_fasta) from ch_genome_fasta
   file(primers_fasta) from ch_primers_fasta
   
@@ -222,6 +218,9 @@ process isoseq3 {
   file("${params.name}.flnc.bam")
   file("${params.name}.flnc.bam.pbi")
   file("${params.name}.flnc.filter_summary.json")
+  val true into ch_isoseq_done
+
+
   script:
   """
   # ensure that only qv10 reads from ccs are input
@@ -272,7 +271,6 @@ Channel
 STAR Alignment
 ---------------------------------------------------*/
 
-// TODO - "== true" ?   
 if(params.star_genome_dir != false){
     Channel
     .fromPath(params.star_genome_dir, type:'dir')
@@ -281,6 +279,7 @@ if(params.star_genome_dir != false){
 else{
     process star_generate_genome{
         cpus params.max_cpus
+        publishDir "${params.outdir}/star_index", mode: "copy"
         
         when:
         (params.fastq_read_1 != false | params.fastq_read_2 !=false) & params.star_genome_dir == false
@@ -389,7 +388,6 @@ process sqanti3 {
   //
 }
 
-// TODO - add an additional filter for only nnc with illumina coverage
 process filter_sqanti {
   publishDir "${params.outdir}/sqanti3-filtered/", mode: 'copy'
 
@@ -486,7 +484,6 @@ process transcriptome_summary {
   file(enst_to_isoname) from ch_enst_isoname
   file(len_stats) from ch_gene_lens
   
-  // TODO - sqanti_isoform_info.tsv outputs isonames with underscores, convert back to hyphens
   output:
   file("gene_level_tab.tsv") into ch_gene_level
   file("sqanti_isoform_info.tsv") into ch_sqanti_isoform_info
@@ -603,7 +600,6 @@ process refine_orf_database {
   publishDir "${params.outdir}/refined_database/", mode: 'copy'
 
   input:
-  // TODO - would short params go here too? or do they get called within the script line (as it is now)
   file(best_orfs) from ch_best_orf_refine
   file(sample_fasta) from ch_sample_fasta_refine
   file(protein_coding_genes) from ch_protein_coding_genes_db
@@ -657,11 +653,12 @@ MetaMorpheus wtih Sample Specific Database
 ---------------------------------------------------*/
 
 process mass_spec_raw_convert{
-    publishDir "${params.outdir}/raw_convert/", mode: 'copy'
+    // publishDir "${params.outdir}/raw_convert/", mode: 'copy'
     when:
       params.mass_spec != false
 
     input:
+        val flag from ch_isoseq_done
         file(raw_file) from ch_mass_spec_raw
     output:
         file("*") into ch_mass_spec_converted
@@ -692,7 +689,9 @@ process metamorpheus_with_sample_specific_database{
 
     output:
         file("toml/*")
-        file("search_results/*")
+        file("search_results/Task1SearchTask/All*")
+        file("search_results/Task1SearchTask/prose.txt")
+        file("search_results/Task1SearchTask/results.txt")
         file("search_results/Task1SearchTask/AllPeptides.Gencode.psmtsv") into ch_pacbio_peptides
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv") into ch_pacbio_protein_groups
     
@@ -719,7 +718,9 @@ process metamorpheus_with_gencode_database{
 
     output:
         file("toml/*")
-        file("search_results/*")
+        file("search_results/Task1SearchTask/All*")
+        file("search_results/Task1SearchTask/prose.txt")
+        file("search_results/Task1SearchTask/results.txt")
         file("search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv") into ch_gencode_peptides
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv") into ch_gencode_protein_groups
     
@@ -746,7 +747,9 @@ process metamorpheus_with_uniprot_database{
 
     output:
         file("toml/*")
-        file("search_results/*")
+        file("search_results/Task1SearchTask/All*")
+        file("search_results/Task1SearchTask/prose.txt")
+        file("search_results/Task1SearchTask/results.txt")
         file("search_results/Task1SearchTask/AllPeptides.UniProt.psmtsv") into ch_uniprot_peptides
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.UniProt.tsv") into ch_uniprot_protein_groups
     
