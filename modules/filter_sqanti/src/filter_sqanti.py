@@ -157,8 +157,9 @@ def main():
         classification = filter_intra_polyA(classification, results.percent_A_downstream_threshold)
     if is_template_switching_filtered:
         classification = filter_rts_stage(classification)
-    
-    classification = filter_illumina_coverage(classification, results.min_illumina_coverage)
+
+    # turn off Illumina filtering 
+    # classification = filter_illumina_coverage(classification, results.min_illumina_coverage)
 
     if results.structural_categories_level in structural_categories.keys():
         classification = classification[classification['structural_category'].isin(structural_categories[results.structural_categories_level])]
