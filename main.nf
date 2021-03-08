@@ -67,68 +67,42 @@ log.info "refine_cutoff                         : ${params.refine_cutoff}"
 log.info "mass_spec                             : ${params.mass_spec}"
 log.info ""
 
-Channel
-    .value(file(params.gencode_gtf))
-    .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.gencode_gtf}" }
-    .set { ch_gencode_gtf }   
-    
-Channel
-    .value(file(params.gencode_transcript_fasta))
-    .ifEmpty { error "Cannot find any file for parameter --gencode_transcript_fasta: ${params.gencode_transcript_fasta}" }
-    .set { ch_gencode_transcript_fasta }  
+if (!params.gencode_gtf) exit 1, "Cannot find gtf file for parameter --gencode_gtf: ${params.gencode_gtf}"
+ch_gencode_gtf = Channel.value(file(params.gencode_gtf))
 
-Channel
-    .value(file(params.gencode_translation_fasta))
-    .ifEmpty { error "Cannot find any file for parameter --gencode_translation_fasta: ${params.gencode_translation_fasta}" }
-    .set { ch_gencode_translation_fasta }  
+if (!params.gencode_transcript_fasta) exit 1, "Cannot find any file for parameter --gencode_transcript_fasta: ${params.gencode_transcript_fasta}"
+ch_gencode_transcript_fasta= Channel.value(file(params.gencode_transcript_fasta))
 
-Channel
-    .value(file(params.sample_ccs))
-    .ifEmpty { error "Cannot find file for parameter --sample_ccs: ${params.sample_ccs}" }
-    .set { ch_sample_ccs }   
+if (!params.gencode_translation_fasta) exit 1, "Cannot find any file for parameter --gencode_translation_fasta: ${params.gencode_translation_fasta}"
+ch_gencode_translation_fasta = Channel.value(file(params.gencode_translation_fasta))
 
-Channel
-    .value(file(params.genome_fasta))
-    .ifEmpty { error "Cannot find any seq file for parameter --genome_fasta: ${params.genome_fasta}" }
-    .set { ch_genome_fasta }  
+if (!params.sample_ccs) exit 1, "Cannot find file for parameter --sample_ccs: ${params.sample_ccs}"
+ch_sample_ccs = Channel.value(file(params.sample_ccs))
 
-Channel
-    .value(file(params.primers_fasta))
-    .ifEmpty { error "Cannot find any seq file for parameter --primers_fasta: ${params.primers_fasta}" }
-    .set { ch_primers_fasta } 
+if (!params.genome_fasta) exit 1, "Cannot find any seq file for parameter --genome_fasta: ${params.genome_fasta}"
+ch_genome_fasta = Channel.value(file(params.genome_fasta))
 
-Channel
-     .value(file(params.hexamer))
-     .ifEmpty { error "Cannot find headmer file for parameter --hexamer: ${params.hexamer}" }
-     .set { ch_hexamer }   
-     
-Channel
-    .value(file(params.logit_model))
-    .ifEmpty { error "Cannot find any logit model file for parameter --logit_model: ${params.logit_model}" }
-    .set { ch_logit_model } 
+if (!params.primers_fasta) exit 1, "Cannot find any seq file for parameter --primers_fasta: ${params.primers_fasta}"
+ch_primers_fasta = Channel.value(file(params.primers_fasta))
 
-Channel
-    .value(file(params.sample_kallisto_tpm))
-    .ifEmpty { error "Cannot find any sample_kallisto_tpm file for parameter --sample_kallisto_tpm: ${params.sample_kallisto_tpm}" }
-    .set { ch_sample_kallisto } 
-  
-Channel
-    .value(file(params.normalized_ribo_kallisto))
-    .ifEmpty { error "Cannot find any normalized_ribo_kallisto file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}" }
-    .set { ch_normalized_ribo_kallisto } 
+if (!params.hexamer) exit 1, "Cannot find headmer file for parameter --hexamer: ${params.hexamer}"
+ch_hexamer = Channel.value(file(params.hexamer))
 
+if (!params.logit_model) exit 1, "Cannot find any logit model file for parameter --logit_model: ${params.logit_model}"
+ch_logit_model =  Channel.value(file(params.logit_model)).set
 
-Channel
-    .value(file(params.uniprot_protein_fasta))
-    .ifEmpty { error "Cannot find any file for parameter --uniprot_protein_fasta: ${params.uniprot_protein_fasta}" }
-    .set { ch_uniprot_protein_fasta } 
+if (!params.sample_kallisto_tpm) exit 1, "Cannot find any sample_kallisto_tpm file for parameter --sample_kallisto_tpm: ${params.sample_kallisto_tpm}"
+ch_sample_kallisto = Channel.value(file(params.sample_kallisto_tpm))
 
+if (!params.normalized_ribo_kallisto) exit 1, "Cannot find any normalized_ribo_kallisto file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}"
+ch_normalized_ribo_kallisto = Channel.value(file(params.normalized_ribo_kallisto))
 
-Channel
-    .from(params.fastq_read_1, params.fastq_read_2)
-    .filter(String)
-    .flatMap{ files(it) }
-    .set{ ch_fastq_reads }
+if (params.uniprot_protein_fasta) exit 1, "Cannot find any file for parameter --uniprot_protein_fasta: ${params.uniprot_protein_fasta}"
+ch_uniprot_protein_fasta = Channel.value(file(params.uniprot_protein_fasta))
+
+if (!params.fastq_read_1) exit 1, "No file found for the parameter --fastq_read_1 at the location ${params.fastq_read_1}"
+if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
+ch_fastq_reads = Channel.from(params.fastq_read_1, params.fastq_read_2).filter(String).flatMap{ files(it) }
 
 
 /*--------------------------------------------------
