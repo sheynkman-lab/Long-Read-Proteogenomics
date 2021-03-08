@@ -42,7 +42,6 @@ log.info "====================================="
 // Header log info
 log.info "\nPARAMETERS SUMMARY"
 log.info "mainScript                            : ${params.mainScript}"
-log.info "defaultBranch                         : ${params.defaultBranch}"
 log.info "config                                : ${params.config}"
 log.info "max_cpus                              : ${params.max_cpus}"
 log.info "outdir                                : ${params.outdir}"
