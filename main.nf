@@ -88,7 +88,7 @@ if (!params.hexamer) exit 1, "Cannot find headmer file for parameter --hexamer: 
 ch_hexamer = Channel.value(file(params.hexamer))
 
 if (!params.logit_model) exit 1, "Cannot find any logit model file for parameter --logit_model: ${params.logit_model}"
-ch_logit_model =  Channel.value(file(params.logit_model)).set
+ch_logit_model =  Channel.value(file(params.logit_model))
 
 if (!params.sample_kallisto_tpm) exit 1, "Cannot find any sample_kallisto_tpm file for parameter --sample_kallisto_tpm: ${params.sample_kallisto_tpm}"
 ch_sample_kallisto = Channel.value(file(params.sample_kallisto_tpm))
@@ -96,7 +96,7 @@ ch_sample_kallisto = Channel.value(file(params.sample_kallisto_tpm))
 if (!params.normalized_ribo_kallisto) exit 1, "Cannot find any normalized_ribo_kallisto file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}"
 ch_normalized_ribo_kallisto = Channel.value(file(params.normalized_ribo_kallisto))
 
-if (params.uniprot_protein_fasta) exit 1, "Cannot find any file for parameter --uniprot_protein_fasta: ${params.uniprot_protein_fasta}"
+if (!params.uniprot_protein_fasta) exit 1, "Cannot find any file for parameter --uniprot_protein_fasta: ${params.uniprot_protein_fasta}"
 ch_uniprot_protein_fasta = Channel.value(file(params.uniprot_protein_fasta))
 
 if (!params.fastq_read_1) exit 1, "No file found for the parameter --fastq_read_1 at the location ${params.fastq_read_1}"
