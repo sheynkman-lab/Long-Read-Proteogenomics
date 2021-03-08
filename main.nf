@@ -66,14 +66,20 @@ log.info "refine_cutoff                         : ${params.refine_cutoff}"
 log.info "mass_spec                             : ${params.mass_spec}"
 log.info ""
 
-if (!params.gencode_gtf) exit 1, "Cannot find gtf file for parameter --gencode_gtf: ${params.gencode_gtf}"
+// if (!params.gencode_gtf) exit 1, "Cannot find gtf file for parameter --gencode_gtf: ${params.gencode_gtf}"
 ch_gencode_gtf = Channel.value(file(params.gencode_gtf))
 
 if (!params.gencode_transcript_fasta) exit 1, "Cannot find any file for parameter --gencode_transcript_fasta: ${params.gencode_transcript_fasta}"
 ch_gencode_transcript_fasta= Channel.value(file(params.gencode_transcript_fasta))
 
 if (!params.gencode_translation_fasta) exit 1, "Cannot find any file for parameter --gencode_translation_fasta: ${params.gencode_translation_fasta}"
+
+if (params.gencode_translation_fasta.endsWith('.gz')){
 ch_gencode_translation_fasta = Channel.value(file(params.gencode_translation_fasta))
+}
+if (!params.gencode_translation_fasta.endsWith('.gz')){
+ch_gencode_translation_fasta_uncompressed = Channel.value(file(params.gencode_translation_fasta))
+}
 
 if (!params.sample_ccs) exit 1, "Cannot find file for parameter --sample_ccs: ${params.sample_ccs}"
 ch_sample_ccs = Channel.value(file(params.sample_ccs))
@@ -163,13 +169,31 @@ ch_genome_fasta.into{
 Gencode Database
 ---------------------------------------------------*/
 
+if (params.gencode_translation_fasta.endsWith('.gz')) {
+  process gunzip_gencode_translation_fasta {
+  tag "decompress gzipped fasta"
+  cpus 1
+
+  input:
+  file(gencode_translation_fasta) from ch_gencode_translation_fasta
+
+  output:
+  file("*.{fa,fasta}") into ch_gencode_translation_fasta_uncompressed
+
+  script:
+  """
+  gunzip -f ${gencode_translation_fasta}
+  """
+  }
+}
+
 process make_gencode_database {
   tag "${gencode_translation_fasta}"
   cpus 1
   publishDir "${params.outdir}/gencode_db/", mode: 'copy'
 
   input:
-  file(gencode_translation_fasta) from ch_gencode_translation_fasta
+  file(gencode_translation_fasta) from ch_gencode_translation_fasta_uncompressed
   
   output:
   file("gencode_protein.fasta") into ch_gencode_protein_fasta
