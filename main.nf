@@ -39,17 +39,33 @@ if (params.help) {
 
 log.info "Longread Proteogenomics - N F  ~  version 0.1"
 log.info "====================================="
-// log.info "orf_coord      : ${params.orf_coord}"
-// log.info "gencode_gtf    : ${params.gencode_gtf}"
-// log.info "sample_gtf     : ${params.sample_gtf}"
-// log.info "pb_gene        : ${params.pb_gene}"
-// log.info "classification : ${params.classification}"
-// log.info "sample_fasta   : ${params.sample_fasta}"
-
-
-
-
-
+// Header log info
+log.info "\nPARAMETERS SUMMARY"
+log.info "mainScript                            : ${params.mainScript}"
+log.info "defaultBranch                         : ${params.defaultBranch}"
+log.info "config                                : ${params.config}"
+log.info "max_cpus                              : ${params.max_cpus}"
+log.info "outdir                                : ${params.outdir}"
+log.info "name                                  : ${params.name}"
+log.info "gencode_gtf                           : ${params.gencode_gtf}"
+log.info "gencode_transcript_fasta              : ${params.gencode_transcript_fasta}"
+log.info "gencode_translation_fasta             : ${params.gencode_translation_fasta}"
+log.info "genome_fasta                          : ${params.genome_fasta}"
+log.info "fastq_read_1                          : ${params.fastq_read_1}"
+log.info "fastq_read_2                          : ${params.fastq_read_2}"
+log.info "star_genome_dir                       : ${params.star_genome_dir}"
+log.info "sample_ccs                            : ${params.sample_ccs}"
+log.info "primers_fasta                         : ${params.primers_fasta}"
+log.info "hexamer                               : ${params.hexamer}"
+log.info "logit_model                           : ${params.logit_model}"
+log.info "sample_kallisto_tpm                   : ${params.sample_kallisto_tpm}"
+log.info "normalized_ribo_kallisto              : ${params.normalized_ribo_kallisto}"
+log.info "uniprot_fasta                         : ${params.uniprot_fasta}"
+log.info "uniprot_protein_fasta                 : ${params.uniprot_protein_fasta}"
+log.info "protein_coding_only                   : ${params.protein_coding_only}"
+log.info "refine_cutoff                         : ${params.refine_cutoff}"
+log.info "mass_spec                             : ${params.mass_spec}"
+log.info ""
 
 Channel
     .value(file(params.gencode_gtf))
@@ -93,12 +109,12 @@ Channel
 
 Channel
     .value(file(params.sample_kallisto_tpm))
-    .ifEmpty { error "Cannot find any logit model file for parameter --sample_kallisto_tpm: ${params.sample_kallisto_tpm}" }
+    .ifEmpty { error "Cannot find any sample_kallisto_tpm file for parameter --sample_kallisto_tpm: ${params.sample_kallisto_tpm}" }
     .set { ch_sample_kallisto } 
   
 Channel
     .value(file(params.normalized_ribo_kallisto))
-    .ifEmpty { error "Cannot find any logit model file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}" }
+    .ifEmpty { error "Cannot find any normalized_ribo_kallisto file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}" }
     .set { ch_normalized_ribo_kallisto } 
 
 
