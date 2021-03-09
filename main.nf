@@ -39,80 +39,75 @@ if (params.help) {
 
 log.info "Longread Proteogenomics - N F  ~  version 0.1"
 log.info "====================================="
-// log.info "orf_coord      : ${params.orf_coord}"
-// log.info "gencode_gtf    : ${params.gencode_gtf}"
-// log.info "sample_gtf     : ${params.sample_gtf}"
-// log.info "pb_gene        : ${params.pb_gene}"
-// log.info "classification : ${params.classification}"
-// log.info "sample_fasta   : ${params.sample_fasta}"
+// Header log info
+log.info "\nPARAMETERS SUMMARY"
+log.info "mainScript                            : ${params.mainScript}"
+log.info "config                                : ${params.config}"
+log.info "max_cpus                              : ${params.max_cpus}"
+log.info "outdir                                : ${params.outdir}"
+log.info "name                                  : ${params.name}"
+log.info "gencode_gtf                           : ${params.gencode_gtf}"
+log.info "gencode_transcript_fasta              : ${params.gencode_transcript_fasta}"
+log.info "gencode_translation_fasta             : ${params.gencode_translation_fasta}"
+log.info "genome_fasta                          : ${params.genome_fasta}"
+log.info "fastq_read_1                          : ${params.fastq_read_1}"
+log.info "fastq_read_2                          : ${params.fastq_read_2}"
+log.info "star_genome_dir                       : ${params.star_genome_dir}"
+log.info "sample_ccs                            : ${params.sample_ccs}"
+log.info "primers_fasta                         : ${params.primers_fasta}"
+log.info "hexamer                               : ${params.hexamer}"
+log.info "logit_model                           : ${params.logit_model}"
+log.info "sample_kallisto_tpm                   : ${params.sample_kallisto_tpm}"
+log.info "normalized_ribo_kallisto              : ${params.normalized_ribo_kallisto}"
+log.info "uniprot_fasta                         : ${params.uniprot_fasta}"
+log.info "uniprot_protein_fasta                 : ${params.uniprot_protein_fasta}"
+log.info "protein_coding_only                   : ${params.protein_coding_only}"
+log.info "refine_cutoff                         : ${params.refine_cutoff}"
+log.info "mass_spec                             : ${params.mass_spec}"
+log.info ""
 
+// if (!params.gencode_gtf) exit 1, "Cannot find gtf file for parameter --gencode_gtf: ${params.gencode_gtf}"
+ch_gencode_gtf = Channel.value(file(params.gencode_gtf))
 
+if (!params.gencode_transcript_fasta) exit 1, "Cannot find any file for parameter --gencode_transcript_fasta: ${params.gencode_transcript_fasta}"
+ch_gencode_transcript_fasta= Channel.value(file(params.gencode_transcript_fasta))
 
+if (!params.gencode_translation_fasta) exit 1, "Cannot find any file for parameter --gencode_translation_fasta: ${params.gencode_translation_fasta}"
 
+if (params.gencode_translation_fasta.endsWith('.gz')){
+ch_gencode_translation_fasta = Channel.value(file(params.gencode_translation_fasta))
+}
+if (!params.gencode_translation_fasta.endsWith('.gz')){
+ch_gencode_translation_fasta_uncompressed = Channel.value(file(params.gencode_translation_fasta))
+}
 
+if (!params.sample_ccs) exit 1, "Cannot find file for parameter --sample_ccs: ${params.sample_ccs}"
+ch_sample_ccs = Channel.value(file(params.sample_ccs))
 
-Channel
-    .value(file(params.gencode_gtf))
-    .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.gencode_gtf}" }
-    .set { ch_gencode_gtf }   
-    
-Channel
-    .value(file(params.gencode_transcript_fasta))
-    .ifEmpty { error "Cannot find any file for parameter --gencode_transcript_fasta: ${params.gencode_transcript_fasta}" }
-    .set { ch_gencode_transcript_fasta }  
+if (!params.genome_fasta) exit 1, "Cannot find any seq file for parameter --genome_fasta: ${params.genome_fasta}"
+ch_genome_fasta = Channel.value(file(params.genome_fasta))
 
-Channel
-    .value(file(params.gencode_translation_fasta))
-    .ifEmpty { error "Cannot find any file for parameter --gencode_translation_fasta: ${params.gencode_translation_fasta}" }
-    .set { ch_gencode_translation_fasta }  
+if (!params.primers_fasta) exit 1, "Cannot find any seq file for parameter --primers_fasta: ${params.primers_fasta}"
+ch_primers_fasta = Channel.value(file(params.primers_fasta))
 
-Channel
-    .value(file(params.sample_ccs))
-    .ifEmpty { error "Cannot find file for parameter --sample_ccs: ${params.sample_ccs}" }
-    .set { ch_sample_ccs }   
+if (!params.hexamer) exit 1, "Cannot find headmer file for parameter --hexamer: ${params.hexamer}"
+ch_hexamer = Channel.value(file(params.hexamer))
 
-Channel
-    .value(file(params.genome_fasta))
-    .ifEmpty { error "Cannot find any seq file for parameter --genome_fasta: ${params.genome_fasta}" }
-    .set { ch_genome_fasta }  
+if (!params.logit_model) exit 1, "Cannot find any logit model file for parameter --logit_model: ${params.logit_model}"
+ch_logit_model =  Channel.value(file(params.logit_model))
 
-Channel
-    .value(file(params.primers_fasta))
-    .ifEmpty { error "Cannot find any seq file for parameter --primers_fasta: ${params.primers_fasta}" }
-    .set { ch_primers_fasta } 
+if (!params.sample_kallisto_tpm) exit 1, "Cannot find any sample_kallisto_tpm file for parameter --sample_kallisto_tpm: ${params.sample_kallisto_tpm}"
+ch_sample_kallisto = Channel.value(file(params.sample_kallisto_tpm))
 
-Channel
-     .value(file(params.hexamer))
-     .ifEmpty { error "Cannot find headmer file for parameter --hexamer: ${params.hexamer}" }
-     .set { ch_hexamer }   
-     
-Channel
-    .value(file(params.logit_model))
-    .ifEmpty { error "Cannot find any logit model file for parameter --logit_model: ${params.logit_model}" }
-    .set { ch_logit_model } 
+if (!params.normalized_ribo_kallisto) exit 1, "Cannot find any normalized_ribo_kallisto file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}"
+ch_normalized_ribo_kallisto = Channel.value(file(params.normalized_ribo_kallisto))
 
-Channel
-    .value(file(params.sample_kallisto_tpm))
-    .ifEmpty { error "Cannot find any logit model file for parameter --sample_kallisto_tpm: ${params.sample_kallisto_tpm}" }
-    .set { ch_sample_kallisto } 
-  
-Channel
-    .value(file(params.normalized_ribo_kallisto))
-    .ifEmpty { error "Cannot find any logit model file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}" }
-    .set { ch_normalized_ribo_kallisto } 
+if (!params.uniprot_protein_fasta) exit 1, "Cannot find any file for parameter --uniprot_protein_fasta: ${params.uniprot_protein_fasta}"
+ch_uniprot_protein_fasta = Channel.value(file(params.uniprot_protein_fasta))
 
-
-Channel
-    .value(file(params.uniprot_protein_fasta))
-    .ifEmpty { error "Cannot find any file for parameter --uniprot_protein_fasta: ${params.uniprot_protein_fasta}" }
-    .set { ch_uniprot_protein_fasta } 
-
-
-Channel
-    .from(params.fastq_read_1, params.fastq_read_2)
-    .filter(String)
-    .flatMap{ files(it) }
-    .set{ ch_fastq_reads }
+if (!params.fastq_read_1) exit 1, "No file found for the parameter --fastq_read_1 at the location ${params.fastq_read_1}"
+if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
+ch_fastq_reads = Channel.from(params.fastq_read_1, params.fastq_read_2).filter(String).flatMap{ files(it) }
 
 
 /*--------------------------------------------------
@@ -174,13 +169,31 @@ ch_genome_fasta.into{
 Gencode Database
 ---------------------------------------------------*/
 
+if (params.gencode_translation_fasta.endsWith('.gz')) {
+  process gunzip_gencode_translation_fasta {
+  tag "decompress gzipped fasta"
+  cpus 1
+
+  input:
+  file(gencode_translation_fasta) from ch_gencode_translation_fasta
+
+  output:
+  file("*.{fa,fasta}") into ch_gencode_translation_fasta_uncompressed
+
+  script:
+  """
+  gunzip -f ${gencode_translation_fasta}
+  """
+  }
+}
+
 process make_gencode_database {
   tag "${gencode_translation_fasta}"
   cpus 1
   publishDir "${params.outdir}/gencode_db/", mode: 'copy'
 
   input:
-  file(gencode_translation_fasta) from ch_gencode_translation_fasta
+  file(gencode_translation_fasta) from ch_gencode_translation_fasta_uncompressed
   
   output:
   file("gencode_protein.fasta") into ch_gencode_protein_fasta

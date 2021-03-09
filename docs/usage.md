@@ -85,9 +85,21 @@ Specify this when restarting a pipeline. Nextflow will used cached results from 
 
 You can also supply a run name to resume a specific run: `-resume [run-name]`. Use the `nextflow log` command to show previous run names.
 
-### `-c`
+### Use of the config variable: `--config`
 
-Specify the path to a specific config file (this is a core Nextflow command). See the [nf-core website documentation](https://nf-co.re/usage/configuration) for more information.
+The pipeline utilizes a idiomatic heuristic that enables the use of a config defined as:
+
+To create a config file, that will hold all the parameter key-value pairs for a specific test, feel free to create a file inside the folder `conf/`.
+
+To run, with all the parameters defined in a config, eg in the `conf/test.config`, one only needs to run the `nextflow run` command with one parameter key-value pair:
+
+```bash
+nextflow run main.nf --config conf/test.config
+```
+
+> NOTE:
+The parameters that are not defined within the custom config, eg. `conf/test.config`, will maintain the default values defined inside `nextflow.config`.
+
 
 #### Custom resource requests
 
