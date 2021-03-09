@@ -149,7 +149,7 @@ def write_peptide_gtf(name, pep_ranges, pbs, gene_pb, seqs):
 def make_peptide_gtf(name, gtf, pbs, pb_gene, pep, seqs):
     def find_start_end_pep_index(row):
         pep, pb_acc = row[['pep', 'pb_acc']]
-        print(f"{pb_acc}\t{pep}")
+        # print(f"{pb_acc}\t{pep}")
         seq = seqs[pb_acc]
         start = seq.find(pep)
         if start == -1:

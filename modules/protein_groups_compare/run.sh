@@ -1,11 +1,14 @@
 # run three times to compare databases pairwise
-
+RESULTS=/Users/bj8th/Documents/Lab-for-Proteoform-Systems-Biology/Long-Read-Proteogenomics/data/results/jurkat_gloria/results/results
 # gencode versus pacbio
-python ./src/protein_groups_compare.py --pg_fileOne ./ProteinInfResults/GENCODE/AllQuantifiedProteinGroups.tsv --pg_fileTwo ./ProteinInfResults/PacBio/AllQuantifiedProteinGroups.tsv --mapping ./accession_map_gencode_uniprot_pacbio.tsv --output ./
+echo 'PROTEIN GROUPS COMPARE: GENCODE PACBIO'
+python ./src/protein_groups_compare.py --pg_fileOne $RESULTS/metamorpheus/gencode/search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv --pg_fileTwo $RESULTS/metamorpheus/pacbio/search_results/Task1SearchTask/AllQuantifiedProteinGroups.jurkat.tsv --mapping $RESULTS/accession_mapping/accession_map_gencode_uniprot_pacbio.tsv --output $RESULTS/protein_groups_compare
 
-# gencode versus uniprot
-python ./src/protein_groups_compare.py --pg_fileOne <gencode protein groups file> --pg_fileTwo <uniprot protein groups> --mapping ./accession_map_gencode_uniprot_pacbio.tsv --output ./
+# # gencode versus uniprot
+# echo 'PROTEIN GROUPS COMPARE: GENCODE UNIPROT'
+python ./src/protein_groups_compare.py --pg_fileOne $RESULTS/metamorpheus/uniprot/search_results/Task1SearchTask/AllQuantifiedProteinGroups.UniProt.tsv --pg_fileTwo $RESULTS/metamorpheus/gencode/search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv --mapping $RESULTS/accession_mapping/accession_map_gencode_uniprot_pacbio.tsv --output $RESULTS/protein_groups_compare
 
-# uniprot versus pacbio
-python ./src/protein_groups_compare.py --pg_fileOne <uniprot protein groups file> --pg_fileTwo <pacbio protein groups> --mapping ./accession_map_gencode_uniprot_pacbio.tsv --output ./
+# # uniprot versus pacbio
+# echo 'PROTEIN GROUPS COMPARE: UNIPROT PACBIO'
+python ./src/protein_groups_compare.py --pg_fileOne $RESULTS/metamorpheus/uniprot/search_results/Task1SearchTask/AllQuantifiedProteinGroups.UniProt.tsv --pg_fileTwo $RESULTS/metamorpheus/pacbio/search_results/Task1SearchTask/AllQuantifiedProteinGroups.jurkat.tsv --mapping $RESULTS/accession_mapping/accession_map_gencode_uniprot_pacbio.tsv --output $RESULTS/protein_groups_compare
 

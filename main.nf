@@ -717,8 +717,8 @@ process metamorpheus_with_sample_specific_database{
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
         dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
 
-        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.Gencode.psmtsv
-        mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv
+        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv
+        mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv
         """
 }
 
@@ -738,8 +738,8 @@ process metamorpheus_with_gencode_database{
         file("search_results/Task1SearchTask/All*")
         file("search_results/Task1SearchTask/prose.txt")
         file("search_results/Task1SearchTask/results.txt")
-        file("search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv") into ch_gencode_peptides
-        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv") into ch_gencode_protein_groups
+        file("search_results/Task1SearchTask/AllPeptides.Gencode.psmtsv") into ch_gencode_peptides
+        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv") into ch_gencode_protein_groups
     
     script:
         """
@@ -918,61 +918,61 @@ process make_multiregion{
   """
 }
 
-// /*--------------------------------------------------
-// Make Peptide GTF 
-// ---------------------------------------------------*/
-// process make_peptide_gtf{
-//   publishDir "${params.outdir}/peptide_track/", mode: 'copy'
+/*--------------------------------------------------
+Make Peptide GTF 
+---------------------------------------------------*/
+process make_peptide_gtf{
+  publishDir "${params.outdir}/peptide_track/", mode: 'copy'
 
-//   when:
-//     params.mass_spec != false
+  when:
+    params.mass_spec != false
 
 
-//   input:
-//     file(sample_gtf) from ch_pb_cds_peptide_gtf
-//     file(peptides) from ch_pacbio_peptides
-//     file(pb_gene) from ch_pb_gene_peptide_gtf
-//     file(refined_fasta) from ch_refined_fasta_peptide_gtf
-//   output:
-//     file("${params.name}_peptides.gtf") into ch_peptide_gtf
+  input:
+    file(sample_gtf) from ch_pb_cds_peptide_gtf
+    file(peptides) from ch_pacbio_peptides
+    file(pb_gene) from ch_pb_gene_peptide_gtf
+    file(refined_fasta) from ch_refined_fasta_peptide_gtf
+  output:
+    file("${params.name}_peptides.gtf") into ch_peptide_gtf
 
-//   script:
-//   """
-//   make_peptide_gtf_file.py \
-//   --name ${params.name} \
-//   --sample_gtf $sample_gtf \
-//   --peptides $peptides \
-//   --pb_gene $pb_gene \
-//   --refined_fasta $refined_fasta
-//   """
-// }
+  script:
+  """
+  make_peptide_gtf_file.py \
+  --name ${params.name} \
+  --sample_gtf $sample_gtf \
+  --peptides $peptides \
+  --pb_gene $pb_gene \
+  --refined_fasta $refined_fasta
+  """
+}
 
-// /*--------------------------------------------------
-// Convert Peptide GTF to BED and Add RGB
-// ---------------------------------------------------*/
-// process peptide_gtf_to_bed{
-//   publishDir "${params.outdir}/peptide_track/", mode: 'copy'
+/*--------------------------------------------------
+Convert Peptide GTF to BED and Add RGB
+---------------------------------------------------*/
+process peptide_gtf_to_bed{
+  publishDir "${params.outdir}/peptide_track/", mode: 'copy'
 
-//   when:
-//     params.mass_spec != false
+  when:
+    params.mass_spec != false
 
-//   input:
-//     file(peptide_gtf) from ch_peptide_gtf
+  input:
+    file(peptide_gtf) from ch_peptide_gtf
     
-//   output:
-//     file("${params.name}_peptides.bed12") into ch_peptide_bed
+  output:
+    file("${params.name}_peptides.bed12") into ch_peptide_bed
 
-//   script:
-//   """
-//   gtfToGenePred $peptide_gtf ${params.name}_peptides.genePred
-//   genePredToBed ${params.name}_peptides.genePred ${params.name}_peptides.bed12
+  script:
+  """
+  gtfToGenePred $peptide_gtf ${params.name}_peptides.genePred
+  genePredToBed ${params.name}_peptides.genePred ${params.name}_peptides.bed12
 
-//   # add rgb to colorize specific peptides 
-//   echo 'track name=peptide_w_specificity itemRgb=On' > ${params.name}_peptide_rgb.bed12
-//   cat ${params.name}_peptides.bed12 | awk '{ if (\$4 ~ /-1\$/) {\$9="0,102,0"; print \$0} else {\$9="0,51,0"; print \$0} }' >> ${params.name}_peptide_rgb.bed12
-//   """
+  # add rgb to colorize specific peptides 
+  echo 'track name=peptide_w_specificity itemRgb=On' > ${params.name}_peptide_rgb.bed12
+  cat ${params.name}_peptides.bed12 | awk '{ if (\$4 ~ /-1\$/) {\$9="0,102,0"; print \$0} else {\$9="0,51,0"; print \$0} }' >> ${params.name}_peptide_rgb.bed12
+  """
   
-// }
+}
 
 
 /*--------------------------------------------------
@@ -1012,25 +1012,38 @@ process accession_mapping{
 /*--------------------------------------------------
 Protein Group Comparison
 ---------------------------------------------------*/
-// process protein_group_compare{
-//     publishDir "${params.outdir}/protein_group_compare/", mode: 'copy'
-//     when:
-//       params.mass_spec != false
-//     input: 
-//       file(pacbio_protein_groups) from ch_pacbio_protein_groups
-//       file(gencode_protein_groups) from ch_gencode_protein_groups
-//       file(mapping) from ch_accession_map
-//     output:
-//       file("*")
-//     script:
-//       """
-//       protein_groups_compare.py \
-//       --pg_fileOne $gencode_protein_groups \
-//       --pg_fileTwo $pacbio_protein_groups \
-//       --mapping $mapping \
-//       --output ./
-//       """
-// }
+process protein_group_compare{
+    publishDir "${params.outdir}/protein_group_compare/", mode: 'copy'
+    when:
+      params.mass_spec != false
+    input: 
+      file(pacbio_protein_groups) from ch_pacbio_protein_groups
+      file(gencode_protein_groups) from ch_gencode_protein_groups
+      file(uniprot_protein_groups) from ch_uniprot_protein_groups
+      file(mapping) from ch_accession_map
+    output:
+      file("*")
+    script:
+      """
+      protein_groups_compare.py \
+      --pg_fileOne $gencode_protein_groups \
+      --pg_fileTwo $pacbio_protein_groups \
+      --mapping $mapping \
+      --output ./
+
+      protein_groups_compare.py \
+      --pg_fileOne $gencode_protein_groups \
+      --pg_fileTwo $uniprot_protein_groups \
+      --mapping $mapping \
+      --output ./
+
+      protein_groups_compare.py \
+      --pg_fileOne $uniprot_protein_groups \
+      --pg_fileTwo $pacbio_protein_groups \
+      --mapping $mapping \
+      --output ./
+      """
+}
 // TODO - implement Rachel's code that does a cross-comparison of protein groups
 // NOTE - her code requires a map from the accession mapping module
 
