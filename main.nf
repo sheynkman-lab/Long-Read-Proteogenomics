@@ -237,7 +237,6 @@ process isoseq3 {
   file("${params.name}.flnc.bam")
   file("${params.name}.flnc.bam.pbi")
   file("${params.name}.flnc.filter_summary.json")
-  val true into ch_isoseq_done
 
 
   script:
@@ -677,7 +676,6 @@ process mass_spec_raw_convert{
       params.mass_spec != false
 
     input:
-        val flag from ch_isoseq_done
         file(raw_file) from ch_mass_spec_raw
     output:
         file("*") into ch_mass_spec_converted
