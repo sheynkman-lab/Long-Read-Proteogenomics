@@ -98,7 +98,7 @@ nextflow run main.nf --config conf/test.config
 ```
 
 > NOTE:
-The parameters that are not defined withing the custom config, eg. `conf/test.config`, will maintain the default values defined inside `nextflow.config`.
+The parameters that are not defined within the custom config, eg. `conf/test.config`, will maintain the default values defined inside `nextflow.config`.
 
 
 #### Custom resource requests
