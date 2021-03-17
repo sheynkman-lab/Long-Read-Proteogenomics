@@ -96,13 +96,13 @@ if (params.genome_fasta.endsWith('.gz')) {
 
 
 
-if (params.genome_gtf.endsWith('.gz')) {
+if (params.gencode_gtf.endsWith('.gz')) {
   process gunzip_gencode_gtf {
   tag "decompress gzipped gtf"
   cpus 1
 
   input:
-  file(genome_gtf) from ch_gencode_gtf
+  file(gencode_gtf) from ch_gencode_gtf
 
   output:
   file("*.{gtf}") into ch_gencode_gtf_uncompressed
