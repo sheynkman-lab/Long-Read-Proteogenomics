@@ -54,35 +54,64 @@ log.info "sample_ccs                            : ${params.sample_ccs}"
 log.info "primers_fasta                         : ${params.primers_fasta}"
 log.info ""
 
-if (!params.gencode_gtf) exit 1, "Cannot find gtf file for parameter --gencode_gtf: ${params.gencode_gtf}"
+
+if (params.gencode_gtf.endsWith('.gz')){
 ch_gencode_gtf = Channel.value(file(params.gencode_gtf))
-
-if (!params.gencode_transcript_fasta) exit 1, "Cannot find any file for parameter --gencode_transcript_fasta: ${params.gencode_transcript_fasta}"
-ch_gencode_transcript_fasta= Channel.value(file(params.gencode_transcript_fasta))
-
-if (!params.gencode_translation_fasta) exit 1, "Cannot find any file for parameter --gencode_translation_fasta: ${params.gencode_translation_fasta}"
-
-if (params.gencode_translation_fasta.endsWith('.gz')){
-ch_gencode_translation_fasta = Channel.value(file(params.gencode_translation_fasta))
 }
-if (!params.gencode_translation_fasta.endsWith('.gz')){
-ch_gencode_translation_fasta_uncompressed = Channel.value(file(params.gencode_translation_fasta))
+if (!params.gencode_gtf.endsWith('.gz')){
+ch_gencode_gtf_uncompressed = Channel.value(file(params.gencode_gtf))
+}
+
+if (params.genome_fasta.endsWith('.gz')){
+ch_gencode_fasta = Channel.value(file(params.genome_fasta))
+}
+if (!params.genome_fasta.endsWith('.gz')){
+ch_gencode_fasta_uncompressed = Channel.value(file(params.genome_fasta))
 }
 
 if (!params.sample_ccs) exit 1, "Cannot find file for parameter --sample_ccs: ${params.sample_ccs}"
 ch_sample_ccs = Channel.value(file(params.sample_ccs))
 
-if (!params.genome_fasta) exit 1, "Cannot find any seq file for parameter --genome_fasta: ${params.genome_fasta}"
-ch_genome_fasta = Channel.value(file(params.genome_fasta))
-
 if (!params.primers_fasta) exit 1, "Cannot find any seq file for parameter --primers_fasta: ${params.primers_fasta}"
 ch_primers_fasta = Channel.value(file(params.primers_fasta))
 
 
-// partition channels for use by multiple modules
-ch_genome_fasta.into{
-  ch_genome_fasta_isoseq
-  ch_genome_fasta_sqanti
+if (params.genome_fasta.endsWith('.gz')) {
+  process gunzip_gencode_fasta {
+  tag "decompress gzipped fasta"
+  cpus 1
+
+  input:
+  file(genome_fasta) from ch_gencode_fasta
+
+  output:
+  file("*.{fa,fasta}") into ch_gencode_fasta_uncompressed
+
+  script:
+  """
+  gunzip -f ${gencode_fasta}
+  """
+  }
+}
+
+
+
+if (params.genome_gtf.endsWith('.gz')) {
+  process gunzip_gencode_gtf {
+  tag "decompress gzipped gtf"
+  cpus 1
+
+  input:
+  file(genome_gtf) from ch_gencode_gtf
+
+  output:
+  file("*.{gtf}") into ch_gencode_gtf_uncompressed
+
+  script:
+  """
+  gunzip -f ${gencode_gtf}
+  """
+  }
 }
 
 
@@ -149,7 +178,7 @@ process sqanti3 {
 
   input:
   file(fl_count) from ch_fl_count
-  file(gencode_gtf) from ch_gencode_gtf
+  file(gencode_gtf) from ch_gencode_gtf_uncompressed
   file(genome_fasta) from ch_genome_fasta_sqanti
   file(sample_gtf) from ch_isoseq_gtf
   
