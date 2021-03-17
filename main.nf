@@ -79,43 +79,6 @@ if (!params.primers_fasta) exit 1, "Cannot find any seq file for parameter --pri
 ch_primers_fasta = Channel.value(file(params.primers_fasta))
 
 
-/*--------------------------------------------------
-Reference Tables 
----------------------------------------------------*/
-
-process generate_reference_tables {
-  tag "${gencode_gtf}, ${gencode_transcript_fasta}"
-  cpus 1
-  publishDir "${params.outdir}/reference_tables/", mode: 'copy'
-
-  input:
-  file(gencode_gtf) from ch_gencode_gtf
-  file(gencode_transcript_fasta) from ch_gencode_transcript_fasta
-  
-  output:
-  file("ensg_gene.tsv") into ch_ensg_gene
-  file("enst_isoname.tsv") into ch_enst_isoname
-  file("gene_ensp.tsv") into ch_gene_ensp
-  file("gene_isoname.tsv") into ch_gene_isoname
-  file("isoname_lens.tsv") into ch_isoname_lens
-  file("gene_lens.tsv") into ch_gene_lens
-  file("protein_coding_genes.txt") into ch_protein_coding_genes
-  
-  script:
-  """
-  prepare_reference_tables.py \
-  --gtf $gencode_gtf \
-  --fa $gencode_transcript_fasta \
-  --ensg_gene ensg_gene.tsv \
-  --enst_isoname enst_isoname.tsv \
-  --gene_ensp gene_ensp.tsv \
-  --gene_isoname gene_isoname.tsv \
-  --isoname_lens isoname_lens.tsv \
-  --gene_lens gene_lens.tsv \
-  --protein_coding_genes protein_coding_genes.txt
-  """
-}
-
 // partition channels for use by multiple modules
 ch_genome_fasta.into{
   ch_genome_fasta_isoseq
@@ -208,7 +171,7 @@ process sqanti3 {
     --skipORF \
     -o ${params.name} \
     --fl_count $fl_count  \
-    --gtf \
+    --gtf
     """
 }
 
