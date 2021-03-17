@@ -85,7 +85,7 @@ if (params.genome_fasta.endsWith('.gz')) {
   file(genome_fasta) from ch_genome_fasta
 
   output:
-//   file("*.{fa,fasta}") into ch_genome_fasta_uncompressed
+  file("*.{fa,fasta}") into ch_genome_fasta_uncompressed
 
   script:
   """
