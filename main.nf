@@ -63,10 +63,10 @@ ch_gencode_gtf_uncompressed = Channel.value(file(params.gencode_gtf))
 }
 
 if (params.genome_fasta.endsWith('.gz')){
-ch_gencode_fasta = Channel.value(file(params.genome_fasta))
+ch_genome_fasta = Channel.value(file(params.genome_fasta))
 }
 if (!params.genome_fasta.endsWith('.gz')){
-ch_gencode_fasta_uncompressed = Channel.value(file(params.genome_fasta))
+ch_genome_fasta_uncompressed = Channel.value(file(params.genome_fasta))
 }
 
 if (!params.sample_ccs) exit 1, "Cannot find file for parameter --sample_ccs: ${params.sample_ccs}"
@@ -82,14 +82,14 @@ if (params.genome_fasta.endsWith('.gz')) {
   cpus 1
 
   input:
-  file(genome_fasta) from ch_gencode_fasta
+  file(genome_fasta) from ch_genome_fasta
 
   output:
-  file("*.{fa,fasta}") into ch_gencode_fasta_uncompressed
+  file("*.{fa,fasta}") into ch_genome_fasta_uncompressed
 
   script:
   """
-  gunzip -f ${gencode_fasta}
+  gunzip -f ${genome_fasta}
   """
   }
 }
@@ -112,6 +112,11 @@ if (params.gencode_gtf.endsWith('.gz')) {
   gunzip -f ${gencode_gtf}
   """
   }
+}
+
+ch_genome_fasta_uncompressed.into{
+    ch_genome_fasta_isoseq
+    ch_genome_fasta_sqanti
 }
 
 
@@ -172,7 +177,7 @@ SQANTI3
 ---------------------------------------------------*/
 
 process sqanti3 {
-  tag "${fl_count}, ${gencode_gtf}, ${gencode_fasta}, ${sample_gtf},"
+  tag "${fl_count}, ${gencode_gtf}, ${genome_fasta}, ${sample_gtf},"
   cpus params.max_cpus
   publishDir "${params.outdir}/sqanti3/", mode: 'copy'
 
