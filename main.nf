@@ -105,9 +105,26 @@ ch_normalized_ribo_kallisto = Channel.value(file(params.normalized_ribo_kallisto
 if (!params.uniprot_protein_fasta) exit 1, "Cannot find any file for parameter --uniprot_protein_fasta: ${params.uniprot_protein_fasta}"
 ch_uniprot_protein_fasta = Channel.value(file(params.uniprot_protein_fasta))
 
-if (!params.fastq_read_1) exit 1, "No file found for the parameter --fastq_read_1 at the location ${params.fastq_read_1}"
-if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
+// if (!params.fastq_read_1) exit 1, "No file found for the parameter --fastq_read_1 at the location ${params.fastq_read_1}"
+// if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
 ch_fastq_reads = Channel.from(params.fastq_read_1, params.fastq_read_2).filter(String).flatMap{ files(it) }
+
+if(params.mass_spec != false){
+  ch_mass_spec_raw = Channel.fromPath("${params.mass_spec}/*.raw")
+  ch_mass_spec_mzml = Channel.fromPath("${params.mass_spec}/*.{mzml,mzML}")
+}
+else{
+  ch_mass_spec_raw = Channel.from("no mass spec")
+  ch_mass_spec_mzml = Channel.from("no mass spec")
+}
+
+if (params.mass_spec != false & params.rescue_resolve_toml == false){
+  exit 1, "Cannot find file for parameter --rescue_resolve_toml: ${params.rescue_resolve_toml}"
+}else if (params.mass_spec == true & params.rescue_resolve_toml == true){
+  ch_rr_toml = Channel.value(file(params.rescue_resolve_toml))
+}else{
+  ch_rr_toml = Channel.from("no mass spec")
+}
 
 
 /*--------------------------------------------------
@@ -644,26 +661,14 @@ ch_refined_fasta.into{
   ch_refined_fasta_mapping
 }
 
-
-
-
-if(params.mass_spec != false){
-  Channel
-    .fromPath("${params.mass_spec}/*.raw")
-    .set{ch_mass_spec_raw}
-  Channel
-      .fromPath("${params.mass_spec}/*.{mzml,mzML}")
-      .set{ch_mass_spec_mzml}
+ch_refined_info.into{
+  ch_refined_info_rescue_resolve
+  ch_refined_info_cds
 }
-else{
-  Channel
-    .from("no mass spec")
-    .set{ch_mass_spec_raw}
-  Channel
-    .from("no mass spec")
-    .set{ch_mass_spec_mzml}
 
-}
+
+
+
 
 
 /*--------------------------------------------------
@@ -719,6 +724,35 @@ process metamorpheus_with_sample_specific_database{
 
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv
+        """
+}
+
+process metamorpheus_with_sample_specific_database_rescue_resolve{
+    tag " $mass_spec"
+    publishDir "${params.outdir}/metamorpheus/rescue_resolve", mode: 'copy'
+
+    input:
+        // file(orf_calls) from ch_orf_calls
+        file(orf_fasta) from ch_orf_fasta
+        // file(toml) from ch_toml
+        file(mass_spec) from ch_mass_spec_combined.collect()
+        file(toml) from ch_rr_toml
+        file(orf_meta) from ch_refined_info_cds
+
+    output:
+        file("toml/*")
+        file("search_results/Task1SearchTask/All*")
+        file("search_results/Task1SearchTask/prose.txt")
+        file("search_results/Task1SearchTask/results.txt")
+        file("search_results/Task1SearchTask/AllPeptides.${params.name}.rescue_resolve.psmtsv")
+        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.rescue_resolve.tsv")
+    
+    script:
+        """
+        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings settings 
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results --orf $orf_meta --cpm 25
+        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.rescue_resolve.psmtsv
+        mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.rescue_resolve.tsv
         """
 }
 
@@ -828,7 +862,7 @@ process make_pacbio_cds_gtf {
 
   input:
     file(sample_gtf) from ch_sample_gtf_cds
-    file(refined_info) from ch_refined_info
+    file(refined_info) from ch_refined_info_cds
     file(called_orfs) from ch_best_orf_cds
     file(pb_gene) from ch_pb_gene_cds
   

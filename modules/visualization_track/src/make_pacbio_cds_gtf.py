@@ -241,6 +241,7 @@ def make_pacbio_cds_gtf(sample_gtf, refined_orfs, called_orfs, pb_gene, name, in
     with open(f"{name}_with_cds.gtf", 'w') as ofile:
         for i, row in ranges.iterrows():
             acc, orf_start, orf_end, cpm = row
+            cpm = round(cpm)
             # remove stop exon
             orf_end = orf_end - 3
             if acc in pbs:
@@ -267,7 +268,7 @@ def make_pacbio_cds_gtf(sample_gtf, refined_orfs, called_orfs, pb_gene, name, in
                     orf_coords = make_cds_coords_negative_strand(i1, delta1, i2, delta2, coords)
                 # write out the coordinates
                 acc_w_gene_w_cpm = gene + '|' + acc + '|' + str(cpm)
-                out_acc = f'gene_id "{gene}"; transcript_id "{acc_w_gene_w_cpm}"'
+                out_acc = f'gene_id "{gene}"; transcript_id "{acc_w_gene_w_cpm}";'
 
                 if include_transcript:
                     tstart, tend = get_min_and_max_coords_from_exon_chain(coords)

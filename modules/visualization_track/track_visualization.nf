@@ -29,37 +29,42 @@ log.info "====================================="
 Channel
     .value(file(params.sample_gtf))
     .ifEmpty { error "Cannot find gtf file for parameter --sample_gtf: ${params.sample_gtf}" }
-    .set { ch_sample_gtf }   
+    .set { ch_sample_gtf_cds }   
 
 Channel
-    .value(file(params.refined_db_data))
-    .ifEmpty { error "Cannot find gtf file for parameter --refined_db_data: ${params.refined_db_data}" }
-    .set { ch_refined_db_data }  
+    .value(file(params.refined_info))
+    .ifEmpty { error "Cannot find gtf file for parameter --ch_refined_info: ${params.refined_info}" }
+    .set { ch_refined_info_cds }  
 
 Channel
-    .value(file(params.refined_db_fasta))
-    .ifEmpty { error "Cannot find gtf file for parameter --refined_db_fasta: ${params.refined_db_fasta}" }
-    .set { ch_refined_db_fasta }  
+    .value(file(params.refined_fasta))
+    .ifEmpty { error "Cannot find gtf file for parameter --refined_db_fasta: ${params.refined_fasta}" }
+    .set { ch_refined_fasta_peptide_gtf }  
 
 Channel
-    .value(file(params.orf_calls))
-    .ifEmpty { error "Cannot find gtf file for parameter --orf_calls: ${params.orf_calls}" }
-    .set { ch_orf_calls }   
+    .value(file(params.best_orf))
+    .ifEmpty { error "Cannot find gtf file for parameter --orf_calls: ${params.best_orf}" }
+    .set { ch_best_orf_cds }   
 
 Channel
     .value(file(params.pb_gene))
     .ifEmpty { error "Cannot find gtf file for parameter --pb_gene: ${params.pb_gene}" }
     .set { ch_pb_gene }   
 
+ch_pb_gene.into{
+  ch_pb_gene_cds
+  ch_pb_gene_peptide_gtf
+}
+
 Channel
     .value(file(params.peptides))
-    .ifEmpty { error "Cannot find gtf file for parameter --refined_db_data: ${params.peptides}" }
-    .set { ch_peptides }  
+    .ifEmpty { error "Cannot find gtf file for parameter --peptides: ${params.peptides}" }
+    .set { ch_pacbio_peptides }  
 
   Channel
-  .value(file(params.reference_gtf))
-    .ifEmpty { error "Cannot find gtf file for parameter --reference_gtf: ${params.reference_gtf}" }
-    .set { ch_reference_gtf } 
+  .value(file(params.gencode_gtf))
+    .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.gencode_gtf}" }
+    .set { ch_gencode_gtf } 
 
 
 /*--------------------------------------------------
@@ -72,24 +77,39 @@ process make_pacbio_cds_gtf {
   publishDir "${params.outdir}/pacbio_cds/", mode: 'copy'
 
   input:
-    file(sample_gtf) from ch_sample_gtf
-    file(agg_orfs) from ch_refined_db_data
-    file(refined_orfs) from ch_orf_calls
-    file(pb_gene) from ch_pb_gene
+    file(sample_gtf) from ch_sample_gtf_cds
+    file(refined_info) from ch_refined_info_cds
+    file(called_orfs) from ch_best_orf_cds
+    file(pb_gene) from ch_pb_gene_cds
   
   output:
     file("${params.name}_with_cds.gtf") into ch_pb_cds
+    file("*")
   
   script:
   """
   make_pacbio_cds_gtf.py \
   --name ${params.name} \
   --sample_gtf $sample_gtf \
-  --agg_orfs $agg_orfs \
-  --refined_orfs $refined_orfs \
+  --refined_database $refined_info \
+  --called_orfs $called_orfs \
   --pb_gene $pb_gene \
-  --include_transcript ${params.include_transcript}
+  --include_transcript yes
+
+  make_pacbio_cds_gtf.py \
+  --name ${params.name}_no_transcript \
+  --sample_gtf $sample_gtf \
+  --refined_database $refined_info \
+  --called_orfs $called_orfs \
+  --pb_gene $pb_gene \
+  --include_transcript no
   """
+}
+ch_pb_cds.into{
+  ch_pb_cds_bed
+  ch_pb_cds_multiregion
+  ch_pb_cds_peptide_gtf
+  
 }
 
 /*--------------------------------------------------
@@ -99,7 +119,7 @@ process pb_cds_to_bed12 {
   publishDir "${params.outdir}/pacbio_cds/", mode: 'copy'
 
   input:
-    file(pb_cds) from ch_pb_cds
+    file(pb_cds) from ch_pb_cds_bed
   output:
     file("${params.name}_with_cds.bed12") into ch_cds_bed
   
@@ -134,8 +154,8 @@ Make Region Bed for UCSC Browser
 ---------------------------------------------------*/
 process make_multiregion{
   input:
-    file(sample_gtf) from ch_pb_cds
-    file(reference_gtf) from ch_reference_gtf
+    file(sample_gtf) from ch_pb_cds_multiregion
+    file(reference_gtf) from ch_gencode_gtf
   output:
     file("*")
 
@@ -154,11 +174,15 @@ Make Peptide GTF
 process make_peptide_gtf{
   publishDir "${params.outdir}/peptide_track/", mode: 'copy'
 
+  when:
+    params.mass_spec != false
+
+
   input:
-    file(sample_gtf) from ch_pb_cds
-    file(peptides) from ch_peptides
-    file(pb_gene) from ch_pb_gene
-    file(refined_fasta) from ch_refined_db_fasta
+    file(sample_gtf) from ch_pb_cds_peptide_gtf
+    file(peptides) from ch_pacbio_peptides
+    file(pb_gene) from ch_pb_gene_peptide_gtf
+    file(refined_fasta) from ch_refined_fasta_peptide_gtf
   output:
     file("${params.name}_peptides.gtf") into ch_peptide_gtf
 
@@ -179,6 +203,9 @@ Convert Peptide GTF to BED and Add RGB
 process peptide_gtf_to_bed{
   publishDir "${params.outdir}/peptide_track/", mode: 'copy'
 
+  when:
+    params.mass_spec != false
+
   input:
     file(peptide_gtf) from ch_peptide_gtf
     
@@ -196,7 +223,6 @@ process peptide_gtf_to_bed{
   """
   
 }
-
 
 
 

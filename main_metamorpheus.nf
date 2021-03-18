@@ -29,6 +29,9 @@ Channel
     .set{ch_mass_spec_mzml}
 
 
+if (!params.rescue_resolve_toml) exit 1, "Cannot find file for parameter --rescue_resolve_toml: ${params.rescue_resolve_toml}"
+ch_rr_toml = Channel.value(file(params.rescue_resolve_toml))
+
 process mass_spec_raw_convert{
     publishDir "${params.outdir}/raw_convert/", mode: 'copy'
 
@@ -66,6 +69,35 @@ process metamorpheus_with_sample_specific_database{
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings settings 
         dotnet /metamorpheus/CMD.dll -d $orf_fasta -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        """
+}
+
+process metamorpheus_with_sample_specific_database_rescue_resolve{
+    tag " $mass_spec"
+    publishDir "${params.outdir}/metamorpheus/rescue_resolve", mode: 'copy'
+
+    input:
+        // file(orf_calls) from ch_orf_calls
+        file(orf_fasta) from ch_orf_fasta
+        // file(toml) from ch_toml
+        file(mass_spec) from ch_mass_spec_combined.collect()
+        file(toml) from ch_rr_toml
+        file(orf_meta) from ch_orf_meta
+
+    output:
+        file("toml/*")
+        file("search_results/Task1SearchTask/All*")
+        file("search_results/Task1SearchTask/prose.txt")
+        file("search_results/Task1SearchTask/results.txt")
+        file("search_results/Task1SearchTask/AllPeptides.${params.name}.rescue_resolve.psmtsv")
+        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.rescue_resolve.tsv")
+    
+    script:
+        """
+        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings settings 
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results --orf $orf_meta --cpm 25
+        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.rescue_resolve.psmtsv
+        mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.rescue_resolve.tsv
         """
 }
 
