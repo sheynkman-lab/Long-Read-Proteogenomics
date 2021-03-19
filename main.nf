@@ -236,7 +236,7 @@ IsoSeq3
 ---------------------------------------------------*/
 
 process isoseq3 {
-  tag "${sample_ccs}, ${gencode_fasta}, ${primers_fasta}"
+  tag "${sample_ccs}, ${genome_fasta}, ${primers_fasta}"
   cpus params.max_cpus
   publishDir "${params.outdir}/isoseq3/", mode: 'copy'
 

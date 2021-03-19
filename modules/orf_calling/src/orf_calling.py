@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+#%%
+
 from gtfparse import read_gtf
 import multiprocessing
 from collections import defaultdict
@@ -9,6 +11,25 @@ import pandas as pd
 import numpy as np
 import logging
 import itertools
+
+def is_orf_called_with_stop_codon(orf_fasta, stop_codons=('TAG','TAA','TGA')):  
+    """Determines if orf was called with a stop codon as determined by CPAT
+    stop codon is True if last codon is in tuple of stop_codons used.
+
+    Args:
+        orf_fasta (str): filename of orf fasta file
+        stop_codons (tuple, optional): stop codons to use in check. Defaults to ('TAG','TAA','TGA').
+
+    Returns:
+        pandas DataFrame: columns:[ID (str), has_stop_codon (bool)]
+    """
+    orf_stop_codon_status_list = []
+    for record in SeqIO.parse(orf_fasta, 'fasta'):
+        orf_stop_codon_status_list.append([record.id,str(record.seq).endswith(stop_codons)])
+    orf_stop_codon_status = pd.DataFrame(orf_stop_codon_status_list, columns=['ID','has_stop_codon'])
+    return orf_stop_codon_status
+
+
 
 def orf_mapping(orf_coord, gencode, sample_gtf, orf_seq, pool, num_cores = 12):
     def get_num_upstream_atgs(row):
@@ -156,8 +177,8 @@ def read_orf(filename):
     orf = pd.read_csv(filename, sep = '\t')
     orf[['pb_acc', 'misc', 'orf']] = orf['ID'].str.split('_', expand=True)
     orf['pb_acc'] = orf['pb_acc'].str.split('|').str[0]
-    orf = orf.drop(labels=['ID', 'misc'], axis=1)
-    orf.columns = ['len', 'orf_strand', 'orf_frame', 'orf_start', 'orf_end', 'orf_len', 'fickett', 'hexamer', 'coding_score', 'pb_acc', 'orf_rank',]
+    orf = orf.drop(labels=['misc',], axis=1)
+    orf.columns = ['ID','len', 'orf_strand', 'orf_frame', 'orf_start', 'orf_end', 'orf_len', 'fickett', 'hexamer', 'coding_score', 'pb_acc', 'orf_rank',]
     logging.info(f"ORF file read \n{orf.head()}")
     return orf
 
@@ -210,6 +231,7 @@ def orf_calling_multiprocessing(orf, pool, num_orfs_per_accession=1, num_cores =
 def main():
     parser = argparse.ArgumentParser(description='Proccess ORF related file locations')
     parser.add_argument('--orf_coord', '-oc',action='store', dest= 'orf_coord',help='ORF coordinate input file location')
+    parser.add_argument('--orf_fasta', '-oc',action='store', dest= 'orf_fasta',help='ORF fasta input file location')
     parser.add_argument('--gencode_gtf','-g',action='store', dest= 'gencode_gtf',help='gencode coordinate input file location')
     parser.add_argument('--sample_gtf','-sg',action='store', dest= 'sample_gtf',help='Sample GTF input file location')
     parser.add_argument('--pb_gene','-pg',action='store', dest= 'pb_gene',help='PB Accession/Gencode id mapping input file location')
@@ -224,6 +246,9 @@ def main():
     
     logging.info("Loading data...")
     orf_coord = read_orf(results.orf_coord)
+    is_with_stop_codon = is_orf_called_with_stop_codon(results.orf_fasta)
+
+    orf_coord = pd.merge(orf_coord, is_with_stop_codon, on ='ID', how = 'left')
     gencode = read_gtf(results.gencode_gtf)
     sample_gtf = read_gtf(results.sample_gtf)
     pb_gene = pd.read_csv(results.pb_gene, sep = '\t')
@@ -251,9 +276,12 @@ def main():
     logging.info("Saving results...")
     orfs = orfs[['pb_acc','len','orf_frame', 'orf_start', 'orf_end', 'orf_len',
        'fickett', 'hexamer', 'coding_score', 'orf_rank', 'seqname','strand','gencode_atg',
-       'upstream_atgs', 'atg_rank', 'score_rank', 'orf_calling_confidence','atg_score', 'orf_score', 'gene', 'FL', 'CPM']]
+       'upstream_atgs', 'atg_rank', 'score_rank', 'orf_calling_confidence','atg_score', 'orf_score', 'gene', 'FL', 'CPM','has_stop_codon']]
     orfs.to_csv(results.output, index = False, sep = "\t")
 
+#%%
 
 if __name__ == "__main__":
     main()
+
+#%%
