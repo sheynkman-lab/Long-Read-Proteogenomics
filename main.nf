@@ -141,13 +141,13 @@ process generate_reference_tables {
   file(gencode_transcript_fasta) from ch_gencode_transcript_fasta
   
   output:
-  value(file("ensg_gene.tsv")) into ch_ensg_gene
-  value(file("enst_isoname.tsv")) into ch_enst_isoname
-  value(file("gene_ensp.tsv")) into ch_gene_ensp
-  value(file("gene_isoname.tsv")) into ch_gene_isoname
-  value(file("isoname_lens.tsv")) into ch_isoname_lens
-  value(file("gene_lens.tsv")) into ch_gene_lens
-  value(file("protein_coding_genes.txt")) into ch_protein_coding_genes
+  val(file("ensg_gene.tsv")) into ch_ensg_gene
+  val(file("enst_isoname.tsv")) into ch_enst_isoname
+  val(file("gene_ensp.tsv")) into ch_gene_ensp
+  val(file("gene_isoname.tsv")) into ch_gene_isoname
+  val(file("isoname_lens.tsv")) into ch_isoname_lens
+  val(file("gene_lens.tsv")) into ch_gene_lens
+  val(file("protein_coding_genes.txt")) into ch_protein_coding_genes
   
   script:
   """
@@ -180,7 +180,7 @@ if (params.gencode_translation_fasta.endsWith('.gz')) {
   file(gencode_translation_fasta) from ch_gencode_translation_fasta
 
   output:
-  value(file("*.{fa,fasta}")) into ch_gencode_translation_fasta_uncompressed
+  val(file("*.{fa,fasta}")) into ch_gencode_translation_fasta_uncompressed
 
   script:
   """
@@ -198,7 +198,7 @@ process make_gencode_database {
   file(gencode_translation_fasta) from ch_gencode_translation_fasta_uncompressed
   
   output:
-  value(file("gencode_protein.fasta")) into ch_gencode_protein_fasta
+  val(file("gencode_protein.fasta")) into ch_gencode_protein_fasta
   file("gencode_isoname_clusters.tsv")
   
   script:
@@ -227,8 +227,8 @@ process isoseq3 {
   file(primers_fasta) from ch_primers_fasta
   
   output:
-  value(file("${params.name}.collapsed.gff")) into ch_isoseq_gtf
-  value(file("${params.name}.collapsed.abundance.txt")) into ch_fl_count
+  val(file("${params.name}.collapsed.gff")) into ch_isoseq_gtf
+  val(file("${params.name}.collapsed.abundance.txt")) into ch_fl_count
   file("${params.name}.collapsed.fasta")
   file("${params.name}.collapsed.report.json")
   file("${params.name}.demult.lima.summary")
@@ -332,7 +332,7 @@ if(params.fastq_read_1 != false | params.fastq_read_2 !=false){
             path(genome_dir) from ch_genome_dir
 
         output:
-            value(file("*SJ.out.tab")) into ch_star_junction
+            val(file("*SJ.out.tab")) into ch_star_junction
             file("*Log.final.out")
 
         script:
@@ -370,9 +370,9 @@ process sqanti3 {
   
   
   output:
-  value(file("${params.name}_classification.txt")) into ch_sample_unfiltered_classification
-  value(file("${params.name}_corrected.fasta")) into ch_sample_unfiltered_fasta
-  value(file("${params.name}_corrected.gtf")) into ch_sample_unfiltered_gtf
+  val(file("${params.name}_classification.txt")) into ch_sample_unfiltered_classification
+  val(file("${params.name}_corrected.fasta")) into ch_sample_unfiltered_fasta
+  val(file("${params.name}_corrected.gtf")) into ch_sample_unfiltered_gtf
   file("${params.name}_junctions.txt")
   file("${params.name}_sqanti_report.pdf")
   file("${params.name}.params.txt")
@@ -415,9 +415,9 @@ process filter_sqanti {
     file(ensg_gene) from ch_ensg_gene
 
   output:
-    value(file("filtered_${params.name}_classification.txt")) into ch_sample_classification
-    value(file("filtered_${params.name}_corrected.fasta")) into ch_sample_fasta
-    value(file("filtered_${params.name}_corrected.gtf")) into ch_sample_gtf
+    val(file("filtered_${params.name}_classification.txt")) into ch_sample_classification
+    val(file("filtered_${params.name}_corrected.fasta")) into ch_sample_fasta
+    val(file("filtered_${params.name}_corrected.gtf")) into ch_sample_gtf
 
   script:
     """
@@ -453,7 +453,7 @@ process six_frame_translation {
     file(sample_fasta) from ch_sample_fasta
 
     output:
-    value(file("${params.name}.6frame.fasta")) into ch_six_frame
+    val(file("${params.name}.6frame.fasta")) into ch_six_frame
 
     script:
     """
@@ -483,9 +483,9 @@ process transcriptome_summary {
   file(len_stats) from ch_gene_lens
   
   output:
-  value(file("gene_level_tab.tsv")) into ch_gene_level
-  value(file("sqanti_isoform_info.tsv")) into ch_sqanti_isoform_info
-  value(file("pb_gene.tsv")) into ch_pb_gene
+  val(file("gene_level_tab.tsv")) into ch_gene_level
+  val(file("sqanti_isoform_info.tsv")) into ch_sqanti_isoform_info
+  val(file("pb_gene.tsv")) into ch_pb_gene
   
   script:
   """
@@ -518,9 +518,9 @@ process cpat {
   file(sample_fasta) from ch_sample_fasta
 
   output:
-  value(file("${params.name}.ORF_prob.tsv")) into ch_cpat_all_orfs
-  value(file("${params.name}.ORF_prob.best.tsv")) into ch_cpat_best_orf
-  value(file("${params.name}.ORF_seqs.fa")) into ch_cpat_protein_fasta
+  val(file("${params.name}.ORF_prob.tsv")) into ch_cpat_all_orfs
+  val(file("${params.name}.ORF_prob.best.tsv")) into ch_cpat_best_orf
+  val(file("${params.name}.ORF_seqs.fa")) into ch_cpat_protein_fasta
   file("*")
 
   script:
@@ -558,7 +558,7 @@ process orf_calling {
   file(classification) from ch_sample_classification
   
   output:
-  value(file("${params.name}_best_orf.tsv")) into ch_best_orf
+  val(file("${params.name}_best_orf.tsv")) into ch_best_orf
   
   script:
   """
@@ -593,8 +593,8 @@ process refine_orf_database {
   
   output:
   file("*")
-  value(file("${params.name}_orf_refined.tsv")) into ch_refined_info
-  value(file("${params.name}_orf_refined.fasta")) into ch_refined_fasta
+  val(file("${params.name}_orf_refined.tsv")) into ch_refined_info
+  val(file("${params.name}_orf_refined.fasta")) into ch_refined_fasta
   
   script:
   """
@@ -632,7 +632,7 @@ process mass_spec_raw_convert{
     input:
         file(raw_file) from ch_mass_spec_raw
     output:
-        value(file("*")) into ch_mass_spec_converted
+        val(file("*")) into ch_mass_spec_converted
     script:
         """
         wine msconvert $raw_file --filter "peakPicking true 1-"
@@ -663,8 +663,8 @@ process metamorpheus_with_sample_specific_database{
         file("search_results/Task1SearchTask/All*")
         file("search_results/Task1SearchTask/prose.txt")
         file("search_results/Task1SearchTask/results.txt")
-        value(file("search_results/Task1SearchTask/AllPeptides.Gencode.psmtsv")) into ch_pacbio_peptides
-        value(file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv")) into ch_pacbio_protein_groups
+        val(file("search_results/Task1SearchTask/AllPeptides.Gencode.psmtsv")) into ch_pacbio_peptides
+        val(file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv")) into ch_pacbio_protein_groups
     
     script:
         """
@@ -721,8 +721,8 @@ process metamorpheus_with_gencode_database{
         file("search_results/Task1SearchTask/All*")
         file("search_results/Task1SearchTask/prose.txt")
         file("search_results/Task1SearchTask/results.txt")
-        value(file("search_results/Task1SearchTask/AllPeptides.Gencode.psmtsv")) into ch_gencode_peptides
-        value(file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv")) into ch_gencode_protein_groups
+        val(file("search_results/Task1SearchTask/AllPeptides.Gencode.psmtsv")) into ch_gencode_peptides
+        val(file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv")) into ch_gencode_protein_groups
     
     script:
         """
@@ -750,8 +750,8 @@ process metamorpheus_with_uniprot_database{
         file("search_results/Task1SearchTask/All*")
         file("search_results/Task1SearchTask/prose.txt")
         file("search_results/Task1SearchTask/results.txt")
-        value(file("search_results/Task1SearchTask/AllPeptides.UniProt.psmtsv")) into ch_uniprot_peptides
-        value(file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.UniProt.tsv")) into ch_uniprot_protein_groups
+        val(file("search_results/Task1SearchTask/AllPeptides.UniProt.psmtsv")) into ch_uniprot_peptides
+        val(file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.UniProt.tsv")) into ch_uniprot_protein_groups
     
     script:
         """
@@ -816,7 +816,7 @@ process make_pacbio_cds_gtf {
     file(pb_gene) from ch_pb_gene
   
   output:
-    value(file("${params.name}_with_cds.gtf")) into ch_pb_cds
+    val(file("${params.name}_with_cds.gtf")) into ch_pb_cds
     file("*")
   
   script:
