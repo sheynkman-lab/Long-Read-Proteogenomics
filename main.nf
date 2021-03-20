@@ -584,6 +584,10 @@ ch_cpat_all_orfs.into{
   ch_cpat_all_orfs_for_peptide_analysis
 }
 
+ch_cpat_protein_fasta.into{
+  ch_cpat_protein_fasta_orf_calling
+  ch_cpat_protein_fasta_peptide_analysis
+}
 
 /*--------------------------------------------------
 ORF Calling 
@@ -596,6 +600,7 @@ process orf_calling {
 
   input:
   file(cpat_orfs) from ch_cpat_all_orfs_for_orf_calling
+  file(cpat_fasta) from ch_cpat_protein_fasta_orf_calling
   file(gencode_gtf) from ch_gencode_gtf
   file(sample_gtf) from ch_sample_gtf_orf
   file(sample_fasta) from ch_sample_fasta_orf
@@ -609,6 +614,7 @@ process orf_calling {
   """
   orf_calling.py \
   --orf_coord $cpat_orfs \
+  --orf_fasta $cpat_fasta \
   --gencode $gencode_gtf \
   --sample_gtf $sample_gtf \
   --pb_gene $pb_gene \
@@ -832,7 +838,7 @@ process peptide_analysis{
       file(pb_gene) from ch_pb_gene_peptide_analysis
       file(cpat_all_orfs) from ch_cpat_all_orfs_for_peptide_analysis
       file(cpat_best_orf) from ch_cpat_best_orf
-      file(cpat_protein_fasta) from ch_cpat_protein_fasta
+      file(cpat_protein_fasta) from ch_cpat_protein_fasta_peptide_analysis
 
     output:
       file("*")
