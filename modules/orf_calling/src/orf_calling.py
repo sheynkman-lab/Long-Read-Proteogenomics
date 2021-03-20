@@ -231,7 +231,7 @@ def orf_calling_multiprocessing(orf, pool, num_orfs_per_accession=1, num_cores =
 def main():
     parser = argparse.ArgumentParser(description='Proccess ORF related file locations')
     parser.add_argument('--orf_coord', '-oc',action='store', dest= 'orf_coord',help='ORF coordinate input file location')
-    parser.add_argument('--orf_fasta', '-oc',action='store', dest= 'orf_fasta',help='ORF fasta input file location')
+    parser.add_argument('--orf_fasta', '-of',action='store', dest= 'orf_fasta',help='ORF fasta input file location')
     parser.add_argument('--gencode_gtf','-g',action='store', dest= 'gencode_gtf',help='gencode coordinate input file location')
     parser.add_argument('--sample_gtf','-sg',action='store', dest= 'sample_gtf',help='Sample GTF input file location')
     parser.add_argument('--pb_gene','-pg',action='store', dest= 'pb_gene',help='PB Accession/Gencode id mapping input file location')
