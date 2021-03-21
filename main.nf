@@ -120,7 +120,7 @@ else{
 
 if (params.mass_spec != false & params.rescue_resolve_toml == false){
   exit 1, "Cannot find file for parameter --rescue_resolve_toml: ${params.rescue_resolve_toml}"
-}else if (params.mass_spec == true & params.rescue_resolve_toml == true){
+}else if (params.mass_spec != false & params.rescue_resolve_toml != false){
   ch_rr_toml = Channel.value(file(params.rescue_resolve_toml))
 }else{
   ch_rr_toml = Channel.from("no mass spec")
@@ -735,13 +735,12 @@ process metamorpheus_with_sample_specific_database{
 }
 
 process metamorpheus_with_sample_specific_database_rescue_resolve{
-    tag " $mass_spec"
+    tag " $mass_spec $orf_fasta $orf_meta  $toml"
     publishDir "${params.outdir}/metamorpheus/rescue_resolve", mode: 'copy'
 
     input:
         // file(orf_calls) from ch_orf_calls
         file(orf_fasta) from ch_refined_fasta_rescue_resolve
-        // file(toml) from ch_toml
         file(mass_spec) from ch_mass_spec_for_pacbio_rescue_resolve.collect()
         file(toml) from ch_rr_toml
         file(orf_meta) from ch_refined_info_rescue_resolve

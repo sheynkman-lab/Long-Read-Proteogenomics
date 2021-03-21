@@ -1,3 +1,6 @@
+
+# large file formats
+*fa.gz
 .DS_Store
 .vscode
 #nextflow related files
