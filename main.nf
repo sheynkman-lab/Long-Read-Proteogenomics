@@ -721,8 +721,8 @@ process metamorpheus_with_sample_specific_database{
         file("search_results/Task1SearchTask/All*")
         file("search_results/Task1SearchTask/prose.txt")
         file("search_results/Task1SearchTask/results.txt")
-        file("search_results/Task1SearchTask/AllPeptides.Gencode.psmtsv") into ch_pacbio_peptides
-        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv") into ch_pacbio_protein_groups
+        file("search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv") into ch_pacbio_peptides
+        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv") into ch_pacbio_protein_groups
     
     script:
         """
@@ -786,8 +786,8 @@ process metamorpheus_with_gencode_database{
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
         dotnet /metamorpheus/CMD.dll -d $gencode_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
 
-        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv
-        mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv
+        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.Gencode.psmtsv
+        mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv
         """
 }
 
