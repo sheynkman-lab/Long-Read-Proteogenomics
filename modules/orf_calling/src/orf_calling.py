@@ -127,7 +127,7 @@ def minus_mapping_single_chromosome(orf_coord, minus_exons, start_codons):
         logging.warning("No orf start codons found...")
         return orf_exons
     orf_exons['start_diff'] = orf_exons['orf_start'] - orf_exons['prior_size']
-    orf_exons['cds_start'] = orf_exons['exon_end'] - orf_exons['start_diff'] 
+    orf_exons['cds_start'] = orf_exons['exon_end'] - orf_exons['start_diff'] + 1
     orf_exons['gencode_atg'] = orf_exons.apply(lambda row : compare_start_minus(row, start_codons), axis = 1)
     orf_exons.drop(columns=['exon_length', 'current_size', 'prior_size', 'start_diff'], inplace = True)
     return orf_exons
