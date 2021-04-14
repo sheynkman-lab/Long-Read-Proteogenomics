@@ -196,8 +196,8 @@ def make_pacbio_cds_gtf(sample_gtf, refined_orfs, called_orfs, pb_gene, name, in
         name (string): name of sample
         include_transcript (bool): whether to include transcript in saved gtf file 
     """
-    
-    representative_accessions = pd.read_table(refined_orfs)['base_acc'].to_list()
+    refined_db = pd.read_table(refined_orfs)
+    representative_accessions = refined_db['base_acc'].to_list()
     # import gtf, only exon info.
     # only move forward with representative pb isoform (for same-protein groups)
     gtf = gtfparse.read_gtf(sample_gtf)
@@ -230,8 +230,14 @@ def make_pacbio_cds_gtf(sample_gtf, refined_orfs, called_orfs, pb_gene, name, in
 
 
     # read in the ranges of orf on pb transcripts
-    ranges = pd.read_table(called_orfs)[['pb_acc', 'orf_start', 'orf_end', 'CPM']]
-    ranges = ranges[ranges['pb_acc'].isin(representative_accessions)]
+    ranges = pd.read_table(called_orfs)[['pb_acc', 'orf_start', 'orf_end']]
+    ranges = pd.merge(
+        ranges, refined_db[['base_acc', 'CPM']], 
+        left_on='pb_acc',
+        right_on='base_acc',
+        how='inner')
+    ranges = ranges[['pb_acc', 'orf_start', 'orf_end', 'CPM']]
+    # ranges = ranges[ranges['pb_acc'].isin(representative_accessions)]
 
     # read in pb to genename
     pb_gene = pd.read_table(pb_gene)
