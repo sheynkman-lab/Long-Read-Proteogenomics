@@ -125,6 +125,9 @@ def main():
     
     # Filter ORFS based on score and whether protein coding
     orfs = filter_orf_scores(orfs, results.cutoff)
+
+    # only keep orfs that have a stop codon
+    orfs = orfs.query('has_stop_codon')
     
     pb_seqs,redundant_accs = get_accession_seqs(seqs)
     pb_pseqs = combine_by_sequence(orfs, pb_seqs)

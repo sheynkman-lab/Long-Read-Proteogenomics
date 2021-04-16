@@ -1087,6 +1087,13 @@ process protein_group_compare{
 // TODO - implement Rachel's code that does a cross-comparison of protein groups
 // NOTE - her code requires a map from the accession mapping module
 
+/*--------------------------------------------------
+Protein Classification
+---------------------------------------------------*/
+
+/*--------------------------------------------------
+Protein Filtering
+---------------------------------------------------*/
 
 def logHeader() {
     // Log colors ANSI codes

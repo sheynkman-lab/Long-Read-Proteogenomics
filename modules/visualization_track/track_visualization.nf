@@ -68,9 +68,6 @@ Channel
     .set { ch_gencode_gtf } 
 
 
-/*--------------------------------------------------
-PacBio CDS GTF 
----------------------------------------------------*/
 
 process make_pacbio_cds_gtf {
   cpus 1
@@ -159,7 +156,6 @@ process make_multiregion{
     file(reference_gtf) from ch_gencode_gtf
   output:
     file("*")
-  memory '16 GB'
 
   script:
   """
@@ -175,6 +171,10 @@ Make Peptide GTF
 ---------------------------------------------------*/
 process make_peptide_gtf{
   publishDir "${params.outdir}/peptide_track/", mode: 'copy'
+
+  when:
+    params.mass_spec != false
+
 
   input:
     file(sample_gtf) from ch_pb_cds_peptide_gtf
@@ -201,6 +201,9 @@ Convert Peptide GTF to BED and Add RGB
 process peptide_gtf_to_bed{
   publishDir "${params.outdir}/peptide_track/", mode: 'copy'
 
+  when:
+    params.mass_spec != false
+
   input:
     file(peptide_gtf) from ch_peptide_gtf
     
@@ -218,6 +221,7 @@ process peptide_gtf_to_bed{
   """
   
 }
+
 
 
 

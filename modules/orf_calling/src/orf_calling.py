@@ -185,6 +185,7 @@ def read_orf(filename):
 def orf_calling(orf, num_orfs_per_accession = 1):
     """
     Choose 'best' ORF by examining number of upstream ATG's, match to Gencode Transcript start, and ORF codings
+    If a gencode start codon matches an orf, choose the ORF that matches Gencode with the least upstream ATGs
     """
     def call_orf(acc_orfs):
         score_threshold = 0.364
@@ -201,17 +202,26 @@ def orf_calling(orf, num_orfs_per_accession = 1):
         acc_orfs['orf_calling_confidence'] = acc_orfs.apply(lambda row : calling_confidence(row), axis = 1)
         
         with_gencode = acc_orfs.dropna(subset=['gencode_atg'])
-        if len(with_gencode) >=1:
-            acc_orfs = with_gencode
-        
-        atg_shift = 5       # how much to shift sigmoid for atg score
-        atg_growth = 0.5    # how quickly the slope of the sigmoid changes 
-        acc_orfs['atg_score'] = acc_orfs['upstream_atgs'].apply(lambda x : 1 - 1/( 1+ np.exp(-atg_growth*(x - atg_shift))))
-        acc_orfs['orf_score'] = acc_orfs.apply(lambda row: 1 - (1-row['coding_score']*0.99)*(1-row['atg_score']), axis = 1)
-        
-        acc_orfs = acc_orfs.sort_values(by='orf_score', ascending=False).reset_index(drop=True)
-        return acc_orfs.head(num_orfs_per_accession)
-        
+        # if start codons match a gencode start, take the gencode with the earliest start codon
+        if len(with_gencode) >= 1:
+            return (with_gencode
+                    .sort_values(by='upstream_atgs')
+                    .reset_index(drop=True)
+                    .head(num_orfs_per_accession)
+            )
+        else:
+            # if no gencode start exists return ORF with best orf_score
+            return (
+                acc_orfs
+                    .sort_values(by='orf_score', ascending=False)
+                    .reset_index(drop=True)
+                    .head(num_orfs_per_accession)
+            )
+    atg_shift = 10       # how much to shift sigmoid for atg score
+    atg_growth = 0.5    # how quickly the slope of the sigmoid changes 
+    orf['atg_score'] = orf['upstream_atgs'].apply(lambda x : 1 - 1/( 1+ np.exp(-atg_growth*(x - atg_shift))))
+    # orf['orf_score'] = orf.apply(lambda row: 1 - (1-row['coding_score']*0.99)*(1-row['atg_score']), axis = 1)
+    orf['orf_score'] = orf['coding_score']*orf['atg_score']  
     called_orf = orf.groupby('pb_acc').apply(call_orf).reset_index(drop=True)
 
     return called_orf
@@ -260,6 +270,7 @@ def main():
 
     logging.info("Mapping orfs to gencode...")
     all_orfs = orf_mapping(orf_coord, gencode, sample_gtf, orf_seq, pool,results.num_cores)
+    all_orfs.to_csv('all_orfs_mapped.tsv', sep='\t',index=False)
     
     logging.info("Calling ORFs...")
     # orfs = orf_calling(all_orfs, num_orfs_per_accession = 1)

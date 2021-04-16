@@ -105,8 +105,15 @@ log.info "sample fasta  : ${params.sample_fasta}"
     
     script:
     """
-    cpat.py -x $hexamer -d $logit_model -g $sample_fasta --min-orf=50 --top-orf=50 -o ${params.name} 1> ${params.name}_cpat.output 2> ${params.name}_cpat.error
-
+    cpat.py \
+    -x $hexamer \
+    -d $logit_model \
+    -g $sample_fasta \
+    --min-orf=${params.min_orf} \
+    --top-orf=50 \
+    -o ${params.name} \
+    1> ${params.name}_cpat.output \
+    2> ${params.name}_cpat.error
     """
   }
 
