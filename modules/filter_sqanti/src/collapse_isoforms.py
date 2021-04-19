@@ -4,7 +4,8 @@ from cupcake.io import GFF
 from collections import defaultdict
 from cupcake.tofu import compare_junctions
 import os
-import argparse 
+import argparse
+from Bio import SeqIO
 ### helper functions for main (below)
 
 def can_merge(m, r1, r2, internal_fuzzy_max_dist):
@@ -63,25 +64,32 @@ def modify_gff_file(sqanti_gtf, output_filename):
                     ofile.write('\t'.join(prefix + [acc_line]) + '\n')
 
 #%%
-def collapse_isoforms(gff_filename, name):
+def collapse_isoforms(gff_filename, fasta_filename, name):
+    
     recs = defaultdict(lambda: [])
     reader = GFF.collapseGFFReader(gff_filename)
     for record in reader:
         assert record.seqid.startswith('PB.')
         pb_cluster = f'PB.{record.seqid.split(".")[1]}'
         recs[pb_cluster].append(record)
-
+    # collapse and write gff
     good = []
-    output_filename = f'{name}_corrected.5degfilter.gff'
-    output_file = open(output_filename, 'w')
+    output_gtf_filename = f'{name}_corrected.5degfilter.gff'
+    output_gtf_file = open(output_gtf_filename, 'w')
     for pb_cluster, isoforms in recs.items():
-        
         fuzzy_junc_max_dist = 0
         filter_out_subsets(isoforms, fuzzy_junc_max_dist)
         for record in isoforms:
-            GFF.write_collapseGFF_format(output_file, record)
+            GFF.write_collapseGFF_format(output_gtf_file, record)
             good.append(record.seqid)
-    output_file.close()
+    output_gtf_file.close()
+    # write filtered fata file
+    isoform_seqs = []
+    for record in SeqIO.parse(fasta_filename, 'fasta'):
+        if record.id in good:
+            isoform_seqs.append(record)
+    SeqIO.write(isoform_seqs, f'{name}_corrected.5degfilter.fasta','fasta')
+    
 #%%
 ###################################
 ### main - find 5' deg products ###
@@ -90,8 +98,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--name', '-oc',action='store', dest= 'name',)
     parser.add_argument('--sqanti_gtf',action='store',dest='sqanti_gtf')
+    parser.add_argument('--sqanti_fasta',action='store',dest='sqanti_fasta')
     args = parser.parse_args()
-    collapse_isoforms(args.sqanti_gtf, args.name)
+    collapse_isoforms(args.sqanti_gtf,args.sqanti_fasta, args.name)
 
 if __name__ == "__main__":
     main()
