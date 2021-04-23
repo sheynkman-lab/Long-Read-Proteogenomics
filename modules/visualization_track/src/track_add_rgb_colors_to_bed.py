@@ -42,7 +42,7 @@ def calculate_rgb_shading(grp):
                        'ceil_idx': ceil_idx,
                        'rgb': rgb}, ignore_index=True)
     # comment out line below to return all intermediate values
-    out_df = out_df[['acc_full', 'pb_acc', 'cpm', 'fc', 'rgb']]
+    out_df = out_df[['acc_full','rgb']]
     return out_df
 
 
@@ -60,21 +60,26 @@ def add_rgb_shading_cpm(name, bed,split_size):
     
     
     # subset df to determine rgb shading
-    subbed = bed[['acc_full', 'gene', 'pb_acc', 'cpm']].copy()
+    if split_size==3:
+        subbed = bed[['acc_full', 'gene', 'pb_acc', 'cpm']].copy()
+    elif split_size==4:
+        subbed = bed[['acc_full', 'gene', 'pb_acc','pclass', 'cpm']].copy()
     subbed['cpm'] = subbed['cpm'].astype(str).astype(int)
 
-    shaded = subbed.groupby('gene').apply(calculate_rgb_shading).reset_index()
+    shaded = subbed.groupby('gene').apply(calculate_rgb_shading).reset_index(drop=True)
 
     # include rgb into original bed12
-    shaded['cpm_int'] = shaded['cpm'].apply(lambda x: str(round(x)).split('.')[0])
+    bed_shaded = pd.merge(bed, shaded, how='left', on='acc_full')
+    
+    # shaded['cpm_int'] = shaded['cpm'].apply(lambda x: str(round(x)).split('.')[0])
     if split_size==3:
-        shaded['new_acc_full'] = shaded.apply(lambda row: '|'.join([row['gene'],row['pb_acc'],str(row['cpm'])]),axis=1)
+        bed_shaded['new_acc_full'] = bed_shaded.apply(lambda row: '|'.join([row['gene'],row['pb_acc'],str(row['cpm'])]),axis=1)
     if split_size==4:
-        shaded['new_acc_full'] = shaded.apply(lambda row: '|'.join([row['gene'],row['pb_acc'],row['pclass'],str(row['cpm'])]),axis=1)
+        bed_shaded['new_acc_full'] = bed_shaded.apply(lambda row: '|'.join([row['gene'],row['pb_acc'],row['pclass'],str(row['cpm'])]),axis=1)
 
 
     # join in the rgb data and new accession
-    bed_shaded = pd.merge(bed, shaded, how='left', on='acc_full')
+    
     bed_shaded = bed_shaded[['chrom', 'chromStart', 'chromStop', 'new_acc_full', 'score', 'strand', 'thickStart', 'thickEnd', 'rgb', 'blockCount', 'blockSizes', 'blockStarts']]
 
     with open(f'{name}_cds_shaded_cpm.bed12', 'w') as ofile:
@@ -84,7 +89,7 @@ def add_rgb_shading_cpm(name, bed,split_size):
 
 def add_rgb_shading_pclass(name,bed):
     pclass_shading_dict = {
-        'pFSM':'100,165,20',
+        'pFSM':'100,165,200',
         'pNIC':'111,189,113',
         'pNNC':'232,98,76',
         'pISM':'248,132,85'
@@ -106,7 +111,7 @@ def add_rgb_shading(name, bed_file):
         bed[['gene', 'pb_acc','pclass', 'cpm']] = bed['acc_full'].str.split('|', expand=True)
     bed = bed[bed.gene != '-']
 
-    add_rgb_shading_cpm(name,bed, split_size)
+    add_rgb_shading_cpm(name, bed.copy(), split_size)
     if split_size==4:
         add_rgb_shading_pclass(name,bed)
 
@@ -116,7 +121,7 @@ def main():
     parser.add_argument("--name", action="store", dest="name", help="name of sample - used for output file name")
     parser.add_argument("--bed_file", action="store", dest = "bed_file", help="sample bed with cds")
     results = parser.parse_args()
-    add_rgb_shading_cpm(results.name, results.bed_file)
+    add_rgb_shading(results.name, results.bed_file)
 
 
 

@@ -942,6 +942,7 @@ ch_pb_cds.into{
   ch_pb_cds_peptide_gtf
   ch_pb_cds_rename
   ch_pb_cds_5p_utr
+  ch_pb_cds_filter
 }
 
 /*--------------------------------------------------
@@ -1064,17 +1065,24 @@ process filter_protein{
     file(reference_gtf) from ch_gencode_gtf
     file(protein_classification) from ch_protein_classification_unfiltered
     file(protein_fasta) from ch_refined_fasta_pclass_filter
+    file(sample_cds) from ch_pb_cds_filter
   output:
    file("${params.name}.classification_filtered.tsv") into ch_filtered_protein_classification
    file("${params.name}.filtered_protein.fasta") into ch_filtered_protein_fasta
+   file("${params.name}_with_cds_filtered.gtf") into ch_filtered_cds
   script:
     """
     filter_out_intergenic_and_cand_trunc.py \
     --protein_classification $protein_classification \
     --gencode_gtf $reference_gtf \
     --protein_fasta $protein_fasta \
+    --sample_cds_gtf $sample_cds \
     --name ${params.name} \
     """
+}
+ch_filtered_cds.into{
+  ch_filtered_cds_bed
+  ch_filtered_cds_agg
 }
 
 /*--------------------------------------------------
@@ -1089,8 +1097,10 @@ process aggregate_protein_database{
     file(pb_fasta) from ch_filtered_protein_fasta
     file(gc_fasta) from ch_gencode_protein_fasta_aggregate
     file(refined_info) from chr_refined_info_aggregate
+    file(sample_cds) from ch_filtered_cds_agg
   output:
     file("*")
+    file("${params.name}_cds_high_confidence.gtf") into ch_high_confidence_cds
   script:
     """
     protein_database_aggregation.py \
@@ -1099,6 +1109,7 @@ process aggregate_protein_database{
     --pb_fasta $pb_fasta \
     --gc_fasta $gc_fasta \
     --refined_info $refined_info \
+    --pb_cds_gtf $sample_cds \
     --name ${params.name} \
     --lower_kb ${params.lower_kb} \
     --upper_kb ${params.upper_kb} \
@@ -1107,6 +1118,7 @@ process aggregate_protein_database{
 
 }
 
+
 /*--------------------------------------------------
 Convert PacBio CDS to Bed12
 ---------------------------------------------------*/
@@ -1114,7 +1126,7 @@ process pb_cds_to_bed12 {
 
   input:
     file(refined_cds) from ch_pb_cds_bed
-    file(filtered_cds) from ch_filtered_cds
+    file(filtered_cds) from ch_filtered_cds_bed
     file(high_confidence_cds) from ch_high_confidence_cds
   output:
     file("${params.name}_refined_cds.bed12") into ch_cds_refined_bed
@@ -1146,7 +1158,6 @@ process add_shading_to_cds{
     file(filtered_bed) from ch_cds_filtered_bed
     file(high_confidence_bed) from ch_cds_high_confidence_bed
   output:
-    file("${params.name}_refined_cds_shaded.bed12") into ch_cds_shaded
     file("*")
   script:
   """

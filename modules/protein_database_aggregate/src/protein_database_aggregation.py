@@ -85,9 +85,9 @@ refined = refined[refined['base_acc'].isin(pclass_accs)]
 refined.to_csv(f'{args.name}_refined_high_confidence.tsv',sep='\t',index=False)
 
 # write cds high confidence table
-with open(args.pb_cds_gtf) as ifile, open(f'{args.name}_cds_high_confidence.gtf') as ofile:
+with open(args.pb_cds_gtf) as ifile, open(f'{args.name}_cds_high_confidence.gtf', 'w') as ofile:
     for line in ifile:
-        gene_info,pb_acc,cpm = line.split("|")
+        pb_acc= line.split("|")[1]
         if pb_acc in pclass_accs:
             ofile.write(line)
 # %%

@@ -122,7 +122,7 @@ for record in SeqIO.parse(args.protein_fasta, 'fasta'):
 
 SeqIO.write(filtered_fasta, f'{args.name}.filtered_protein.fasta','fasta')
 
-protein_class_dict = pd.Series(filtered_proteins.protein_classification_base.values,index=filtered_proteins.pb).to_dict()
+pb_pclass_dict = pd.Series(filtered_proteins.protein_classification_base.values,index=filtered_proteins.pb).to_dict()
 
 # write filtered cds.gtf file
 with open(args.sample_cds, 'r') as ifile, open(f'{args.name}_with_cds_filtered.gtf','w') as cds_ofile:
