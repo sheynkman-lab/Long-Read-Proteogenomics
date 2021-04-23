@@ -1111,17 +1111,27 @@ process aggregate_protein_database{
 Convert PacBio CDS to Bed12
 ---------------------------------------------------*/
 process pb_cds_to_bed12 {
-  publishDir "${params.outdir}/${params.name}/pacbio_cds/", mode: 'copy'
 
   input:
-    file(pb_cds) from ch_pb_cds_bed
+    file(refined_cds) from ch_pb_cds_bed
+    file(filtered_cds) from ch_filtered_cds
+    file(high_confidence_cds) from ch_high_confidence_cds
   output:
-    file("${params.name}_with_cds.bed12") into ch_cds_bed
-  
+    file("${params.name}_refined_cds.bed12") into ch_cds_refined_bed
+    file("${params.name}_filtered_cds.bed12") into ch_cds_filtered_bed
+    file("${params.name}_high_confidence_cds.bed12") into ch_cds_high_confidence_bed
   script:
     """
-    gtfToGenePred $pb_cds ${params.name}_with_cds.genePred
-    genePredToBed ${params.name}_with_cds.genePred ${params.name}_with_cds.bed12
+    gtfToGenePred $refined_cds ${params.name}_refined_cds.genePred
+    genePredToBed ${params.name}_refined_cds.genePred ${params.name}_refined_cds.bed12
+
+    gtfToGenePred $filtered_cds ${params.name}_filtered_cds.genePred
+    genePredToBed ${params.name}_filtered_cds.genePred ${params.name}_filtered_cds.bed12
+
+
+    gtfToGenePred $high_confidence_cds ${params.name}_high_confidence_cds.genePred
+    genePredToBed ${params.name}_high_confidence_cds.genePred ${params.name}_high_confidence_cds.bed12
+
     """
 }
 
@@ -1129,18 +1139,28 @@ process pb_cds_to_bed12 {
 Add RGB shading to tracks
 ---------------------------------------------------*/
 process add_shading_to_cds{
-  publishDir "${params.outdir}/${params.name}/pacbio_cds/", mode: 'copy'
+  publishDir "${params.outdir}/${params.name}/track_visualization/", mode: 'copy'
 
   input:
-    file(cds_bed) from ch_cds_bed
+    file(refined_bed) from ch_cds_refined_bed
+    file(filtered_bed) from ch_cds_filtered_bed
+    file(high_confidence_bed) from ch_cds_high_confidence_bed
   output:
-    file("${params.name}_cds_shaded.bed12") into ch_cds_shaded
-
+    file("${params.name}_refined_cds_shaded.bed12") into ch_cds_shaded
+    file("*")
   script:
   """
-  add_rgb_shading_to_pb_track.py \
-  --name ${params.name} \
-  --bed_file $cds_bed
+  track_add_rgb_colors_to_bed.py \
+  --name ${params.name}_refined \
+  --bed_file $refined_bed
+
+  track_add_rgb_colors_to_bed.py \
+  --name ${params.name}_filtered \
+  --bed_file $filtered_bed
+
+  track_add_rgb_colors_to_bed.py \
+  --name ${params.name}_high_confidence \
+  --bed_file $high_confidence_bed
   """
 }
 
@@ -1148,6 +1168,7 @@ process add_shading_to_cds{
 Make Region Bed for UCSC Browser
 ---------------------------------------------------*/
 process make_multiregion{
+  publishDir "${params.outdir}/${params.name}/track_visualization/", mode: 'copy'
   input:
     file(sample_gtf) from ch_pb_cds_multiregion
     file(reference_gtf) from ch_gencode_gtf

@@ -11,6 +11,7 @@ parser.add_argument('--gene_lens',action='store',dest='gene_lens')
 parser.add_argument('--pb_fasta',action='store',dest='pb_fasta')
 parser.add_argument('--gc_fasta',action='store',dest='gc_fasta')
 parser.add_argument('--refined_info',action='store',dest='refined_info')
+parser.add_argument('--pb_cds_gtf',action='store',dest='pb_cds_gtf')
 parser.add_argument('--name',action='store',dest='name')
 parser.add_argument('--lower_kb',action='store',dest='lower_kb',type=float,default=1)
 parser.add_argument('--upper_kb',action='store',dest='upper_kb',type=float,default=4)
@@ -78,8 +79,15 @@ for gene in gc_genes_all:
 #%%
 SeqIO.write(aggregated_fasta, f'{args.name}_aggregated.fasta', 'fasta')
 # %%
-
+# write aggreated refined info table - pb filtered 
 refined = pd.read_table(args.refined_info)
 refined = refined[refined['base_acc'].isin(pclass_accs)]
-refined.to_csv(f'{args.name}_refined_aggregated.tsv',sep='\t',index=False)
+refined.to_csv(f'{args.name}_refined_high_confidence.tsv',sep='\t',index=False)
+
+# write cds high confidence table
+with open(args.pb_cds_gtf) as ifile, open(f'{args.name}_cds_high_confidence.gtf') as ofile:
+    for line in ifile:
+        gene_info,pb_acc,cpm = line.split("|")
+        if pb_acc in pclass_accs:
+            ofile.write(line)
 # %%

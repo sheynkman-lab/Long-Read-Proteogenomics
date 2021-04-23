@@ -13,7 +13,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--protein_classification',action='store',dest='protein_classification')
 parser.add_argument('--gencode_gtf',action='store',dest='gencode_gtf')
 parser.add_argument('--protein_fasta',action='store',dest='protein_fasta')
+parser.add_argument('--sample_cds_gtf',action='store',dest='sample_cds')
 parser.add_argument('--name',action='store',dest='name')
+
 args = parser.parse_args()
 
 #%%
@@ -119,6 +121,23 @@ for record in SeqIO.parse(args.protein_fasta, 'fasta'):
         filtered_fasta.append(record)
 
 SeqIO.write(filtered_fasta, f'{args.name}.filtered_protein.fasta','fasta')
+
+protein_class_dict = pd.Series(filtered_proteins.protein_classification_base.values,index=filtered_proteins.pb).to_dict()
+
+# write filtered cds.gtf file
+with open(args.sample_cds, 'r') as ifile, open(f'{args.name}_with_cds_filtered.gtf','w') as cds_ofile:
+    for line in ifile:
+        seqname,source,feature,start,end,score,strand,phase,attributes=line.split('\t')
+        gene_info,pb_acc,cpm = attributes.split("|")
+        if pb_acc in filtered_accs:
+            # cds_line='\t'.join([seqname,source,feature,start,end,score,strand,phase, attributes])
+            # pclass_attributes='|'.join([gene_info,pb_acc,pb_pclass_dict[pb_acc]])
+            # pclass_line='\t'.join([seqname,source,feature,start,end,score,strand,phase, pclass_attributes]) + '\n'
+            both_attributes='|'.join([gene_info,pb_acc,pb_pclass_dict[pb_acc],cpm])
+            both_line=pclass_line='\t'.join([seqname,source,feature,start,end,score,strand,phase, both_attributes])
+            cds_ofile.write(both_line)
+
+
 
 
 # %%

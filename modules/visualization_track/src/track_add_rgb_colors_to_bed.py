@@ -46,7 +46,7 @@ def calculate_rgb_shading(grp):
     return out_df
 
 
-def add_rgb_shading(name, bed_file):
+def add_rgb_shading_cpm(name, bed,split_size):
     """
     Reads a BAM file containing CPM info to determine rgb color to use for track visualizatio
 
@@ -57,31 +57,58 @@ def add_rgb_shading(name, bed_file):
     bed_file : filename
         file of bed cds to read
     """
-    bed = pd.read_table(bed_file, header=None)
-    bed[['gene', 'pb_acc', 'cpm']] = bed[3].str.split('|', expand=True)
-    bed = bed[bed.gene != '-']
-    bed = bed.rename(columns={3: 'acc_full'})
+    
     
     # subset df to determine rgb shading
     subbed = bed[['acc_full', 'gene', 'pb_acc', 'cpm']].copy()
-    subbed['cpm'] = subbed['cpm'].astype(str).astype(float)
+    subbed['cpm'] = subbed['cpm'].astype(str).astype(int)
 
     shaded = subbed.groupby('gene').apply(calculate_rgb_shading).reset_index()
 
     # include rgb into original bed12
     shaded['cpm_int'] = shaded['cpm'].apply(lambda x: str(round(x)).split('.')[0])
-    shaded['new_acc_full'] = shaded['gene'] + '|' + shaded['pb_acc'] + '|' + shaded['cpm_int'].astype(str)
+    if split_size==3:
+        shaded['new_acc_full'] = shaded.apply(lambda row: '|'.join([row['gene'],row['pb_acc'],str(row['cpm'])]),axis=1)
+    if split_size==4:
+        shaded['new_acc_full'] = shaded.apply(lambda row: '|'.join([row['gene'],row['pb_acc'],row['pclass'],str(row['cpm'])]),axis=1)
+
 
     # join in the rgb data and new accession
     bed_shaded = pd.merge(bed, shaded, how='left', on='acc_full')
-    bed_shaded = bed_shaded[[0, 1, 2, 'new_acc_full', 4, 5, 6, 7, 'rgb', 9, 10, 11]]
+    bed_shaded = bed_shaded[['chrom', 'chromStart', 'chromStop', 'new_acc_full', 'score', 'strand', 'thickStart', 'thickEnd', 'rgb', 'blockCount', 'blockSizes', 'blockStarts']]
 
-    with open(f'{name}_cds_shaded.bed12', 'w') as ofile:
-        ofile.write('track name=pacbio_cds_w_rgb_shade itemRgb=On\n')
+    with open(f'{name}_cds_shaded_cpm.bed12', 'w') as ofile:
+        ofile.write(f'track name={name}_cds_w_cpm_rgb_shade itemRgb=On\n')
         bed_shaded.to_csv(ofile, sep='\t', index=None, header=None)
 
+
+def add_rgb_shading_pclass(name,bed):
+    pclass_shading_dict = {
+        'pFSM':'100,165,20',
+        'pNIC':'111,189,113',
+        'pNNC':'232,98,76',
+        'pISM':'248,132,85'
+    }
+    bed['rgb'] = bed['pclass'].map(pclass_shading_dict).fillna('0,0,0')
+    filter_names = ['chrom','chromStart','chromStop','acc_full','score','strand','thickStart','thickEnd','rgb','blockCount','blockSizes','blockStarts']
+    bed = bed[filter_names]
+    with open(f'{name}_cds_shaded_protein_class.bed12', 'w') as ofile:
+        ofile.write(f'track name={name}_cds_w_pclass_rgb_shade itemRgb=On\n')
+        bed.to_csv(ofile, sep='\t', index=None, header=None)
     
-    
+def add_rgb_shading(name, bed_file):
+    bed_names = ['chrom','chromStart','chromStop','acc_full','score','strand','thickStart','thickEnd','itemRGB','blockCount','blockSizes','blockStarts']
+    bed = pd.read_table(bed_file, names=bed_names)
+    split_size=len(bed.loc[0,'acc_full'].split('|'))
+    if split_size==3:
+        bed[['gene', 'pb_acc', 'cpm']] = bed['acc_full'].str.split('|', expand=True)
+    if split_size==4:
+        bed[['gene', 'pb_acc','pclass', 'cpm']] = bed['acc_full'].str.split('|', expand=True)
+    bed = bed[bed.gene != '-']
+
+    add_rgb_shading_cpm(name,bed, split_size)
+    if split_size==4:
+        add_rgb_shading_pclass(name,bed)
 
 
 def main():
@@ -89,10 +116,11 @@ def main():
     parser.add_argument("--name", action="store", dest="name", help="name of sample - used for output file name")
     parser.add_argument("--bed_file", action="store", dest = "bed_file", help="sample bed with cds")
     results = parser.parse_args()
-    add_rgb_shading(results.name, results.bed_file)
+    add_rgb_shading_cpm(results.name, results.bed_file)
 
 
 
 
 if __name__ == "__main__":
     main()
+# %%
