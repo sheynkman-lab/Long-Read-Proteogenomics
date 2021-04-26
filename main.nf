@@ -951,6 +951,7 @@ Rename CDS to Exon
 process rename_cds_to_exon{
     publishDir "${params.outdir}/${params.name}/rename_cds/", mode: 'copy'
     tag "${params.name} ${reference_gtf} ${sample_gtf}"
+    cpus params.max_cpus
     input:
         file(reference_gtf) from ch_gencode_gtf
         file(sample_gtf) from ch_pb_cds_rename
@@ -967,7 +968,8 @@ process rename_cds_to_exon{
         --sample_gtf $sample_gtf \
         --sample_name ${params.name} \
         --reference_gtf $reference_gtf \
-        --reference_name gencode
+        --reference_name gencode \
+        --num_cores ${params.max_cpus}
         """
 }
 /*--------------------------------------------------
