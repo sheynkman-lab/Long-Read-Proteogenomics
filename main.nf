@@ -229,7 +229,7 @@ ch_gencode_protein_fasta.into{
 }
 
 /*--------------------------------------------------
-Run IsoSeq3 and Sqanti3 if Sqanti ouput not provided
+Run IsoSeq3 and Sqanti3 if Sqanti output not provided
 ---------------------------------------------------*/
 if( params.sqanti_classification==false || params.sqanti_fasta==false || params.sqanti_gtf==false ){
   if (!params.sample_ccs) exit 1, "Cannot find file for parameter --sample_ccs: ${params.sample_ccs}"
