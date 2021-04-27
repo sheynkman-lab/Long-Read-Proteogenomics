@@ -24,3 +24,4 @@ dependencies:
   - bioconda:bedtools
   - bioconda:ucsc-gtftogenepred
   - bioconda:ucsc-genepredtobed
+  - bioconda:cdna_cupcake 

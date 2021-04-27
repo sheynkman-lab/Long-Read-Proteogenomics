@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # collapse entries, based on cdna cupcake
 #%%
 from cupcake.io import GFF
