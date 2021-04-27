@@ -714,7 +714,28 @@ ch_refined_info.into{
 
 
 
+process mass_spec_raw_convert{
+    // publishDir "${params.outdir}/${params.name}/raw_convert/", mode: 'copy'
+    when:
+      params.mass_spec != false
 
+    input:
+        file(raw_file) from ch_mass_spec_raw
+    output:
+        file("*") into ch_mass_spec_converted
+    script:
+        """
+        wine msconvert $raw_file --filter "peakPicking true 1-"
+        """
+}
+
+ch_mass_spec_combined = ch_mass_spec_mzml.concat(ch_mass_spec_converted)
+ch_mass_spec_combined.into{
+  ch_mass_spec_for_pacbio
+  ch_mass_spec_for_gencode
+  ch_mass_spec_for_uniprot
+  ch_mass_spec_for_pacbio_rescue_resolve
+}
 
 
 
@@ -1047,28 +1068,7 @@ ch_sample_agg_fasta.into{
 MetaMorpheus wtih Sample Specific Database
 ---------------------------------------------------*/
 
-process mass_spec_raw_convert{
-    // publishDir "${params.outdir}/${params.name}/raw_convert/", mode: 'copy'
-    when:
-      params.mass_spec != false
 
-    input:
-        file(raw_file) from ch_mass_spec_raw
-    output:
-        file("*") into ch_mass_spec_converted
-    script:
-        """
-        wine msconvert $raw_file --filter "peakPicking true 1-"
-        """
-}
-
-ch_mass_spec_combined = ch_mass_spec_mzml.concat(ch_mass_spec_converted)
-ch_mass_spec_combined.into{
-  ch_mass_spec_for_pacbio
-  ch_mass_spec_for_gencode
-  ch_mass_spec_for_uniprot
-  ch_mass_spec_for_pacbio_rescue_resolve
-}
 
 process metamorpheus_with_sample_specific_database{
     tag "${mass_spec}"
