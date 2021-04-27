@@ -717,91 +717,7 @@ ch_refined_info.into{
 
 
 
-/*--------------------------------------------------
-MetaMorpheus wtih Sample Specific Database
----------------------------------------------------*/
 
-process mass_spec_raw_convert{
-    // publishDir "${params.outdir}/${params.name}/raw_convert/", mode: 'copy'
-    when:
-      params.mass_spec != false
-
-    input:
-        file(raw_file) from ch_mass_spec_raw
-    output:
-        file("*") into ch_mass_spec_converted
-    script:
-        """
-        wine msconvert $raw_file --filter "peakPicking true 1-"
-        """
-}
-
-ch_mass_spec_combined = ch_mass_spec_mzml.concat(ch_mass_spec_converted)
-ch_mass_spec_combined.into{
-  ch_mass_spec_for_pacbio
-  ch_mass_spec_for_gencode
-  ch_mass_spec_for_uniprot
-  ch_mass_spec_for_pacbio_rescue_resolve
-}
-
-process metamorpheus_with_sample_specific_database{
-    tag "${mass_spec}"
-    cpus params.max_cpus
-    publishDir "${params.outdir}/${params.name}/metamorpheus/pacbio", mode: 'copy'
-    when:
-      params.mass_spec != false
-
-    input:
-        file(orf_fasta) from ch_refined_fasta_metamorpheus
-        file(mass_spec) from ch_mass_spec_for_pacbio.collect()
-
-    output:
-        file("toml/*")
-        file("search_results/Task1SearchTask/All*")
-        file("search_results/Task1SearchTask/prose.txt")
-        file("search_results/Task1SearchTask/results.txt")
-        file("search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv") into ch_pacbio_peptides
-        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv") into ch_pacbio_protein_groups
-    
-    script:
-        """
-        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
-        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
-
-        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv
-        mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv
-        """
-}
-
-process metamorpheus_with_sample_specific_database_rescue_resolve{
-    tag " $mass_spec $orf_fasta $orf_meta  $toml"
-    publishDir "${params.outdir}/${params.name}/metamorpheus/rescue_resolve", mode: 'copy'
-    when:
-      params.mass_spec != false
-
-    input:
-        // file(orf_calls) from ch_orf_calls
-        file(orf_fasta) from ch_refined_fasta_rescue_resolve
-        file(mass_spec) from ch_mass_spec_for_pacbio_rescue_resolve.collect()
-        file(toml) from ch_rr_toml
-        file(orf_meta) from ch_refined_info_rescue_resolve
-
-    output:
-        file("toml/*")
-        file("search_results/Task1SearchTask/All*")
-        file("search_results/Task1SearchTask/prose.txt")
-        file("search_results/Task1SearchTask/results.txt")
-        file("search_results/Task1SearchTask/AllPeptides.${params.name}.rescue_resolve.psmtsv")
-        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.rescue_resolve.tsv")
-    
-    script:
-        """
-        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings settings 
-        dotnet /metamorpheus/CMD.dll -d $orf_fasta -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results --orf $orf_meta --cpm 25
-        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.rescue_resolve.psmtsv
-        mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.rescue_resolve.tsv
-        """
-}
 
 process metamorpheus_with_gencode_database{
     tag "${mass_spec}"
@@ -1103,6 +1019,8 @@ process aggregate_protein_database{
   output:
     file("*")
     file("${params.name}_cds_high_confidence.gtf") into ch_high_confidence_cds
+    file("${params.name}_aggregated.fasta") into ch_sample_agg_fasta
+    file("${params.name}_refined_aggregated.tsv") into ch_refined_info_agg
   script:
     """
     protein_database_aggregation.py \
@@ -1118,6 +1036,97 @@ process aggregate_protein_database{
     --lower_cpm ${params.lower_cpm} \
     """
 
+}
+ch_sample_agg_fasta.into{
+  ch_sample_agg_fasta_normal
+  ch_sample_agg_fasta_rescue
+}
+
+
+/*--------------------------------------------------
+MetaMorpheus wtih Sample Specific Database
+---------------------------------------------------*/
+
+process mass_spec_raw_convert{
+    // publishDir "${params.outdir}/${params.name}/raw_convert/", mode: 'copy'
+    when:
+      params.mass_spec != false
+
+    input:
+        file(raw_file) from ch_mass_spec_raw
+    output:
+        file("*") into ch_mass_spec_converted
+    script:
+        """
+        wine msconvert $raw_file --filter "peakPicking true 1-"
+        """
+}
+
+ch_mass_spec_combined = ch_mass_spec_mzml.concat(ch_mass_spec_converted)
+ch_mass_spec_combined.into{
+  ch_mass_spec_for_pacbio
+  ch_mass_spec_for_gencode
+  ch_mass_spec_for_uniprot
+  ch_mass_spec_for_pacbio_rescue_resolve
+}
+
+process metamorpheus_with_sample_specific_database{
+    tag "${mass_spec}"
+    cpus params.max_cpus
+    publishDir "${params.outdir}/${params.name}/metamorpheus/pacbio", mode: 'copy'
+    when:
+      params.mass_spec != false
+
+    input:
+        file(orf_fasta) from ch_sample_agg_fasta_normal
+        file(mass_spec) from ch_mass_spec_for_pacbio.collect()
+
+    output:
+        file("toml/*")
+        file("search_results/Task1SearchTask/All*")
+        file("search_results/Task1SearchTask/prose.txt")
+        file("search_results/Task1SearchTask/results.txt")
+        file("search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv") into ch_pacbio_peptides
+        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv") into ch_pacbio_protein_groups
+    
+    script:
+        """
+        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+
+        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv
+        mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv
+        """
+}
+
+process metamorpheus_with_sample_specific_database_rescue_resolve{
+    tag " $mass_spec $orf_fasta $orf_meta  $toml"
+    publishDir "${params.outdir}/${params.name}/metamorpheus/rescue_resolve", mode: 'copy'
+    when:
+      params.mass_spec != false
+
+    input:
+        // file(orf_calls) from ch_orf_calls
+        file(orf_fasta) from ch_sample_agg_fasta_rescue
+        file(mass_spec) from ch_mass_spec_for_pacbio_rescue_resolve.collect()
+        file(toml) from ch_rr_toml
+        file(orf_meta) from ch_refined_info_agg
+
+    output:
+        file("toml/*")
+        file("search_results/Task1SearchTask/All*")
+        file("search_results/Task1SearchTask/prose.txt")
+        file("search_results/Task1SearchTask/results.txt")
+        file("search_results/Task1SearchTask/AllPeptides.${params.name}.rescue_resolve.psmtsv")
+        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.rescue_resolve.tsv")
+    
+    script:
+        """
+        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings settings 
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results --orf $orf_meta --cpm 25
+        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.rescue_resolve.psmtsv
+        mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.rescue_resolve.tsv
+        """
 }
 
 
