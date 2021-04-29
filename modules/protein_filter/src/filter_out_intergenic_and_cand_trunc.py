@@ -19,11 +19,12 @@ parser.add_argument('--name',action='store',dest='name')
 args = parser.parse_args()
 
 #%%
-prot = pd.read_table(args.protein_classification)
+
 
 def determine_if_pb_should_be_filtered(row):
     # filter out pbs that are artifacts or noncoding
-    pclass = row['protein_classification']
+    pclass = str(row['protein_classification'])
+
     if 'trunc' in pclass: 
         return 1
     elif 'intergenic' in pclass:
@@ -37,7 +38,6 @@ def determine_if_pb_should_be_filtered(row):
     elif 'genic' in pclass:
         return 1
     return 0
-prot['filter_status'] = prot.apply(determine_if_pb_should_be_filtered, axis=1)
 
 def get_short_psubclass_descriptor(psubclass):
     # derive a shorter psubclass for viewing on ucsc browser
@@ -78,12 +78,15 @@ def get_short_psubclass_descriptor(psubclass):
     else:
         raise Exception('Invalid psubclass:' + psubclass)
 
+prot = pd.read_table(args.protein_classification)
+prot = prot.dropna(subset=['protien_classification'])
+prot['filter_status'] = prot.apply(determine_if_pb_should_be_filtered, axis=1)
 
-for df in (prot,):
-    df['pclass'] = df['protein_classification'].str.split(',').str[0]
-    df['pclass'] = df['pclass'].fillna('-')
-    df['psubclass'] = df['protein_classification'].str.split(',').str[1]
-    df['psubclass_short'] = df['psubclass'].apply(get_short_psubclass_descriptor)
+
+prot['pclass'] = prot['protein_classification'].str.split(',').str[0]
+prot['pclass'] = prot['pclass'].fillna('-')
+prot['psubclass'] = prot['protein_classification'].str.split(',').str[1]
+prot['psubclass_short'] = prot['psubclass'].apply(get_short_psubclass_descriptor)
 
 # output info needed for ucsc track visualization
 prot['orf_calling_confidence']

@@ -972,6 +972,7 @@ process five_prime_utr{
 Protein Classification
 ---------------------------------------------------*/
 process protein_classification{
+  publishDir "${params.outdir}/${params.name}/protein_classification/", mode: 'copy'
   input:
     file(protein_classification) from ch_sqanti_protein_classification_w_5utr
     file(best_orf) from ch_best_orf_pclass
@@ -1000,6 +1001,7 @@ process protein_classification{
 Protein Filtering
 ---------------------------------------------------*/
 process filter_protein{
+  publishDir "${params.outdir}/${params.name}/protein_filter/", mode: 'copy'
   input:
     file(reference_gtf) from ch_gencode_gtf
     file(protein_classification) from ch_protein_classification_unfiltered
@@ -1041,7 +1043,7 @@ process aggregate_protein_database{
     file("*")
     file("${params.name}_cds_high_confidence.gtf") into ch_high_confidence_cds
     file("${params.name}_aggregated.fasta") into ch_sample_agg_fasta
-    file("${params.name}_refined_aggregated.tsv") into ch_refined_info_agg
+    file("${params.name}_refined_high_confidence.tsv") into ch_refined_info_high_conf
   script:
     """
     protein_database_aggregation.py \
@@ -1110,7 +1112,7 @@ process metamorpheus_with_sample_specific_database_rescue_resolve{
         file(orf_fasta) from ch_sample_agg_fasta_rescue
         file(mass_spec) from ch_mass_spec_for_pacbio_rescue_resolve.collect()
         file(toml) from ch_rr_toml
-        file(orf_meta) from ch_refined_info_agg
+        file(orf_meta) from ch_refined_info_high_conf
 
     output:
         file("toml/*")
