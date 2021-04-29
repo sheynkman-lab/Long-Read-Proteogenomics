@@ -1233,7 +1233,7 @@ process make_peptide_gtf{
   make_peptide_gtf_file.py \
   --name ${params.name} \
   --sample_gtf $sample_gtf \
-  ----reference_gtf $reference_gtf \
+  --reference_gtf $reference_gtf \
   --peptides $peptides \
   --pb_gene $pb_gene \
   --refined_fasta $fasta
