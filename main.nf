@@ -1063,6 +1063,7 @@ process aggregate_protein_database{
 ch_sample_agg_fasta.into{
   ch_sample_agg_fasta_normal
   ch_sample_agg_fasta_rescue
+  ch_sample_agg_fasta_track_viz
 }
 
 
@@ -1220,9 +1221,10 @@ process make_peptide_gtf{
 
   input:
     file(sample_gtf) from ch_pb_cds_peptide_gtf
+    file(reference_gtf) from ch_gencode_gtf
     file(peptides) from ch_pacbio_peptides
     file(pb_gene) from ch_pb_gene_peptide_gtf
-    file(refined_fasta) from ch_refined_fasta_peptide_gtf
+    file(fasta) from ch_sample_agg_fasta_track_viz
   output:
     file("${params.name}_peptides.gtf") into ch_peptide_gtf
 
@@ -1231,9 +1233,10 @@ process make_peptide_gtf{
   make_peptide_gtf_file.py \
   --name ${params.name} \
   --sample_gtf $sample_gtf \
+  ----reference_gtf $reference_gtf \
   --peptides $peptides \
   --pb_gene $pb_gene \
-  --refined_fasta $refined_fasta
+  --refined_fasta $fasta
   """
 }
 
