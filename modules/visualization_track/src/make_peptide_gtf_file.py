@@ -21,17 +21,25 @@ def make_cumulative_blens(blocks):
     return cblocks
 
 
-def process_gtf(gtf_file):
-    # import CDS gtf
+def read_sample_gtf(gtf_file):
     gtf = pd.read_table(gtf_file, skiprows=1, header=None)
     gtf = gtf[[0, 2, 3, 4, 6, 8]]
     gtf.columns = ['chr', 'feat', 'start', 'end', 'strand', 'acc']
-
-    
-
     gtf = gtf.loc[gtf['feat']=='CDS']
     gtf['acc'] = gtf['acc'].str.split('|').str[1]
+    return gtf
 
+def read_reference_gtf(gtf_file):
+    gtf = pd.read_table(gtf_file, skiprows=5, header=None)
+    gtf = gtf[[0, 2, 3, 4, 6, 8]]
+    gtf.columns = ['chr', 'feat', 'start', 'end', 'strand', 'acc']
+    gtf = gtf.loc[gtf['feat']=='CDS']
+
+    gtf['acc'] = gtf['acc'].str.split('transcript_name "').str[1]
+    gtf['acc'] = gtf['acc'].str.split('";').str[0]
+    return gtf
+
+def process_gtf(gtf):
     # CDS coords into dict
     pbs = defaultdict(lambda: ['chr', 'strand', [], [], []]) # pb -> [chr, strand, [start, end], [block lengths], [cum. block lengths]]
     # PB.1.1 -> ['chr1', '+', [[100,150], [200,270]], [50, 70], [50, 120], [150-200]]
@@ -49,7 +57,7 @@ def process_gtf(gtf_file):
             infos[2] = sorted(infos[2], reverse=True)
         infos[3] = [end-start+1 for [start, end] in infos[2]]
         infos[4] = make_cumulative_blens(infos[3])
-    return gtf, pbs
+    return pbs
 
 
 def process_psmtsv(psmtsv_file, pb_gene):
@@ -146,7 +154,7 @@ def write_peptide_gtf(name, pep_ranges, pbs, gene_pb, seqs):
                     ofile.write('\t'.join([chr, 'hg38_canon', 'CDS', str(start), str(end), '.', strand,
                                 '.', pep_acc]) + '\n')
 
-def make_peptide_gtf(name, gtf, pbs, pb_gene, pep, seqs):
+def make_peptide_gtf(name , pbs, pb_gene, pep, seqs):
     def find_start_end_pep_index(row):
         pep, pb_acc = row[['pep', 'pb_acc']]
         # print(f"{pb_acc}\t{pep}")
@@ -189,16 +197,22 @@ def main():
     parser = argparse.ArgumentParser("IO file locations for make peptide gtf file")
     parser.add_argument("--name", action="store", dest="name", help="name of sample - used for output file name")
     parser.add_argument("--sample_gtf", action="store", dest = "sample_gtf", help="sample gtf with cds. from make_pacbio_cds_gtf")
+    parser.add_argument("--reference_gtf",action="store",dest="reference_gtf")
     parser.add_argument("--peptides", action="store", dest="peptides", help = "peptides file location. from MetaMorpheus")
     parser.add_argument("--pb_gene", action="store", dest="pb_gene", help ="PB-Gene reference")
     parser.add_argument("--refined_fasta", action="store", dest="refined_fasta", help = "refined fasta file. from refined db generation")
     results = parser.parse_args()
-    gtf, pbs = process_gtf(results.sample_gtf)
+    sample_gtf = read_sample_gtf(results.sample_gtf)
+    sample_pbs = process_gtf(sample_gtf)
+
+    reference_gtf = read_reference_gtf(results.reference_gtf)
+    reference_pbs = process_gtf(reference_gtf)
+    pbs = {**sample_pbs, **reference_pbs}
     pb_gene = pd.read_table(results.pb_gene)
     pb_gene = pd.Series(pb_gene.gene.values, index=pb_gene.pb_acc).to_dict()
     pep = process_psmtsv(results.peptides, pb_gene)
     seqs = read_fasta(results.refined_fasta)
-    make_peptide_gtf(results.name, gtf, pbs, pb_gene, pep, seqs)
+    make_peptide_gtf(results.name, pbs, pb_gene, pep, seqs)
 
 #%%
 

@@ -79,7 +79,7 @@ def get_short_psubclass_descriptor(psubclass):
         raise Exception('Invalid psubclass:' + psubclass)
 
 prot = pd.read_table(args.protein_classification)
-prot = prot.dropna(subset=['protien_classification'])
+prot = prot.dropna(subset=['protein_classification'])
 prot['filter_status'] = prot.apply(determine_if_pb_should_be_filtered, axis=1)
 
 
