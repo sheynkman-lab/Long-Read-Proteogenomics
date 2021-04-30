@@ -225,6 +225,7 @@ ch_gencode_protein_fasta.into{
   ch_gencode_protein_fasta_metamorpheus
   ch_gencode_protein_fasta_mapping
   ch_gencode_protein_fasta_aggregate
+  ch_gencode_protein_fasta_novel
 
 }
 
@@ -1101,6 +1102,10 @@ process metamorpheus_with_sample_specific_database{
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv
         """
 }
+ch_pacbio_peptides.into{
+  ch_pacbio_peptides_gtf
+  ch_pacbio_peptides_novel
+}
 
 process metamorpheus_with_sample_specific_database_rescue_resolve{
     tag " $mass_spec $orf_fasta $orf_meta  $toml"
@@ -1222,7 +1227,7 @@ process make_peptide_gtf{
   input:
     file(sample_gtf) from ch_pb_cds_peptide_gtf
     file(reference_gtf) from ch_gencode_gtf
-    file(peptides) from ch_pacbio_peptides
+    file(peptides) from ch_pacbio_peptides_gtf
     file(pb_gene) from ch_pb_gene_peptide_gtf
     file(fasta) from ch_sample_agg_fasta_track_viz
   output:
@@ -1266,12 +1271,6 @@ process peptide_gtf_to_bed{
   """
   
 }
-
-
-/*--------------------------------------------------
-Novel Peptides
----------------------------------------------------*/
-// TODO - proposed module to list all peptides from sample search and mark novel peptides
 
 
 /*--------------------------------------------------
@@ -1336,6 +1335,27 @@ process protein_group_compare{
       --mapping $mapping \
       --output ./
       """
+}
+
+/*--------------------------------------------------
+Novel Peptides
+---------------------------------------------------*/
+process find_novel_peptides{
+  publishDir "${params.outdir}/${params.name}/protein_group_compare/", mode: 'copy'
+  input:
+    file(pacbio_peptides) from ch_pacbio_peptides_novel
+    file(gencode_fasta) from ch_gencode_protein_fasta_novel
+  output:
+    file("*")
+  
+  script:
+    """
+    find_novel_peptides.py \
+    --pacbio_peptides $pacbio_peptides \
+    --gencode_fasta $gencode_fasta \
+    --name ${params.name}
+    """
+
 }
 // TODO - implement Rachel's code that does a cross-comparison of protein groups
 // NOTE - her code requires a map from the accession mapping module
