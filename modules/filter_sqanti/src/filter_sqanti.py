@@ -12,6 +12,7 @@ logging.basicConfig(filename='sqanti_filter.log', encoding='utf-8', level=loggin
 """
 Filter SQANTI results based on several criteria 
 - protein coding only
+        PB transcript aligns to a Gencode-annotated protein coding gene.
 - percent A downstream
         perc_A_downstreamTTS : percent of genomic "A"s in the downstream 20 bp window. 
         If this number if high (say > 0.8), the 3' end site of this isoform is probably not reliable.
@@ -86,7 +87,7 @@ def filter_rts_stage(classification):
     return classification
 
 def filter_illumina_coverage(classification, min_coverage):
-    """filters accessions that are not FSM,ISM,NIC to only include accessions where 
+    """Filters accessions that are not FSM,ISM,NIC to only include accessions where 
     the minimum coverage of all junctions is at least min_coverage. If illumina data is 
     not provided then returns original classification
 

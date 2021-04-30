@@ -5,7 +5,7 @@ This module prepares reference tables for other modules
  
   Inputs:
   --------------------------------------------------------------
-   1. Genecode gtf file
+   1. Gencode gtf file
    2. Gencode fasta file 
   --------------------------------------------------------------
   
@@ -15,7 +15,7 @@ This module prepares reference tables for other modules
    2. isoname (transcript name) -> gene 
    3. ensp -> gene 
    4. isoform, gene, length table 
-   5. gene -> min, max, average
+   5. gene -> min, max, average transcript length
    6. protein coding genes
  -------------------------------------------------------------- 
 
