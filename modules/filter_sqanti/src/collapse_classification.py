@@ -14,4 +14,4 @@ for record in SeqIO.parse(args.collapsed_fasta,'fasta'):
 
 classification = pd.read_table(args.classification)
 classification = classification[classification['isoform'].isin(collapsed_accs)]
-classification.to_csv(f'{args.name}_classification.5degfilter.txt',sep='\t',index=False)
+classification.to_csv(f'{args.name}_classification.5degfilter.tsv',sep='\t',index=False)

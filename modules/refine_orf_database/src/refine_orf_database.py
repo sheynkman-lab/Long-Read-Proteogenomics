@@ -78,7 +78,7 @@ def filter_orf_scores(orfs, cutoff):
     """
     Filter ORFS so only orfs above a cutoff value are used.
     Per CPAT a score >= 0.364 is considered a protein-coding score
-    orfs : pandass DataFrame
+    orfs : pandas DataFrame
         called ORFs
     cutoff : float
         remove all orfs that have coding_score < cutoff

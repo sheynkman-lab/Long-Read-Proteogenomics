@@ -11,7 +11,7 @@
  * Rachel Miller
  * Gloria Sheynkman
  * Christina Chatzipantsiou
- * Anne Deslattes Mays (adeslat@scitechcon.org)
+ * Anne Deslattes Mays
  */
 
 def helpMessage() {
@@ -457,7 +457,7 @@ process filter_sqanti {
     file(ensg_gene) from ch_ensg_gene_filter
 
   output:
-    file("${params.name}_classification.5degfilter.txt") into ch_sample_classification
+    file("${params.name}_classification.5degfilter.tsv") into ch_sample_classification
     file("${params.name}_corrected.5degfilter.fasta") into ch_sample_fasta
     file("${params.name}_corrected.5degfilter.gff") into ch_sample_gtf
     file("*")
@@ -485,7 +485,7 @@ process filter_sqanti {
     collapse_classification.py \
     --name ${params.name} \
     --collapsed_fasta ${params.name}_corrected.5degfilter.fasta \
-    --classification filtered_${params.name}_classification.txt
+    --classification filtered_${params.name}_classification.tsv
     """
 }
 
@@ -709,7 +709,7 @@ ch_refined_info.into{
   ch_refined_info_rescue_resolve
   ch_refined_info_cds
   ch_refined_info_pclass
-  chr_refined_info_aggregate
+  ch_refined_info_aggregate
 }
 
 
@@ -1037,7 +1037,7 @@ process aggregate_protein_database{
     file(gene_lens) from ch_gene_lens_aggregate
     file(pb_fasta) from ch_filtered_protein_fasta
     file(gc_fasta) from ch_gencode_protein_fasta_aggregate
-    file(refined_info) from chr_refined_info_aggregate
+    file(refined_info) from ch_refined_info_aggregate
     file(sample_cds) from ch_filtered_cds_agg
   output:
     file("*")

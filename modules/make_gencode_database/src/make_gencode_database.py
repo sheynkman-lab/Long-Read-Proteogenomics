@@ -18,7 +18,7 @@ def make_gencode_database(gencode_fasta, output_fasta, output_cluster):
         gc[rec.seq][gene].append(isoname)
 
     # write a fasta, with same-protein sequences clustered
-    # for each group of same-protein-sequence isonames, choose the one 
+    # for each group of same-protein-sequence isonames, choose the first alphanum
     with open(output_fasta, 'w') as ofile, open(output_cluster, 'w') as ofile2:
         ofile2.write('repr_isoname\tsame_prot_seq_isonames\n')
         for seq in gc:
