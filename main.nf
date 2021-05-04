@@ -105,8 +105,12 @@ ch_uniprot_protein_fasta = Channel.value(file(params.uniprot_protein_fasta))
 // if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
 ch_fastq_reads = Channel.from(params.fastq_read_1, params.fastq_read_2).filter(String).flatMap{ files(it) }
 
-if (!params.metamorpheus_toml) exit 1, "Cannot find any file for parameter --metamorpheus_toml: ${params.metamorpheus_toml}"
-ch_metamorpheus_toml = Channel.value(file(params.metamorpheus_toml))
+if (!params.metamorpheus_toml){
+  ch_metamorpheus_toml = Channel.from("NO_TOML_FILE")
+}
+else{
+  ch_metamorpheus_toml = Channel.value(file(params.metamorpheus_toml))
+}
 
 if(params.mass_spec != false){
   ch_mass_spec_raw = Channel.fromPath("${params.mass_spec}/*.raw")
@@ -1025,6 +1029,7 @@ process filter_protein{
     --gencode_gtf $reference_gtf \
     --protein_fasta $protein_fasta \
     --sample_cds_gtf $sample_cds \
+    --min_junctions_after_stop_codon ${params.min_junctions_after_stop_codon} \
     --name ${params.name} \
     """
 }
