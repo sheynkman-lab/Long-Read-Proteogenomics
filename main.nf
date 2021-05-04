@@ -105,6 +105,9 @@ ch_uniprot_protein_fasta = Channel.value(file(params.uniprot_protein_fasta))
 // if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
 ch_fastq_reads = Channel.from(params.fastq_read_1, params.fastq_read_2).filter(String).flatMap{ files(it) }
 
+if (!params.metamorpheus_toml) exit 1, "Cannot find any file for parameter --metamorpheus_toml: ${params.metamorpheus_toml}"
+ch_metamorpheus_toml = Channel.value(file(params.metamorpheus_toml))
+
 if(params.mass_spec != false){
   ch_mass_spec_raw = Channel.fromPath("${params.mass_spec}/*.raw")
   ch_mass_spec_mzml = Channel.fromPath("${params.mass_spec}/*.{mzml,mzML}")
@@ -751,7 +754,7 @@ process metamorpheus_with_gencode_database{
     input:
         file(gencode_fasta) from ch_gencode_protein_fasta_metamorpheus
         file(mass_spec) from ch_mass_spec_for_gencode.collect()
-
+        file(toml_file) from ch_metamorpheus_toml
     output:
         file("toml/*")
         file("search_results/Task1SearchTask/All*")
@@ -761,9 +764,10 @@ process metamorpheus_with_gencode_database{
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv") into ch_gencode_protein_groups
     
     script:
+        def toml = toml_file.name != 'NO_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
-        dotnet /metamorpheus/CMD.dll -d $gencode_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        dotnet /metamorpheus/CMD.dll -d $gencode_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results
 
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.Gencode.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv
@@ -778,6 +782,7 @@ process metamorpheus_with_uniprot_database{
       params.mass_spec != false
 
     input:
+        file(toml_file) from ch_metamorpheus_toml
         file(uniprot_fasta) from ch_uniprot_protein_fasta
         file(mass_spec) from ch_mass_spec_for_uniprot.collect()
 
@@ -790,9 +795,10 @@ process metamorpheus_with_uniprot_database{
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.UniProt.tsv") into ch_uniprot_protein_groups
     
     script:
+        def toml = toml_file.name != 'NO_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
-        dotnet /metamorpheus/CMD.dll -d $uniprot_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        dotnet /metamorpheus/CMD.dll -d $uniprot_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results
 
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.UniProt.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.UniProt.tsv
@@ -1014,7 +1020,7 @@ process filter_protein{
    file("${params.name}_with_cds_filtered.gtf") into ch_filtered_cds
   script:
     """
-    filter_out_intergenic_and_cand_trunc.py \
+    protein_filter.py \
     --protein_classification $protein_classification \
     --gencode_gtf $reference_gtf \
     --protein_fasta $protein_fasta \
@@ -1084,6 +1090,8 @@ process metamorpheus_with_sample_specific_database{
     input:
         file(orf_fasta) from ch_sample_agg_fasta_normal
         file(mass_spec) from ch_mass_spec_for_pacbio.collect()
+        file(toml_file) from ch_metamorpheus_toml
+
 
     output:
         file("toml/*")
@@ -1094,9 +1102,10 @@ process metamorpheus_with_sample_specific_database{
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv") into ch_pacbio_protein_groups
     
     script:
+        def toml = toml_file.name != 'NO_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
-        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results
 
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv
