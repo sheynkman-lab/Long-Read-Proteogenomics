@@ -14,6 +14,7 @@ parser.add_argument('--protein_classification',action='store',dest='protein_clas
 parser.add_argument('--gencode_gtf',action='store',dest='gencode_gtf')
 parser.add_argument('--protein_fasta',action='store',dest='protein_fasta')
 parser.add_argument('--sample_cds_gtf',action='store',dest='sample_cds')
+parser.add_argument('--min_junctions_after_stop_codon',action='store', dest='min_junctions_after_stop_codon',type=int,default=2)
 parser.add_argument('--name',action='store',dest='name')
 
 args = parser.parse_args()
@@ -21,11 +22,26 @@ args = parser.parse_args()
 #%%
 
 
-def determine_if_pb_should_be_filtered(row):
+def determine_if_pb_should_be_filtered(row, min_junc_after_stop_codon):
+    """PB should be filtered if NMD, a truncation, or protein classification
+    is not likely protein coding (intergenic, antisense, fusion,...)
+
+    Args:
+        row (pandas Series): protein classification row
+        min_junc_after_stop_codon (int): mininum number of junctions after stop
+        codon a protein can have. used in NMD determination
+
+    Returns:
+        int: 1 if should be filtered, 0 if should not be filtered
+    """
     # filter out pbs that are artifacts or noncoding
     pclass = str(row['protein_classification'])
-
-    if 'trunc' in pclass: 
+    num_junc_after_stop_codon = int(row['num_junc_after_stop_codon'])
+    pclass_base_to_keep = ['pFSM','pNIC']
+    pclass_base = str(row['protein_classification_base'])
+    if pclass_base not in pclass_base_to_keep and num_junc_after_stop_codon > min_junc_after_stop_codon:
+        return 1
+    elif 'trunc' in pclass: 
         return 1
     elif 'intergenic' in pclass:
         return 1
@@ -40,6 +56,17 @@ def determine_if_pb_should_be_filtered(row):
     return 0
 
 def get_short_psubclass_descriptor(psubclass):
+    """Generates a short descriptor of the subclass
+
+    Args:
+        psubclass (string): protein classification subclass
+
+    Raises:
+        Exception: unknown subclass given
+
+    Returns:
+        string: short subclass descriptor
+    """
     # derive a shorter psubclass for viewing on ucsc browser
     if psubclass == 'known_nterm_novel_splice_known_cterm':
         return 'kn_ns_kc'
@@ -80,7 +107,7 @@ def get_short_psubclass_descriptor(psubclass):
 
 prot = pd.read_table(args.protein_classification)
 prot = prot.dropna(subset=['protein_classification'])
-prot['filter_status'] = prot.apply(determine_if_pb_should_be_filtered, axis=1)
+prot['filter_status'] = prot.apply(lambda row: determine_if_pb_should_be_filtered(row, args.min_junctions_after_stop_codon), axis=1)
 
 
 prot['pclass'] = prot['protein_classification'].str.split(',').str[0]
