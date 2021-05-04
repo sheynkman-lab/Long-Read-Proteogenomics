@@ -140,6 +140,7 @@ def main():
     parser.add_argument("--percent_A_downstream_threshold", action="store", dest="percent_A_downstream_threshold", default=95,type=float)
     parser.add_argument("--structural_categories_level", action="store", dest="structural_categories_level", default="strict")
     parser.add_argument("--minimum_illumina_coverage", action="store", dest="min_illumina_coverage", type=int, default=3)
+    
     results = parser.parse_args()
     # Get boolean filtering decisions
     is_protein_coding_filtered = string_to_boolean(results.filter_protein_coding)
@@ -171,7 +172,8 @@ def main():
     filtered_isoforms = set(classification['isoform'])
     # Save Data
     base_name = results.classification_file.split("/")[-1]
-    classification.to_csv(f"filtered_{base_name}", index=False, sep = "\t")
+    base_name = ".".join(base_name.split('.')[:-1])
+    classification.to_csv(f"filtered_{base_name}.tsv", index=False, sep = "\t")
     save_filtered_sqanti_gtf(results.corrected_gtf,filtered_isoforms )
     save_filtered_sqanti_fasta(results.corrected_fasta, filtered_isoforms)
 

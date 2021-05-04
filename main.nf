@@ -111,6 +111,11 @@ if (!params.metamorpheus_toml){
 else{
   ch_metamorpheus_toml = Channel.value(file(params.metamorpheus_toml))
 }
+ch_metamorpheus_toml.into{
+  ch_metamorpheus_toml_gencode
+  ch_metamorpheus_toml_uniprot
+  ch_metamorpheus_toml_pacbio
+}
 
 if(params.mass_spec != false){
   ch_mass_spec_raw = Channel.fromPath("${params.mass_spec}/*.raw")
@@ -758,7 +763,7 @@ process metamorpheus_with_gencode_database{
     input:
         file(gencode_fasta) from ch_gencode_protein_fasta_metamorpheus
         file(mass_spec) from ch_mass_spec_for_gencode.collect()
-        file(toml_file) from ch_metamorpheus_toml
+        file(toml_file) from ch_metamorpheus_toml_gencode
     output:
         file("toml/*")
         file("search_results/Task1SearchTask/All*")
@@ -786,7 +791,7 @@ process metamorpheus_with_uniprot_database{
       params.mass_spec != false
 
     input:
-        file(toml_file) from ch_metamorpheus_toml
+        file(toml_file) from ch_metamorpheus_toml_uniprot
         file(uniprot_fasta) from ch_uniprot_protein_fasta
         file(mass_spec) from ch_mass_spec_for_uniprot.collect()
 
@@ -1095,7 +1100,7 @@ process metamorpheus_with_sample_specific_database{
     input:
         file(orf_fasta) from ch_sample_agg_fasta_normal
         file(mass_spec) from ch_mass_spec_for_pacbio.collect()
-        file(toml_file) from ch_metamorpheus_toml
+        file(toml_file) from ch_metamorpheus_toml_pacbio
 
 
     output:
