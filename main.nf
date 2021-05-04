@@ -773,7 +773,7 @@ process metamorpheus_with_gencode_database{
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv") into ch_gencode_protein_groups
     
     script:
-        def toml = toml_file.name != 'NO_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
+        def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
         dotnet /metamorpheus/CMD.dll -d $gencode_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results
@@ -804,7 +804,7 @@ process metamorpheus_with_uniprot_database{
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.UniProt.tsv") into ch_uniprot_protein_groups
     
     script:
-        def toml = toml_file.name != 'NO_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
+        def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
         dotnet /metamorpheus/CMD.dll -d $uniprot_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results
@@ -1112,7 +1112,7 @@ process metamorpheus_with_sample_specific_database{
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv") into ch_pacbio_protein_groups
     
     script:
-        def toml = toml_file.name != 'NO_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
+        def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
         dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results
