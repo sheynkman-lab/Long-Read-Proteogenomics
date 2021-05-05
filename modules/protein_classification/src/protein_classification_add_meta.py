@@ -15,7 +15,7 @@ refined = pd.read_table(args.refined_meta)
 pclass = (
     pclass
         .merge(best_orf[['pb_acc','orf_calling_confidence','has_stop_codon']], left_on='pb',right_on='pb_acc', how='inner')
-        .merge(refined[['base_acc','CPM']], left_on='pb_acc',right_on='base_acc', how='inner')
+        .merge(refined[['base_acc','gene','CPM',]], left_on='pb_acc',right_on='base_acc', how='inner')
         .drop(columns=['pb_acc','base_acc'])
 )
 pclass.to_csv(f'{args.dest_dir}{args.name}.protein_classification_w_meta.tsv', sep='\t',index=False)

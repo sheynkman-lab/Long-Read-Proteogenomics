@@ -119,15 +119,15 @@ prot['psubclass_short'] = prot['psubclass'].apply(get_short_psubclass_descriptor
 prot['orf_calling_confidence']
 prot['orf_conf'] = prot['orf_calling_confidence'].str[0:3]
 # add genename column
-ensgs = {}
-for line in open(args.gencode_gtf):
-    if line.startswith('#'): continue
-    seqname,source,feature,start,end,score,strand,phase,attributes=line.split('\t')
-    if feature.strip()=='gene':
-        ensg = line.split('gene_id "')[1].split('"')[0]
-        gene = line.split('gene_name "')[1].split('"')[0]
-        ensgs[ensg] = gene
-prot['gene'] = prot['pr_gene'].map(ensgs)
+# ensgs = {}
+# for line in open(args.gencode_gtf):
+#     if line.startswith('#'): continue
+#     seqname,source,feature,start,end,score,strand,phase,attributes=line.split('\t')
+#     if feature.strip()=='gene':
+#         ensg = line.split('gene_id "')[1].split('"')[0]
+#         gene = line.split('gene_name "')[1].split('"')[0]
+#         ensgs[ensg] = gene
+# prot['gene'] = prot['pr_gene'].map(ensgs)
 # end add genename columnd
 (
     prot

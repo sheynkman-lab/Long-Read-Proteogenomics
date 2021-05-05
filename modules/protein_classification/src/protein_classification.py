@@ -161,7 +161,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--sqanti_protein', action='store', dest='sqanti_protein', help='sqanti protein classification file')
     parser.add_argument('--name', action='store',dest='name')
-    parser.add_argument('--dest_dir', action='store',dest='dest_dir')
+    parser.add_argument('--dest_dir', action='store',dest='dest_dir',default='./')
     args = parser.parse_args()
 
     protein_classification = pd.read_table(args.sqanti_protein)

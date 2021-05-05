@@ -50,5 +50,5 @@ for pep in sample_peptides:
 
 # write out the pacbio accession and genename for each novel peptide
 peps_novel = peps[peps['seq'].isin(pacbio_peps)]
-peps_novel.to_csv(f'{name}.pacbio_novel_peptides.tsv', sep='\t', index=None)
+peps_novel.to_csv(f'{args.name}.pacbio_novel_peptides.tsv', sep='\t', index=None)
 
