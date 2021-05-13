@@ -132,10 +132,6 @@ def main():
     pb_seqs,redundant_accs = get_accession_seqs(seqs)
     pb_pseqs = combine_by_sequence(orfs, pb_seqs)
     
-    with open(f'{name}_redundant_accessions.txt', 'w') as f:
-        for acc in redundant_accs:
-            f.write(f'{acc}\n')
-    
     # Save combined results
 
     with open(f'{name}_combined.tsv', 'w') as ofile, open(f'{name}_combined.fasta', 'w') as ofile2:

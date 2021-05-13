@@ -66,7 +66,7 @@ log.info "refine_cutoff                         : ${params.refine_cutoff}"
 log.info "mass_spec                             : ${params.mass_spec}"
 log.info ""
 
-// if (!params.gencode_gtf) exit 1, "Cannot find gtf file for parameter --gencode_gtf: ${params.gencode_gtf}"
+if (!params.gencode_gtf) exit 1, "Cannot find gtf file for parameter --gencode_gtf: ${params.gencode_gtf}"
 ch_gencode_gtf = Channel.value(file(params.gencode_gtf))
 
 if (!params.gencode_transcript_fasta) exit 1, "Cannot find any file for parameter --gencode_transcript_fasta: ${params.gencode_transcript_fasta}"
@@ -79,12 +79,6 @@ if (params.gencode_translation_fasta.endsWith('.gz')){
 } else {
   ch_gencode_translation_fasta_uncompressed = Channel.value(file(params.gencode_translation_fasta))
 }
-
-
-
-
-
-
 
 if (!params.hexamer) exit 1, "Cannot find headmer file for parameter --hexamer: ${params.hexamer}"
 ch_hexamer = Channel.value(file(params.hexamer))
@@ -105,7 +99,7 @@ ch_uniprot_protein_fasta = Channel.value(file(params.uniprot_protein_fasta))
 // if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
 ch_fastq_reads = Channel.from(params.fastq_read_1, params.fastq_read_2).filter(String).flatMap{ files(it) }
 
-if (!params.metamorpheus_toml){
+if (params.metamorpheus_toml==false){
   ch_metamorpheus_toml = Channel.from("NO_TOML_FILE")
 }
 else{
@@ -114,7 +108,9 @@ else{
 ch_metamorpheus_toml.into{
   ch_metamorpheus_toml_gencode
   ch_metamorpheus_toml_uniprot
-  ch_metamorpheus_toml_pacbio
+  ch_metamorpheus_toml_pacbio_refined
+  ch_metamorpheus_toml_pacbio_filtered
+  ch_metamorpheus_toml_pacbio_aggregated
 }
 
 if(params.mass_spec != false){
@@ -190,9 +186,7 @@ ch_gene_lens.into{
 
 
 
-/*--------------------------------------------------
-Gencode Database
----------------------------------------------------*/
+
 
 if (params.gencode_translation_fasta.endsWith('.gz')) {
   process gunzip_gencode_translation_fasta {
@@ -212,6 +206,16 @@ if (params.gencode_translation_fasta.endsWith('.gz')) {
   }
 }
 
+
+
+/*--------------------------------------------------
+Gencode Database
+ * Removes duplicate Gencode entries from fasta file
+ * Output:  gencode_protien.fasta
+ *            - gencode fasta file without duplicate entries
+ *          gencode_isoname_clusters.tsv
+ *            - gencode duplicate gene name information
+---------------------------------------------------*/
 process make_gencode_database {
   tag "${gencode_translation_fasta}"
   cpus 1
@@ -260,6 +264,15 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
   }
   /*--------------------------------------------------
   IsoSeq3
+   * Runs IsoSeq3 on CCS reads, aligning to gneome and
+   * collapsing redundant reads
+   * STEPS
+   *   - Ensure only qv10 reads from ccs are kept as input
+   *   - find and remove adapters/barcodes
+   *   - filter for non-concatamer, polya containing reads
+   *   - clustering of reads
+   *   - align reads to the genome
+   *   - collapse redundant reads
   ---------------------------------------------------*/
   process isoseq3 {
     tag "${sample_ccs}, ${genome_fasta}, ${primers_fasta}"
@@ -307,31 +320,15 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
     """
   }
 
-
-
-
-  // TODO - what was this code snippet for? runnning partially?
-  /*
-  Channel
-    .value(file(params.fl_count))
-    .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.fl_count}" }
-    .set { ch_fl_count }  
-
-  Channel
-    .value(file(params.sample_gtf))
-    .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.sample_gtf}" }
-    .set { ch_sample_gtf } 
-  Channel
-    .value(file(params.sample_fasta))
-    .ifEmpty { error "Cannot find gtf file for parameter --gencode_gtf: ${params.sample_fasta}" }
-    .set { ch_sample_fasta } 
-  */
-
-
   /*--------------------------------------------------
   STAR Alignment
+   * STAR alignment is run if fastq reads are provided
+   * Information is fed to SQANTI3 where information is 
+   * used in classificaiton 
+   * STEPS
+   *  -generate genome (skipped if STAR genome provided)
+   *  -star_alignment 
   ---------------------------------------------------*/
-
   if(params.star_genome_dir != false){
       Channel
       .fromPath(params.star_genome_dir, type:'dir')
@@ -399,6 +396,10 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
 
   /*--------------------------------------------------
   SQANTI3
+   * https://github.com/ConesaLab/SQANTI3
+   * Corrects any errors in alignment from ISOSEQ3 and 
+   * classifies each accession in relation to the reference
+   * genome
   ---------------------------------------------------*/
   process sqanti3 {
     tag "${fl_count}, ${gencode_gtf}, ${gencode_fasta}, ${sample_gtf},"
@@ -458,6 +459,20 @@ else{
 
 /*--------------------------------------------------
 Filter Sqanti
+ * Filter SQANTI results based on several criteria 
+ * - protein coding only
+ *      PB transcript aligns to a Gencode-annotated protein coding gene.
+ * - percent A downstream
+ *      perc_A_downstreamTTS : percent of genomic "A"s in the downstream 20 bp window. 
+ *      If this number if high (say > 0.8), the 3' end site of this isoform is probably not reliable.
+ * - RTS stage
+ *      RTS_stage: TRUE if one of the junctions could be a RT switching artifact.
+ * - Structural Category
+ *      keep only transcripts that have a structural category of:
+ *        -novel_not_in_catalog
+          -novel_in_catalog
+          -incomplete-splice_match
+          -full-splice_match 
 ---------------------------------------------------*/
 process filter_sqanti {
   publishDir "${params.outdir}/${params.name}/sqanti3-filtered/", mode: 'copy'
@@ -506,7 +521,6 @@ ch_sample_classification.into{
   ch_sample_classification_six_frame
   ch_sample_classification_transcriptome
   ch_sample_classification_orf
-
 }
 
 ch_sample_fasta.into{
@@ -525,7 +539,6 @@ ch_sample_gtf.into{
 /*--------------------------------------------------
 Six-Frame Translation
 ---------------------------------------------------*/
-
 process six_frame_translation {
     cpus 1
     tag "${classification}, ${ensg_gene}"
@@ -695,7 +708,7 @@ process refine_orf_database {
   file(protein_coding_genes) from ch_protein_coding_genes_db
   
   output:
-  file("*")
+  // file("*")
   file("${params.name}_orf_refined.tsv") into ch_refined_info
   file("${params.name}_orf_refined.fasta") into ch_refined_fasta
   
@@ -714,6 +727,7 @@ ch_refined_fasta.into{
   ch_refined_fasta_rescue_resolve
   ch_refined_fasta_pep_analysis
   ch_refined_fasta_peptide_gtf
+  ch_refined_fasta_peptide_viz
   ch_refined_fasta_mapping
   ch_refined_fasta_pclass_filter
 }
@@ -956,7 +970,7 @@ process sqanti_protein{
 5' UTR Status
 ---------------------------------------------------*/
 process five_prime_utr{
-  publishDir "${params.outdir}/${params.name}/5p_utr/", mode: 'copy'
+  // publishDir "${params.outdir}/${params.name}/5p_utr/", mode: 'copy'
   input:
     file(reference_gtf) from ch_gencode_gtf
     file(sample_cds) from ch_pb_cds_5p_utr
@@ -1042,6 +1056,10 @@ ch_filtered_cds.into{
   ch_filtered_cds_bed
   ch_filtered_cds_agg
 }
+ch_filtered_protein_fasta.into{
+  ch_filtered_protein_fasta_metamorpheus
+  ch_filtered_protein_fasta_aggregate
+}
 
 /*--------------------------------------------------
 Protein Aggregation
@@ -1052,7 +1070,7 @@ process aggregate_protein_database{
   input:
     file(protein_classification) from ch_filtered_protein_classification
     file(gene_lens) from ch_gene_lens_aggregate
-    file(pb_fasta) from ch_filtered_protein_fasta
+    file(pb_fasta) from ch_filtered_protein_fasta_aggregate
     file(gc_fasta) from ch_gencode_protein_fasta_aggregate
     file(refined_info) from ch_refined_info_aggregate
     file(sample_cds) from ch_filtered_cds_agg
@@ -1090,10 +1108,74 @@ MetaMorpheus wtih Sample Specific Database
 
 
 
-process metamorpheus_with_sample_specific_database{
+process metamorpheus_with_sample_specific_database_refined{
     tag "${mass_spec}"
     cpus params.max_cpus
-    publishDir "${params.outdir}/${params.name}/metamorpheus/pacbio", mode: 'copy'
+    publishDir "${params.outdir}/${params.name}/metamorpheus/pacbio/refined", mode: 'copy'
+    when:
+      params.mass_spec != false
+
+    input:
+        file(orf_fasta) from ch_refined_fasta_metamorpheus
+        file(mass_spec) from ch_mass_spec_for_pacbio.collect()
+        file(toml_file) from ch_metamorpheus_toml_pacbio_refined
+
+
+    output:
+        file("toml/*")
+        file("search_results/Task1SearchTask/All*")
+        file("search_results/Task1SearchTask/prose.txt")
+        file("search_results/Task1SearchTask/results.txt")
+        file("search_results/Task1SearchTask/AllPeptides.${params.name}.refined.psmtsv") into ch_pacbio_peptides_refined
+        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.refined.tsv") into ch_pacbio_protein_groups_refined
+    
+    script:
+        def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
+        """
+        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+
+        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.refined.psmtsv
+        mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.refined.tsv
+        """
+}
+
+process metamorpheus_with_sample_specific_database_filtered{
+    tag "${mass_spec}"
+    cpus params.max_cpus
+    publishDir "${params.outdir}/${params.name}/metamorpheus/pacbio/filtered", mode: 'copy'
+    when:
+      params.mass_spec != false
+
+    input:
+        file(orf_fasta) from ch_filtered_protein_fasta_metamorpheus
+        file(mass_spec) from ch_mass_spec_for_pacbio.collect()
+        file(toml_file) from ch_metamorpheus_toml_pacbio_filtered
+
+
+    output:
+        file("toml/*")
+        file("search_results/Task1SearchTask/All*")
+        file("search_results/Task1SearchTask/prose.txt")
+        file("search_results/Task1SearchTask/results.txt")
+        file("search_results/Task1SearchTask/AllPeptides.${params.name}.filtered.psmtsv") into ch_pacbio_peptides_filtered
+        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.filtered.tsv") into ch_pacbio_protein_groups_filtered
+    
+    script:
+        def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
+        """
+        dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+
+        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.filtered.psmtsv
+        mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.filtered.tsv
+        """
+}
+
+process metamorpheus_with_sample_specific_database_high_confidence{
+    tag "${mass_spec}"
+    cpus params.max_cpus
+    publishDir "${params.outdir}/${params.name}/metamorpheus/pacbio/high_confidence", mode: 'copy'
     when:
       params.mass_spec != false
 
@@ -1108,8 +1190,8 @@ process metamorpheus_with_sample_specific_database{
         file("search_results/Task1SearchTask/All*")
         file("search_results/Task1SearchTask/prose.txt")
         file("search_results/Task1SearchTask/results.txt")
-        file("search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv") into ch_pacbio_peptides
-        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv") into ch_pacbio_protein_groups
+        file("search_results/Task1SearchTask/AllPeptides.${params.name}.high_confidence.psmtsv") into ch_pacbio_peptides_high_confidence
+        file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.high_confidence.tsv") into ch_pacbio_protein_groups_high_confidence
     
     script:
         def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
@@ -1117,18 +1199,20 @@ process metamorpheus_with_sample_specific_database{
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
         dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
 
-        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.psmtsv
-        mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.tsv
+        mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.high_confidence.psmtsv
+        mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.high_confidence.tsv
         """
 }
-ch_pacbio_peptides.into{
-  ch_pacbio_peptides_gtf
-  ch_pacbio_peptides_novel
+
+ch_pacbio_peptides_high_confidence.into{
+  ch_pacbio_peptides_high_confidence_gtf
+  ch_pacbio_peptides_high_confidence_novel
+  ch_pacbio_peptides_high_confidence_track_viz
 }
 
 process metamorpheus_with_sample_specific_database_rescue_resolve{
     tag " $mass_spec $orf_fasta $orf_meta  $toml"
-    publishDir "${params.outdir}/${params.name}/metamorpheus/rescue_resolve", mode: 'copy'
+    publishDir "${params.outdir}/${params.name}/metamorpheus/pacbio/rescue_resolve", mode: 'copy'
     when:
       params.mass_spec != false
 
@@ -1157,21 +1241,24 @@ process metamorpheus_with_sample_specific_database_rescue_resolve{
 }
 
 
-/*--------------------------------------------------
-Convert PacBio CDS to Bed12
----------------------------------------------------*/
-process pb_cds_to_bed12 {
-
+process protein_track_visualization{
+  publishDir "${params.outdir}/${params.name}/track_visualization/refined/protein", patern: "*_refined_*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/filtered/protein", patern: "*_filtered_*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/high_confidence/protein", patern: "*_high_confidence_*"
   input:
     file(refined_cds) from ch_pb_cds_bed
     file(filtered_cds) from ch_filtered_cds_bed
     file(high_confidence_cds) from ch_high_confidence_cds
   output:
-    file("${params.name}_refined_cds.bed12") into ch_cds_refined_bed
-    file("${params.name}_filtered_cds.bed12") into ch_cds_filtered_bed
-    file("${params.name}_high_confidence_cds.bed12") into ch_cds_high_confidence_bed
+    file("*_shaded_*")
   script:
     """
+    #************************************
+    # Convert GTF to Bed
+    #************************************
+    #--------------------------
+    # Refined
+    #--------------------------
     gtfToGenePred $refined_cds ${params.name}_refined_cds.genePred
     genePredToBed ${params.name}_refined_cds.genePred ${params.name}_refined_cds.bed12
 
@@ -1182,36 +1269,115 @@ process pb_cds_to_bed12 {
     gtfToGenePred $high_confidence_cds ${params.name}_high_confidence_cds.genePred
     genePredToBed ${params.name}_high_confidence_cds.genePred ${params.name}_high_confidence_cds.bed12
 
+
+    #************************************
+    # Add RGB colors
+    #************************************
+    #--------------------------
+    # Refined
+    #--------------------------
+    track_add_rgb_colors_to_bed.py \
+    --name ${params.name}_refined \
+    --bed_file ${params.name}_refined_cds.bed12
+
+    #--------------------------
+    # Filtered
+    #--------------------------
+    track_add_rgb_colors_to_bed.py \
+    --name ${params.name}_filtered \
+    --bed_file ${params.name}_filtered_cds.bed12
+
+    #--------------------------
+    # High Confidence
+    #--------------------------
+    track_add_rgb_colors_to_bed.py \
+    --name ${params.name}_high_confidence \
+    --bed_file $ ${params.name}_high_confidence_cds.bed12
     """
+
 }
 
-/*--------------------------------------------------
-Add RGB shading to tracks
----------------------------------------------------*/
-process add_shading_to_cds{
-  publishDir "${params.outdir}/${params.name}/track_visualization/", mode: 'copy'
+
+process gencode_track_visualization{
+    publishDir "${params.outdir}/${params.name}/track_visualization/reference"
 
   input:
-    file(refined_bed) from ch_cds_refined_bed
-    file(filtered_bed) from ch_cds_filtered_bed
-    file(high_confidence_bed) from ch_cds_high_confidence_bed
+    file(reference_gtf) from ch_gencode_gtf
   output:
-    file("*")
+    file("gencode_shaded.bed12")
   script:
-  """
-  track_add_rgb_colors_to_bed.py \
-  --name ${params.name}_refined \
-  --bed_file $refined_bed
+    """
+    gencode_filter_protein_coding.py \
+    --reference_gtf $reference_gtf
 
-  track_add_rgb_colors_to_bed.py \
-  --name ${params.name}_filtered \
-  --bed_file $filtered_bed
+    gtfToGenePred gencode.filtered.gtf gencode.filtered.genePred
+    genePredToBed gencode.filtered.genePred gencode.filtered.bed12
 
-  track_add_rgb_colors_to_bed.py \
-  --name ${params.name}_high_confidence \
-  --bed_file $high_confidence_bed
+    gencode_add_rgb_to_bed.py \
+    --gencode_bed gencode.filtered.bed12 \
+    --rgb 0,50,100 \
+    --version V35
   """
 }
+
+
+
+
+// /*--------------------------------------------------
+// Convert PacBio CDS to Bed12
+// ---------------------------------------------------*/
+// process pb_cds_to_bed12 {
+
+//   input:
+//     file(refined_cds) from ch_pb_cds_bed
+//     file(filtered_cds) from ch_filtered_cds_bed
+//     file(high_confidence_cds) from ch_high_confidence_cds
+//   output:
+//     file("${params.name}_refined_cds.bed12") into ch_cds_refined_bed
+//     file("${params.name}_filtered_cds.bed12") into ch_cds_filtered_bed
+//     file("${params.name}_high_confidence_cds.bed12") into ch_cds_high_confidence_bed
+//   script:
+//     """
+//     gtfToGenePred $refined_cds ${params.name}_refined_cds.genePred
+//     genePredToBed ${params.name}_refined_cds.genePred ${params.name}_refined_cds.bed12
+
+//     gtfToGenePred $filtered_cds ${params.name}_filtered_cds.genePred
+//     genePredToBed ${params.name}_filtered_cds.genePred ${params.name}_filtered_cds.bed12
+
+
+//     gtfToGenePred $high_confidence_cds ${params.name}_high_confidence_cds.genePred
+//     genePredToBed ${params.name}_high_confidence_cds.genePred ${params.name}_high_confidence_cds.bed12
+
+//     """
+// }
+
+// /*--------------------------------------------------
+// Add RGB shading to tracks
+// ---------------------------------------------------*/
+// process add_shading_to_cds{
+//   publishDir "${params.outdir}/${params.name}/track_visualization/", mode: 'copy'
+
+//   input:
+//     file(refined_bed) from ch_cds_refined_bed
+//     file(filtered_bed) from ch_cds_filtered_bed
+//     file(high_confidence_bed) from ch_cds_high_confidence_bed
+//   output:
+//     file("*")
+//   script:
+//   """
+//   track_add_rgb_colors_to_bed.py \
+//   --name ${params.name}_refined \
+//   --bed_file $refined_bed
+
+//   track_add_rgb_colors_to_bed.py \
+//   --name ${params.name}_filtered \
+//   --bed_file $filtered_bed
+
+//   track_add_rgb_colors_to_bed.py \
+//   --name ${params.name}_high_confidence \
+//   --bed_file $high_confidence_bed
+//   """
+// }
 
 /*--------------------------------------------------
 Make Region Bed for UCSC Browser
@@ -1233,63 +1399,152 @@ process make_multiregion{
   """
 }
 
-/*--------------------------------------------------
-Make Peptide GTF 
----------------------------------------------------*/
-process make_peptide_gtf{
-  publishDir "${params.outdir}/${params.name}/peptide_track/", mode: 'copy'
+process peptide_track_visualization{
+  publishDir "${params.outdir}/${params.name}/track_visualization/refined/peptide", patern: "*_refined_*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/filtered/peptide", patern: "*_filtered_*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/high_confidence/peptide", patern: "*_high_confidence_*"
 
   when:
     params.mass_spec != false
-
-
+  
   input:
     file(sample_gtf) from ch_pb_cds_peptide_gtf
     file(reference_gtf) from ch_gencode_gtf
-    file(peptides) from ch_pacbio_peptides_gtf
+    file(high_confidence_peptides) from ch_pacbio_peptides_high_confidence_track_viz
     file(pb_gene) from ch_pb_gene_peptide_gtf
-    file(fasta) from ch_sample_agg_fasta_track_viz
+    file(high_confidence_fasta) from ch_sample_agg_fasta_track_viz
+    file(refined_fasta) from ch_refined_fasta_peptide_viz
   output:
-    file("${params.name}_peptides.gtf") into ch_peptide_gtf
-
+    file("*.gtf")
+    file("*.bed12")
   script:
-  """
-  make_peptide_gtf_file.py \
-  --name ${params.name} \
-  --sample_gtf $sample_gtf \
-  --reference_gtf $reference_gtf \
-  --peptides $peptides \
-  --pb_gene $pb_gene \
-  --refined_fasta $fasta
-  """
-}
+    """
+    #************************************
+    # Make peptide gtf files
+    #************************************
+    #--------------------------
+    # Refined
+    #--------------------------
+    make_peptide_gtf_file.py \
+    --name ${params.name}_refined \
+    --sample_gtf $sample_gtf \
+    --reference_gtf $reference_gtf \
+    --peptides $refined_peptides \
+    --pb_gene $pb_gene \
+    --refined_fasta $refined_fasta
 
-/*--------------------------------------------------
-Convert Peptide GTF to BED and Add RGB
----------------------------------------------------*/
-process peptide_gtf_to_bed{
-  publishDir "${params.outdir}/${params.name}/peptide_track/", mode: 'copy'
+    #--------------------------
+    # Filtered
+    #--------------------------
+    make_peptide_gtf_file.py \
+    --name ${params.name}_filtered \
+    --sample_gtf $sample_gtf \
+    --reference_gtf $reference_gtf \
+    --peptides $filtered_peptides \
+    --pb_gene $pb_gene \
+    --refined_fasta $refined_fasta
 
-  when:
-    params.mass_spec != false
+    #--------------------------
+    # High Confidence
+    #--------------------------
+    make_peptide_gtf_file.py \
+    --name ${params.name}_high_confidence \
+    --sample_gtf $sample_gtf \
+    --reference_gtf $reference_gtf \
+    --peptides $high_confidence_peptides \
+    --pb_gene $pb_gene \
+    --refined_fasta $high_confidence_fasta
 
-  input:
-    file(peptide_gtf) from ch_peptide_gtf
-    
-  output:
-    file("${params.name}_peptides.bed12") into ch_peptide_bed
+    #************************************
+    # Convert GTF to bed and add RGB
+    #************************************
+    #--------------------------
+    # Refined
+    #--------------------------
+    gtfToGenePred ${params.name}_refined_peptides.gtf ${params.name}_refined_peptides.genePred
+    genePredToBed ${params.name}_refined_peptides.genePred ${params.name}_refined_peptides.bed12
+    # add rgb to colorize specific peptides 
+    echo 'track name=refined_peptide_w_specificity itemRgb=On' > ${params.name}_refined_peptides_rgb.bed12
+    cat ${params.name}_refined_peptides.bed12 | awk '{ if (\$4 ~ /-1\$/) {\$9="0,102,0"; print \$0} else {\$9="0,51,0"; print \$0} }' >> ${params.name}_refined_peptides_rgb.bed12
 
-  script:
-  """
-  gtfToGenePred $peptide_gtf ${params.name}_peptides.genePred
-  genePredToBed ${params.name}_peptides.genePred ${params.name}_peptides.bed12
+    #--------------------------
+    # Filtered
+    #--------------------------
+    gtfToGenePred ${params.name}_filtered_peptides.gtf ${params.name}_filtered_peptides.genePred
+    genePredToBed ${params.name}_filtered_peptides.genePred ${params.name}_filtered_peptides.bed12
+    # add rgb to colorize specific peptides 
+    echo 'track name=filtered_peptide_w_specificity itemRgb=On' > ${params.name}_filtered_peptides_rgb.bed12
+    cat ${params.name}_filtered_peptides.bed12 | awk '{ if (\$4 ~ /-1\$/) {\$9="0,102,0"; print \$0} else {\$9="0,51,0"; print \$0} }' >> ${params.name}_filtered_peptides_rgb.bed12
 
-  # add rgb to colorize specific peptides 
-  echo 'track name=peptide_w_specificity itemRgb=On' > ${params.name}_peptide_rgb.bed12
-  cat ${params.name}_peptides.bed12 | awk '{ if (\$4 ~ /-1\$/) {\$9="0,102,0"; print \$0} else {\$9="0,51,0"; print \$0} }' >> ${params.name}_peptide_rgb.bed12
-  """
+    #--------------------------
+    # High Confidence
+    #--------------------------
+    gtfToGenePred ${params.name}_high_confidence_peptides.gtf ${params.name}_high_confidence_peptides.genePred
+    genePredToBed ${params.name}_high_confidence_peptides.genePred ${params.name}_high_confidence_peptides.bed12
+    # add rgb to colorize specific peptides 
+    echo 'track name=high_confidence_peptide_w_specificity itemRgb=On' > ${params.name}_high_confidence_peptides_rgb.bed12
+    cat ${params.name}_high_confidence_peptides.bed12 | awk '{ if (\$4 ~ /-1\$/) {\$9="0,102,0"; print \$0} else {\$9="0,51,0"; print \$0} }' >> ${params.name}_high_confidence_peptides_rgb.bed12
+
+    """
   
 }
+// /*--------------------------------------------------
+// Make Peptide GTF 
+// ---------------------------------------------------*/
+// process make_peptide_gtf{
+//   publishDir "${params.outdir}/${params.name}/peptide_track/", mode: 'copy'
+
+//   when:
+//     params.mass_spec != false
+
+
+//   input:
+//     file(sample_gtf) from ch_pb_cds_peptide_gtf
+//     file(reference_gtf) from ch_gencode_gtf
+//     file(peptides) from ch_pacbio_peptides_high_confidence_gtf
+//     file(pb_gene) from ch_pb_gene_peptide_gtf
+//     file(fasta) from ch_sample_agg_fasta_track_viz
+//   output:
+//     file("${params.name}_peptides.gtf") into ch_peptide_gtf
+
+//   script:
+//   """
+//   make_peptide_gtf_file.py \
+//   --name ${params.name} \
+//   --sample_gtf $sample_gtf \
+//   --reference_gtf $reference_gtf \
+//   --peptides $peptides \
+//   --pb_gene $pb_gene \
+//   --refined_fasta $fasta
+//   """
+// }
+
+// /*--------------------------------------------------
+// Convert Peptide GTF to BED and Add RGB
+// ---------------------------------------------------*/
+// process peptide_gtf_to_bed{
+//   publishDir "${params.outdir}/${params.name}/peptide_track/", mode: 'copy'
+
+//   when:
+//     params.mass_spec != false
+
+//   input:
+//     file(peptide_gtf) from ch_peptide_gtf
+    
+//   output:
+//     file("${params.name}_peptides.bed12") into ch_peptide_bed
+//     file("*")
+//   script:
+//     """
+//     gtfToGenePred $peptide_gtf ${params.name}_peptides.genePred
+//     genePredToBed ${params.name}_peptides.genePred ${params.name}_peptides.bed12
+
+//     # add rgb to colorize specific peptides 
+//     echo 'track name=peptide_w_specificity itemRgb=On' > ${params.name}_peptide_rgb.bed12
+//     cat ${params.name}_peptides.bed12 | awk '{ if (\$4 ~ /-1\$/) {\$9="0,102,0"; print \$0} else {\$9="0,51,0"; print \$0} }' >> ${params.name}_peptide_rgb.bed12
+//     """
+  
+// }
 
 
 /*--------------------------------------------------
@@ -1328,7 +1583,7 @@ process protein_group_compare{
     when:
       params.mass_spec != false
     input: 
-      file(pacbio_protein_groups) from ch_pacbio_protein_groups
+      file(pacbio_protein_groups) from ch_pacbio_protein_groups_high_confidence
       file(gencode_protein_groups) from ch_gencode_protein_groups
       file(uniprot_protein_groups) from ch_uniprot_protein_groups
       file(mapping) from ch_accession_map
@@ -1359,20 +1614,41 @@ process protein_group_compare{
 /*--------------------------------------------------
 Novel Peptides
 ---------------------------------------------------*/
-process find_novel_peptides{
-  publishDir "${params.outdir}/${params.name}/protein_group_compare/", mode: 'copy'
+process peptide_novelty_analysis{
+  publishDir "${params.outdir}/${params.name}/novel_peptides/", mode: 'copy'
   input:
-    file(pacbio_peptides) from ch_pacbio_peptides_novel
+    file(peptides_refined) from ch_pacbio_peptides_refined
+    file(peptides_filtered) from ch_pacbio_peptides_filtered
+    file(peptides_high_confidence) from ch_pacbio_peptides_high_confidence_novel
     file(gencode_fasta) from ch_gencode_protein_fasta_novel
   output:
     file("*")
   
   script:
     """
-    find_novel_peptides.py \
-    --pacbio_peptides $pacbio_peptides \
+    #--------------------------
+    # Refined
+    #--------------------------
+    peptide_novelty_analysis.py \
+    --pacbio_peptides $peptides_refined \
     --gencode_fasta $gencode_fasta \
-    --name ${params.name}
+    --name ${params.name}_high_confidence
+
+    #--------------------------
+    # Filtered
+    #--------------------------
+    peptide_novelty_analysis.py \
+    --pacbio_peptides $peptides_filtered \
+    --gencode_fasta $gencode_fasta \
+    --name ${params.name}_high_confidence
+
+    #--------------------------
+    # High Confidence
+    #--------------------------
+    peptide_novelty_analysis.py \
+    --pacbio_peptides $peptides_high_confidence \
+    --gencode_fasta $gencode_fasta \
+    --name ${params.name}_high_confidence
     """
 
 }
