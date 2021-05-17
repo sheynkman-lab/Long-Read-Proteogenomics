@@ -70,19 +70,31 @@ def add_rgb_shading_cpm(name, bed,split_size):
 
     # include rgb into original bed12
     bed_shaded = pd.merge(bed, shaded, how='left', on='acc_full')
+    bed_shaded.gene = bed_shaded.gene.apply(lambda x: x[:9])
+    gene_sizes = bed_shaded['gene'].apply(lambda x: len(x))
+    max_gene = max(gene_sizes)
+
+    pb_sizes = bed_shaded['pb_acc'].apply(lambda x: len(x))
+    max_pb = max(pb_sizes)
+
+    bed_shaded['cpm'] = bed_shaded['cpm'].apply(lambda cpm: str(cpm) if int(cpm) <=1000 else f'{int(cpm)/1000:.1f}K')
+    cpm_sizes = bed_shaded['cpm'].apply(lambda x: len(x))
+    cpm_len = max(cpm_sizes)
     
     # shaded['cpm_int'] = shaded['cpm'].apply(lambda x: str(round(x)).split('.')[0])
     if split_size==3:
-        bed_shaded['new_acc_full'] = bed_shaded.apply(lambda row: '|'.join([row['gene'],row['pb_acc'],str(row['cpm'])]),axis=1)
-    if split_size==4:
-        bed_shaded['new_acc_full'] = bed_shaded.apply(lambda row: '|'.join([row['gene'],row['pb_acc'],row['pclass'],str(row['cpm'])]),axis=1)
+        bed_shaded['new_acc_full'] = bed_shaded.apply(lambda row: f'{row.gene:_<{max_gene+1}}{row.pb_acc:_<{max_pb+1}}{row.cpm:_>{cpm_len+1}}', axis = 1)
+        # bed_shaded['new_acc_full'] = bed_shaded.apply(lambda row: f'{row.gene}_{row.pb_acc:_<{max_pb+1}}{row.cpm:_>{cpm_len+1}}', axis = 1)
 
+    if split_size==4:
+        bed_shaded['new_acc_full'] = bed_shaded.apply(lambda row: f'{row.gene:_<{max_gene+1}}{row.pb_acc:_<{max_pb+1}}{row.pclass}{row.cpm:_>{cpm_len+1}}', axis = 1)
+        # bed_shaded['new_acc_full'] = bed_shaded.apply(lambda row: f'{row.gene}_{row.pb_acc:_<{max_pb+1}}{row.pclass}{row.cpm:_>{cpm_len+1}}', axis = 1)
 
     # join in the rgb data and new accession
     
     bed_shaded = bed_shaded[['chrom', 'chromStart', 'chromStop', 'new_acc_full', 'score', 'strand', 'thickStart', 'thickEnd', 'rgb', 'blockCount', 'blockSizes', 'blockStarts']]
 
-    with open(f'{name}_cds_shaded_cpm.bed12', 'w') as ofile:
+    with open(f'{name}_shaded_cpm.bed12', 'w') as ofile:
         ofile.write(f'track name={name}_cds_w_cpm_rgb_shade itemRgb=On\n')
         bed_shaded.to_csv(ofile, sep='\t', index=None, header=None)
 
@@ -95,9 +107,27 @@ def add_rgb_shading_pclass(name,bed):
         'pISM':'248,132,85'
     }
     bed['rgb'] = bed['pclass'].map(pclass_shading_dict).fillna('0,0,0')
-    filter_names = ['chrom','chromStart','chromStop','acc_full','score','strand','thickStart','thickEnd','rgb','blockCount','blockSizes','blockStarts']
+
+    bed.gene = bed.gene.apply(lambda x: x[:9])
+    gene_sizes = bed['gene'].apply(lambda x: len(x))
+    max_gene = max(gene_sizes)
+
+    pb_sizes = bed['pb_acc'].apply(lambda x: len(x))
+    max_pb = max(pb_sizes)
+
+    bed['cpm'] = bed['cpm'].apply(lambda cpm: str(cpm) if int(cpm) <=1000 else f'{int(cpm)/1000:.1f}K')
+    cpm_sizes = bed['cpm'].apply(lambda x: len(x))
+    cpm_len = max(cpm_sizes)
+    
+
+    
+    bed['new_acc_full'] = bed.apply(lambda row: f'{row.gene:_<{max_gene+1}}{row.pb_acc:_<{max_pb+1}}{row.pclass}{row.cpm:_>{cpm_len+1}}', axis = 1)
+        # bed['new_acc_full'] = bed.apply(lambda row: f'{row.gene}_{row.pb_acc:_<{max_pb+1}}{row.pclass}{row.cpm:_>{cpm_len+1}}', axis = 1)
+
+
+    filter_names = ['chrom','chromStart','chromStop','new_acc_full','score','strand','thickStart','thickEnd','rgb','blockCount','blockSizes','blockStarts']
     bed = bed[filter_names]
-    with open(f'{name}_cds_shaded_protein_class.bed12', 'w') as ofile:
+    with open(f'{name}_shaded_protein_class.bed12', 'w') as ofile:
         ofile.write(f'track name={name}_cds_w_pclass_rgb_shade itemRgb=On\n')
         bed.to_csv(ofile, sep='\t', index=None, header=None)
     

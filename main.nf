@@ -110,7 +110,7 @@ ch_metamorpheus_toml.into{
   ch_metamorpheus_toml_uniprot
   ch_metamorpheus_toml_pacbio_refined
   ch_metamorpheus_toml_pacbio_filtered
-  ch_metamorpheus_toml_pacbio_aggregated
+  ch_metamorpheus_toml_pacbio_high_confidence
 }
 
 if(params.mass_spec != false){
@@ -758,7 +758,9 @@ process mass_spec_raw_convert{
 
 ch_mass_spec_combined = ch_mass_spec_mzml.concat(ch_mass_spec_converted)
 ch_mass_spec_combined.into{
-  ch_mass_spec_for_pacbio
+  ch_mass_spec_for_pacbio_refined
+  ch_mass_spec_for_pacbio_filtered
+  ch_mass_spec_for_pacbio_high_confidence
   ch_mass_spec_for_gencode
   ch_mass_spec_for_uniprot
   ch_mass_spec_for_pacbio_rescue_resolve
@@ -768,6 +770,7 @@ ch_mass_spec_combined.into{
 
 
 process metamorpheus_with_gencode_database{
+    label 'metamorpheus'
     tag "${mass_spec}"
     cpus params.max_cpus
     publishDir "${params.outdir}/${params.name}/metamorpheus/gencode", mode: 'copy'
@@ -798,6 +801,7 @@ process metamorpheus_with_gencode_database{
 }
 
 process metamorpheus_with_uniprot_database{
+    label 'metamorpheus'
     tag "${mass_spec}"
     cpus params.max_cpus
     publishDir "${params.outdir}/${params.name}/metamorpheus/uniprot", mode: 'copy'
@@ -1077,7 +1081,7 @@ process aggregate_protein_database{
   output:
     file("*")
     file("${params.name}_cds_high_confidence.gtf") into ch_high_confidence_cds
-    file("${params.name}_aggregated.fasta") into ch_sample_agg_fasta
+    file("${params.name}_aggregated.fasta") into ch_sample_high_confidence_fasta
     file("${params.name}_refined_high_confidence.tsv") into ch_refined_info_high_conf
   script:
     """
@@ -1095,10 +1099,10 @@ process aggregate_protein_database{
     """
 
 }
-ch_sample_agg_fasta.into{
-  ch_sample_agg_fasta_normal
-  ch_sample_agg_fasta_rescue
-  ch_sample_agg_fasta_track_viz
+ch_sample_high_confidence_fasta.into{
+  ch_sample_high_confidence_fasta_normal
+  ch_sample_high_confidence_fasta_rescue
+  ch_sample_high_confidence_fasta_track_viz
 }
 
 
@@ -1109,6 +1113,7 @@ MetaMorpheus wtih Sample Specific Database
 
 
 process metamorpheus_with_sample_specific_database_refined{
+    label 'metamorpheus'
     tag "${mass_spec}"
     cpus params.max_cpus
     publishDir "${params.outdir}/${params.name}/metamorpheus/pacbio/refined", mode: 'copy'
@@ -1117,7 +1122,7 @@ process metamorpheus_with_sample_specific_database_refined{
 
     input:
         file(orf_fasta) from ch_refined_fasta_metamorpheus
-        file(mass_spec) from ch_mass_spec_for_pacbio.collect()
+        file(mass_spec) from ch_mass_spec_for_pacbio_refined.collect()
         file(toml_file) from ch_metamorpheus_toml_pacbio_refined
 
 
@@ -1141,6 +1146,7 @@ process metamorpheus_with_sample_specific_database_refined{
 }
 
 process metamorpheus_with_sample_specific_database_filtered{
+    label 'metamorpheus'
     tag "${mass_spec}"
     cpus params.max_cpus
     publishDir "${params.outdir}/${params.name}/metamorpheus/pacbio/filtered", mode: 'copy'
@@ -1149,7 +1155,7 @@ process metamorpheus_with_sample_specific_database_filtered{
 
     input:
         file(orf_fasta) from ch_filtered_protein_fasta_metamorpheus
-        file(mass_spec) from ch_mass_spec_for_pacbio.collect()
+        file(mass_spec) from ch_mass_spec_for_pacbio_filtered.collect()
         file(toml_file) from ch_metamorpheus_toml_pacbio_filtered
 
 
@@ -1173,6 +1179,7 @@ process metamorpheus_with_sample_specific_database_filtered{
 }
 
 process metamorpheus_with_sample_specific_database_high_confidence{
+    label 'metamorpheus'
     tag "${mass_spec}"
     cpus params.max_cpus
     publishDir "${params.outdir}/${params.name}/metamorpheus/pacbio/high_confidence", mode: 'copy'
@@ -1180,9 +1187,9 @@ process metamorpheus_with_sample_specific_database_high_confidence{
       params.mass_spec != false
 
     input:
-        file(orf_fasta) from ch_sample_agg_fasta_normal
-        file(mass_spec) from ch_mass_spec_for_pacbio.collect()
-        file(toml_file) from ch_metamorpheus_toml_pacbio
+        file(orf_fasta) from ch_sample_high_confidence_fasta_normal
+        file(mass_spec) from ch_mass_spec_for_pacbio_high_confidence.collect()
+        file(toml_file) from ch_metamorpheus_toml_pacbio_high_confidence
 
 
     output:
@@ -1211,6 +1218,7 @@ ch_pacbio_peptides_high_confidence.into{
 }
 
 process metamorpheus_with_sample_specific_database_rescue_resolve{
+    label 'metamorpheus'
     tag " $mass_spec $orf_fasta $orf_meta  $toml"
     publishDir "${params.outdir}/${params.name}/metamorpheus/pacbio/rescue_resolve", mode: 'copy'
     when:
@@ -1218,7 +1226,7 @@ process metamorpheus_with_sample_specific_database_rescue_resolve{
 
     input:
         // file(orf_calls) from ch_orf_calls
-        file(orf_fasta) from ch_sample_agg_fasta_rescue
+        file(orf_fasta) from ch_sample_high_confidence_fasta_rescue
         file(mass_spec) from ch_mass_spec_for_pacbio_rescue_resolve.collect()
         file(toml) from ch_rr_toml
         file(orf_meta) from ch_refined_info_high_conf
@@ -1292,7 +1300,7 @@ process protein_track_visualization{
     #--------------------------
     track_add_rgb_colors_to_bed.py \
     --name ${params.name}_high_confidence \
-    --bed_file $ ${params.name}_high_confidence_cds.bed12
+    --bed_file ${params.name}_high_confidence_cds.bed12
     """
 
 }
@@ -1315,7 +1323,7 @@ process gencode_track_visualization{
 
     gencode_add_rgb_to_bed.py \
     --gencode_bed gencode.filtered.bed12 \
-    --rgb 0,50,100 \
+    --rgb 0,0,140 \
     --version V35
   """
 }
@@ -1412,7 +1420,7 @@ process peptide_track_visualization{
     file(reference_gtf) from ch_gencode_gtf
     file(high_confidence_peptides) from ch_pacbio_peptides_high_confidence_track_viz
     file(pb_gene) from ch_pb_gene_peptide_gtf
-    file(high_confidence_fasta) from ch_sample_agg_fasta_track_viz
+    file(high_confidence_fasta) from ch_sample_high_confidence_fasta_track_viz
     file(refined_fasta) from ch_refined_fasta_peptide_viz
   output:
     file("*.gtf")
@@ -1503,7 +1511,7 @@ process peptide_track_visualization{
 //     file(reference_gtf) from ch_gencode_gtf
 //     file(peptides) from ch_pacbio_peptides_high_confidence_gtf
 //     file(pb_gene) from ch_pb_gene_peptide_gtf
-//     file(fasta) from ch_sample_agg_fasta_track_viz
+//     file(fasta) from ch_sample_high_confidence_fasta_track_viz
 //   output:
 //     file("${params.name}_peptides.gtf") into ch_peptide_gtf
 

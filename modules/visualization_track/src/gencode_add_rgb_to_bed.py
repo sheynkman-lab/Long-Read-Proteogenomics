@@ -16,7 +16,7 @@ def add_rgb_colors(bed_file, rgb, version):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--gencode_bed", action="store", dest = "gencode_bed",)
-    parser.add_argument("--rgb", action="store", dest="rgb", default="0,50,100")
+    parser.add_argument("--rgb", action="store", dest="rgb", default="0,0,140")
     parser.add_argument("--version",action="store",dest="version", default="V35")
     args = parser.parse_args()
     add_rgb_colors(args.gencode_bed, args.rgb, args.version)
