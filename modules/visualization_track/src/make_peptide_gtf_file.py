@@ -148,7 +148,7 @@ def write_peptide_gtf(name, pep_ranges, pbs, gene_pb, seqs):
                 elif strand == '-':
                     orf_coords = make_coords_trimmed_to_orf_range_neg_strand(i1, delta1, i2, delta2, coords)
                 # write out the coordinates
-                acc_id= f"{pep_seq}-{num_prots}({gene})"
+                acc_id= f"{pep_seq} ({gene})"
                 pep_acc = f'gene_id "{acc_id}"; transcript_id "{acc_id}";'
                 for [start, end] in orf_coords:
                     ofile.write('\t'.join([chr, 'hg38_canon', 'CDS', str(start), str(end), '.', strand,

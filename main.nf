@@ -1145,6 +1145,11 @@ process metamorpheus_with_sample_specific_database_refined{
         """
 }
 
+ch_pacbio_peptides_refined.into{
+ch_pacbio_peptides_refined_novel
+ch_pacbio_peptides_refined_track_viz
+}
+
 process metamorpheus_with_sample_specific_database_filtered{
     label 'metamorpheus'
     tag "${mass_spec}"
@@ -1176,6 +1181,11 @@ process metamorpheus_with_sample_specific_database_filtered{
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.filtered.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.filtered.tsv
         """
+}
+
+ch_pacbio_peptides_filtered.into{
+ch_pacbio_peptides_filtered_novel
+ch_pacbio_peptides_filtered_track_viz
 }
 
 process metamorpheus_with_sample_specific_database_high_confidence{
@@ -1418,6 +1428,8 @@ process peptide_track_visualization{
   input:
     file(sample_gtf) from ch_pb_cds_peptide_gtf
     file(reference_gtf) from ch_gencode_gtf
+    file(refined_peptides) from ch_pacbio_peptides_refined_track_viz
+    file(filtered_peptides) from ch_pacbio_peptides_filtered_track_viz
     file(high_confidence_peptides) from ch_pacbio_peptides_high_confidence_track_viz
     file(pb_gene) from ch_pb_gene_peptide_gtf
     file(high_confidence_fasta) from ch_sample_high_confidence_fasta_track_viz
@@ -1625,8 +1637,8 @@ Novel Peptides
 process peptide_novelty_analysis{
   publishDir "${params.outdir}/${params.name}/novel_peptides/", mode: 'copy'
   input:
-    file(peptides_refined) from ch_pacbio_peptides_refined
-    file(peptides_filtered) from ch_pacbio_peptides_filtered
+    file(peptides_refined) from ch_pacbio_peptides_refined_novel
+    file(peptides_filtered) from ch_pacbio_peptides_filtered_novel
     file(peptides_high_confidence) from ch_pacbio_peptides_high_confidence_novel
     file(gencode_fasta) from ch_gencode_protein_fasta_novel
   output:
