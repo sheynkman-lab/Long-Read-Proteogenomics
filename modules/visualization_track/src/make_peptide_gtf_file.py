@@ -162,6 +162,8 @@ def write_peptide_gtf(name, pep_ranges, pbs, gene_pb, seqs):
                 # write out the coordinates
                 prev_aa = most_frequent(prev_aa.split('|'))
                 next_aa = most_frequent(next_aa.split('|'))
+                if chr in ['X','Y']:
+                    gene = f"{gene}_{chr}"
                 acc_id= f"{prev_aa}.{pep_seq}.{next_aa}({gene})"
                 pep_acc = f'gene_id "{acc_id}"; transcript_id "{acc_id}";'
                 for [start, end] in orf_coords:
