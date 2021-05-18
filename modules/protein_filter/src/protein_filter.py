@@ -131,14 +131,14 @@ prot['orf_conf'] = prot['orf_calling_confidence'].str[0:3]
 # end add genename columnd
 (
     prot
-        .filter(['pb', 'gene', 'is_nmd', 'has_stop_codon', 'orf_conf', 'CPM', 'pclass', 'psubclass', 'psubclass_short', 'filter_status'])
+        .filter(['pb', 'tx_gene','pr_gene', 'is_nmd', 'has_stop_codon', 'orf_conf', 'CPM', 'pclass', 'psubclass', 'psubclass_short', 'filter_status'])
         .to_csv(f'./{args.name}_w_class_info.tsv', sep='\t', index=None)
 )
 
 (
     prot
         .query('filter_status==0')
-        .filter(['pb', 'gene', 'is_nmd', 'has_stop_codon', 'orf_conf', 'CPM', 'pclass', 'psubclass', 'psubclass_short',])
+        .filter(['pb', 'tx_gene','pr_gene', 'is_nmd', 'has_stop_codon', 'orf_conf', 'CPM', 'pclass', 'psubclass', 'psubclass_short',])
         .to_csv(f'./{args.name}.classification_filtered.tsv', sep='\t', index=None)
 )
 #%%

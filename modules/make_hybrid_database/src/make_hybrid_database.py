@@ -21,9 +21,10 @@ args = parser.parse_args()
 
 #%%
 pclass = pd.read_table(args.pclass)
+
 gene_lens = pd.read_table(args.gene_lens)
 
-all_genes = set(pclass['gene'])
+all_genes = set(pclass['pr_gene'])
 # %%
 lower_cpm = args.lower_cpm
 lower_size = 1000*args.lower_kb
@@ -31,9 +32,9 @@ upper_size = 1000*args.upper_kb
 #%%
 cpm_genes = set(
     pclass
-    .groupby('gene')['CPM'].sum()
+    .groupby('pr_gene')['CPM'].sum()
     .reset_index()
-    .query(f'CPM>={lower_cpm}')['gene']
+    .query(f'CPM>={lower_cpm}')['pr_gene']
 )
     
 #%%
@@ -44,12 +45,12 @@ size_genes = set(
 )
 goldilocks_genes = cpm_genes.intersection(size_genes)
 #%%
-pclass = pclass[pclass['gene'].isin(goldilocks_genes)]
+pclass = pclass[pclass['pr_gene'].isin(goldilocks_genes)]
 pclass_accs = set(pclass['pb'])
 # %%
 # %%
 pfsm = pclass.query('pclass=="pFSM"')
-pfsm_goldilocks_genes = set(pfsm['gene'])
+pfsm_goldilocks_genes = set(pfsm['pr_gene'])
 
 # %%
 pb_fasta = defaultdict(list)
@@ -77,7 +78,7 @@ for gene in gc_genes_all:
         aggregated_fasta = aggregated_fasta + pb_fasta[gene]
 
 #%%
-SeqIO.write(aggregated_fasta, f'{args.name}_aggregated.fasta', 'fasta')
+SeqIO.write(aggregated_fasta, f'{args.name}_hybrid.fasta', 'fasta')
 # %%
 # write aggreated refined info table - pb filtered 
 refined = pd.read_table(args.refined_info)

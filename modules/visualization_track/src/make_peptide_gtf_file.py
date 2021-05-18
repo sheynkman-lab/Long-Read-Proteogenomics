@@ -11,6 +11,18 @@ import copy
 import argparse
 import logging
 
+
+def most_frequent(List):
+	counter = 0
+	element = List[0]
+	for i in List:
+		curr_frequency = List.count(i)
+		if(curr_frequency > counter):
+			counter = curr_frequency
+			element = i
+	return element
+
+
 # sort all coords, calc blocks
 def make_cumulative_blens(blocks):
     cblocks = []
@@ -65,15 +77,15 @@ def process_psmtsv(psmtsv_file, pb_gene):
     # read in peptide data, filter for target + 1% fdr
     pep = pd.read_table(psmtsv_file)
     # pep = pep.iloc[:, [12, 24, 37, 48]]
-    pep = pep[['Base Sequence','Protein Accession','Decoy/Contaminant/Target','QValue']]
-    pep.columns = ['pep', 'pb_acc', 'targ', 'qval']
+    pep = pep[['Base Sequence','Protein Accession','Decoy/Contaminant/Target','QValue', 'Previous Amino Acid', 'Next Amino Acid']]
+    pep.columns = ['pep', 'pb_acc', 'targ', 'qval', 'prev_aa','next_aa']
     # TODO add back in proper filter
     # pep = pep[pep.targ == 'T']
     pep = pep[(pep.targ == 'T') & (pep.qval < 0.01)]
     # for now, all accessions
     # TODO - decide how to deal with multiple PBs mapped to peptide
     pep['pb_acc'] = pep['pb_acc'].str.split('|')
-    pep = pep[['pep', 'pb_acc']]
+    pep = pep[['pep', 'pb_acc', 'prev_aa','next_aa']]
     pep = pep.explode('pb_acc')
 
     # add in gene
@@ -134,7 +146,7 @@ def write_peptide_gtf(name, pep_ranges, pbs, gene_pb, seqs):
         # ofile.write('track name=peptide color=0,0,0\n')
         for i, row in pep_ranges.iterrows():
             
-            pep_seq, pb_acc, gene, num_prots, pep_start, pep_end = row
+            pep_seq, pb_acc, prev_aa, next_aa,gene, num_prots, pep_start, pep_end = row
             # convert from protein (AA) to CDS (nt) coords
             pep_start = pep_start * 3 - 2
             pep_end = pep_end * 3
@@ -148,7 +160,9 @@ def write_peptide_gtf(name, pep_ranges, pbs, gene_pb, seqs):
                 elif strand == '-':
                     orf_coords = make_coords_trimmed_to_orf_range_neg_strand(i1, delta1, i2, delta2, coords)
                 # write out the coordinates
-                acc_id= f"{pep_seq} ({gene})"
+                prev_aa = most_frequent(prev_aa.split('|'))
+                next_aa = most_frequent(next_aa.split('|'))
+                acc_id= f"{prev_aa}.{pep_seq}.{next_aa}({gene})"
                 pep_acc = f'gene_id "{acc_id}"; transcript_id "{acc_id}";'
                 for [start, end] in orf_coords:
                     ofile.write('\t'.join([chr, 'hg38_canon', 'CDS', str(start), str(end), '.', strand,
