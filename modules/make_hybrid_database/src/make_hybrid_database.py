@@ -48,9 +48,6 @@ goldilocks_genes = cpm_genes.intersection(size_genes)
 pclass = pclass[pclass['pr_gene'].isin(goldilocks_genes)]
 pclass_accs = set(pclass['pb'])
 # %%
-# %%
-pfsm = pclass.query('pclass=="pFSM"')
-pfsm_goldilocks_genes = set(pfsm['pr_gene'])
 
 # %%
 pb_fasta = defaultdict(list)
@@ -92,3 +89,8 @@ with open(args.pb_cds_gtf) as ifile, open(f'{args.name}_cds_high_confidence.gtf'
         if pb_acc in pclass_accs:
             ofile.write(line)
 # %%
+# write high confidence genes to table
+with open(f'{args.name}_high_confidence_genes.tsv', 'w') as ofile:
+    ofile.write("GENE\n")
+    for gene in goldilocks_genes:
+        ofile.write(f'{gene}\n')

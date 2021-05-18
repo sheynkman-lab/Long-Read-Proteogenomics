@@ -977,7 +977,7 @@ ch_filtered_protein_fasta.into{
 Protein Aggregation
 ---------------------------------------------------*/
 process make_hybrid_database{
-  publishDir "${params.outdir}/${params.name}/aggregated_protein_database/", mode: 'copy'
+  publishDir "${params.outdir}/${params.name}/hybrid_protein_database/", mode: 'copy'
   
   input:
     file(protein_classification) from ch_filtered_protein_classification
