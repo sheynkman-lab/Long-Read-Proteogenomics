@@ -29,18 +29,30 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--sample_gtf',action='store',dest='sample_gtf')
     parser.add_argument('--sample_protein_fasta',action='store',dest='sample_fasta')
+    parser.add_argument('--sample_refined_info', action='store',dest='sample_refined_info')
     parser.add_argument('--pb_protein_genes',action='store',dest='pb_protein_genes')
     parser.add_argument('--name',action='store',dest='name')
     args = parser.parse_args()
 
-    pb_gene = pd.read_table(args.pb_protein_genes)
-    pb_gene = pd.Series(pb_gene.pr_gene.values,index=pb_gene.pb).to_dict()
+    pb_gene_table = pd.read_table(args.pb_protein_genes)
+    pb_gene = pd.Series(pb_gene_table.pr_gene.values,index=pb_gene_table.pb).to_dict()
 
     rename_fasta_genes(args.sample_fasta, pb_gene, args.name)
     rename_gtf_genes(args.sample_gtf, pb_gene, args.name)
+
+    refined_info = (
+        pd.read_table(args.sample_refined_info)
+        .merge(pb_gene_table, how = 'inner',left_on='base_acc',right_on='pb')
+        .drop(columns=['gene', 'pb'])
+    )
+    refined_info.to_csv(f'{args.name}_orf_refined_gene_update.tsv',sep='\t',index=False)
 
 
 
 
 if __name__=="__main__":
     main()
+
+#%%
+
+# %%

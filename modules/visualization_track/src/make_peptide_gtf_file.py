@@ -72,7 +72,7 @@ def process_gtf(gtf):
     return pbs
 
 
-def process_psmtsv(psmtsv_file, pb_gene):
+def process_psmtsv(psmtsv_file, gene_map):
 
     # read in peptide data, filter for target + 1% fdr
     pep = pd.read_table(psmtsv_file)
@@ -89,7 +89,7 @@ def process_psmtsv(psmtsv_file, pb_gene):
     pep = pep.explode('pb_acc')
 
     # add in gene
-    pep['gene'] = pep['pb_acc'].map(pb_gene)
+    pep['gene'] = pep['pb_acc'].map(gene_map)
     return pep
 
 
@@ -162,7 +162,7 @@ def write_peptide_gtf(name, pep_ranges, pbs, gene_pb, seqs):
                 # write out the coordinates
                 prev_aa = most_frequent(prev_aa.split('|'))
                 next_aa = most_frequent(next_aa.split('|'))
-                if chr in ['X','Y']:
+                if chr in ['chrX','chrY']:
                     gene = f"{gene}_{chr}"
                 acc_id= f"{prev_aa}.{pep_seq}.{next_aa}({gene})"
                 pep_acc = f'gene_id "{acc_id}"; transcript_id "{acc_id}";'
@@ -216,6 +216,7 @@ def main():
     parser.add_argument("--reference_gtf",action="store",dest="reference_gtf")
     parser.add_argument("--peptides", action="store", dest="peptides", help = "peptides file location. from MetaMorpheus")
     parser.add_argument("--pb_gene", action="store", dest="pb_gene", help ="PB-Gene reference")
+    parser.add_argument("--gene_isoname", action="store",dest="gene_isoname")
     parser.add_argument("--refined_fasta", action="store", dest="refined_fasta", help = "refined fasta file. from refined db generation")
     results = parser.parse_args()
     sample_gtf = read_sample_gtf(results.sample_gtf)
@@ -225,10 +226,13 @@ def main():
     reference_pbs = process_gtf(reference_gtf)
     pbs = {**sample_pbs, **reference_pbs}
     pb_gene = pd.read_table(results.pb_gene)
-    pb_gene = pd.Series(pb_gene.gene.values, index=pb_gene.pb_acc).to_dict()
-    pep = process_psmtsv(results.peptides, pb_gene)
+    pb_gene = pd.Series(pb_gene.pr_gene.values, index=pb_gene.pb).to_dict()
+    gene_isoname = pd.read_table(results.gene_isoname, names=['gene','isoname'])
+    gene_isoname = pd.Series(gene_isoname.gene.values, index=gene_isoname.isoname).to_dict()
+    gene_map = {**pb_gene, **gene_isoname}
+    pep = process_psmtsv(results.peptides, gene_map)
     seqs = read_fasta(results.refined_fasta)
-    make_peptide_gtf(results.name, pbs, pb_gene, pep, seqs)
+    make_peptide_gtf(results.name, pbs, gene_map, pep, seqs)
 
 #%%
 

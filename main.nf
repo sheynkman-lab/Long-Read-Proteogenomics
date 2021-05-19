@@ -184,6 +184,11 @@ ch_gene_lens.into{
   ch_gene_lens_aggregate
 }
 
+ch_gene_isoname.into{
+  ch_gene_isoname_pep_viz
+  ch_gene_isoname_pep_analysis
+}
+
 
 
 
@@ -601,7 +606,7 @@ ch_pb_gene.into{
   ch_pb_gene_orf
   ch_pb_gene_cds
   ch_pb_gene_peptide_analysis
-  ch_pb_gene_peptide_gtf
+  
 }
 
 
@@ -896,6 +901,11 @@ process protein_classification{
     --dest_dir ./
     """
 }
+ch_pr_genes.into{
+  ch_pr_genes_rename
+  ch_pr_genes_pep_viz
+  ch_pb_gene_peptide_gtf
+}
 
 
 /*--------------------------------------------------
@@ -1126,7 +1136,7 @@ process peptide_analysis{
     
     input:
       file(gencode_peptides) from ch_gencode_peptides
-      file(gene_isoname) from ch_gene_isoname
+      file(gene_isoname) from ch_gene_isoname_pep_analysis
       file(refined_fasta) from ch_refined_fasta_pep_analysis
       file(six_frame) from ch_six_frame
       file(pb_gene) from ch_pb_gene_peptide_analysis
@@ -1426,6 +1436,7 @@ process peptide_track_visualization{
     file(filtered_peptides) from ch_pacbio_peptides_filtered_track_viz
     file(hybrid_peptides) from ch_pacbio_peptides_hybrid_track_viz
     file(pb_gene) from ch_pb_gene_peptide_gtf
+    file(gene_isoname) from ch_gene_isoname_pep_viz
     file(hybrid_fasta) from ch_sample_hybrid_fasta_track_viz
     file(refined_fasta) from ch_refined_fasta_peptide_viz
   output:
@@ -1445,6 +1456,7 @@ process peptide_track_visualization{
     --reference_gtf $reference_gtf \
     --peptides $refined_peptides \
     --pb_gene $pb_gene \
+    --gene_isoname $gene_isoname \
     --refined_fasta $refined_fasta
 
     #--------------------------
@@ -1456,6 +1468,7 @@ process peptide_track_visualization{
     --reference_gtf $reference_gtf \
     --peptides $filtered_peptides \
     --pb_gene $pb_gene \
+    --gene_isoname $gene_isoname \
     --refined_fasta $refined_fasta
 
     #--------------------------
@@ -1467,6 +1480,7 @@ process peptide_track_visualization{
     --reference_gtf $reference_gtf \
     --peptides $hybrid_peptides \
     --pb_gene $pb_gene \
+    --gene_isoname $gene_isoname \
     --refined_fasta $hybrid_fasta
 
     #************************************
