@@ -726,7 +726,7 @@ process refine_orf_database {
 
 
 ch_refined_info.into{
-  ch_refined_info_rescue_resolve
+  ch_refined_info_rename
   ch_refined_info_cds
   ch_refined_info_pclass
   ch_refined_info_aggregate
@@ -907,14 +907,17 @@ process protein_gene_rename{
     file(protein_genes) from ch_pr_genes
     file(sample_cds) from ch_pb_cds_rename_pr
     file(refined_fasta) from ch_refined_fasta
+    file(refined_info) from ch_refined_info_rename
   output:
     file("${params.name}_with_cds_refined.gtf") into ch_renamed_refined_cds
     file("${params.name}.protein_refined.fasta") into ch_renamed_refined_fasta
+    file("${params.name}_orf_refined_gene_update.tsv") into ch_renamed_refined_info
   script:
     """
     protein_gene_rename.py \
     --sample_gtf $sample_cds \
     --sample_protein_fasta $refined_fasta \
+    --sample_refined_info $refined_info \
     --pb_protein_genes $protein_genes \
     --name ${params.name}
     """ 
