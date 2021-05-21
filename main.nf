@@ -903,7 +903,6 @@ process protein_classification{
 }
 ch_pr_genes.into{
   ch_pr_genes_rename
-  ch_pr_genes_pep_viz
   ch_pb_gene_peptide_gtf
 }
 
@@ -914,7 +913,7 @@ Protein Gene Rename
 process protein_gene_rename{
   publishDir "${params.outdir}/${params.name}/protein_gene_rename/", mode: 'copy'
   input:
-    file(protein_genes) from ch_pr_genes
+    file(protein_genes) from ch_pr_genes_rename
     file(sample_cds) from ch_pb_cds_rename_pr
     file(refined_fasta) from ch_refined_fasta
     file(refined_info) from ch_refined_info_rename
