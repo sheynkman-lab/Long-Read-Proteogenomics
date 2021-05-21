@@ -980,6 +980,7 @@ process filter_protein{
 ch_filtered_cds.into{
   ch_filtered_cds_bed
   ch_filtered_cds_agg
+  ch_filtered_cds_multiregion
 }
 ch_filtered_protein_fasta.into{
   ch_filtered_protein_fasta_metamorpheus
@@ -1019,6 +1020,10 @@ process make_hybrid_database{
     --lower_cpm ${params.lower_cpm} \
     """
 
+}
+ch_high_confidence_cds.into{
+  ch_high_confidence_cds_track_viz
+  ch_high_confidence_cds_multiregion
 }
 ch_sample_hybrid_fasta.into{
   ch_sample_hybrid_fasta_normal
@@ -1317,13 +1322,13 @@ process metamorpheus_with_sample_specific_database_rescue_resolve{
 
 
 process protein_track_visualization{
-  publishDir "${params.outdir}/${params.name}/track_visualization/refined/protein", patern: "*_refined_*"
-  publishDir "${params.outdir}/${params.name}/track_visualization/filtered/protein", patern: "*_filtered_*"
-  publishDir "${params.outdir}/${params.name}/track_visualization/hybrid/protein", patern: "*_hybrid_*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/refined/protein", pattern: "*_refined_*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/filtered/protein", pattern: "*_filtered_*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/hybrid/protein", pattern: "*_hybrid_*"
   input:
     file(refined_cds) from ch_pb_cds_bed
     file(filtered_cds) from ch_filtered_cds_bed
-    file(hybrid_cds) from ch_high_confidence_cds
+    file(hybrid_cds) from ch_high_confidence_cds_track_viz
   output:
     file("*_shaded_*")
   script:
@@ -1405,26 +1410,40 @@ process gencode_track_visualization{
 Make Region Bed for UCSC Browser
 ---------------------------------------------------*/
 process make_multiregion{
-  publishDir "${params.outdir}/${params.name}/track_visualization/", mode: 'copy'
+  publishDir "${params.outdir}/${params.name}/track_visualization/refined", pattern: "*_refined_*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/filtered", pattern: "*_filtered_*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/hybrid", pattern: "*_high_confidence_*"
   input:
-    file(sample_gtf) from ch_pb_cds_multiregion
+    file(refined_gtf) from ch_pb_cds_multiregion
+    file(filtered_gtf) from ch_filtered_cds_multiregion
     file(reference_gtf) from ch_gencode_gtf
+    file(high_conf_gtf) from ch_high_confidence_cds_multiregion
   output:
     file("*")
 
   script:
   """
   make_region_bed_for_ucsc.py \
-  --name ${params.name} \
-  --sample_gtf $sample_gtf \
+  --name ${params.name}_refined \
+  --sample_gtf $refined_gtf \
+  --reference_gtf $reference_gtf
+
+  make_region_bed_for_ucsc.py \
+  --name ${params.name}_filtered \
+  --sample_gtf $filtered_gtf \
+  --reference_gtf $reference_gtf
+
+  make_region_bed_for_ucsc.py \
+  --name ${params.name}_high_confidence \
+  --sample_gtf $high_conf_gtf \
   --reference_gtf $reference_gtf
   """
 }
 
 process peptide_track_visualization{
-  publishDir "${params.outdir}/${params.name}/track_visualization/refined/peptide", patern: "*_refined_*"
-  publishDir "${params.outdir}/${params.name}/track_visualization/filtered/peptide", patern: "*_filtered_*"
-  publishDir "${params.outdir}/${params.name}/track_visualization/hybrid/peptide", patern: "*_hybrid_*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/refined/peptide", pattern: "*_refined_*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/filtered/peptide", pattern: "*_filtered_*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/hybrid/peptide", pattern: "*_hybrid_*"
 
   when:
     params.mass_spec != false
