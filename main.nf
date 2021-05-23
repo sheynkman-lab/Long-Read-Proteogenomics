@@ -215,12 +215,12 @@ if (params.gencode_translation_fasta.endsWith('.gz')) {
 
 
 /*--------------------------------------------------
-Gencode Database
- * Removes duplicate Gencode entries from fasta file
- * Output:  gencode_protien.fasta
+GENCODE Database
+ * Clusters same-protein GENCODE entries 
+ * Output:  gencode_protein.fasta
  *            - gencode fasta file without duplicate entries
  *          gencode_isoname_clusters.tsv
- *            - gencode duplicate gene name information
+ *            - transcript accessions that were clustered
 ---------------------------------------------------*/
 process make_gencode_database {
   tag "${gencode_translation_fasta}"
@@ -252,7 +252,7 @@ ch_gencode_protein_fasta.into{
 }
 
 /*--------------------------------------------------
-Run IsoSeq3 and Sqanti3 if Sqanti output not provided
+Run IsoSeq3 and SQANTI3 if SQANTI output not provided
 ---------------------------------------------------*/
 if( params.sqanti_classification==false || params.sqanti_fasta==false || params.sqanti_gtf==false ){
   if (!params.sample_ccs) exit 1, "Cannot find file for parameter --sample_ccs: ${params.sample_ccs}"
@@ -270,10 +270,10 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
   }
   /*--------------------------------------------------
   IsoSeq3
-   * Runs IsoSeq3 on CCS reads, aligning to gneome and
+   * Runs IsoSeq3 on CCS reads, aligning to genome and
    * collapsing redundant reads
    * STEPS
-   *   - Ensure only qv10 reads from ccs are kept as input
+   *   - ensure only qv10 reads from ccs are kept as input
    *   - find and remove adapters/barcodes
    *   - filter for non-concatamer, polya containing reads
    *   - clustering of reads
@@ -329,11 +329,11 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
   /*--------------------------------------------------
   STAR Alignment
    * STAR alignment is run if fastq reads are provided
-   * Information is fed to SQANTI3 where information is 
-   * used in classificaiton 
+   * Junction alignments are fed to SQANTI3 where 
+   * information is used in classificaiton filtering
    * STEPS
-   *  -generate genome (skipped if STAR genome provided)
-   *  -star_alignment 
+   *   - generate star genome index (skipped if provided) 
+   *   - star read alignment 
   ---------------------------------------------------*/
   if(params.star_genome_dir != false){
       Channel
@@ -403,7 +403,7 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
   /*--------------------------------------------------
   SQANTI3
    * https://github.com/ConesaLab/SQANTI3
-   * Corrects any errors in alignment from ISOSEQ3 and 
+   * Corrects any errors in alignment from IsoSeq3 and 
    * classifies each accession in relation to the reference
    * genome
   ---------------------------------------------------*/
@@ -464,21 +464,21 @@ else{
 }
 
 /*--------------------------------------------------
-Filter Sqanti
+Filter SQANTI 
  * Filter SQANTI results based on several criteria 
  * - protein coding only
- *      PB transcript aligns to a Gencode-annotated protein coding gene.
+ *      PB transcript aligns to a GENCODE-annotated protein coding gene.
  * - percent A downstream
  *      perc_A_downstreamTTS : percent of genomic "A"s in the downstream 20 bp window. 
- *      If this number if high (say > 0.8), the 3' end site of this isoform is probably not reliable.
+ *      If this number if high (> 80%), the 3' end have arisen from intra-priming during the RT step 
  * - RTS stage
- *      RTS_stage: TRUE if one of the junctions could be a RT switching artifact.
+ *      RTS_stage: TRUE if one of the junctions could be an RT template switching artifact.
  * - Structural Category
- *      keep only transcripts that have a structural category of:
+ *      keep only transcripts that have a isoform structural category of:
  *        -novel_not_in_catalog
-          -novel_in_catalog
-          -incomplete-splice_match
-          -full-splice_match 
+ *        -novel_in_catalog
+ *        -incomplete-splice_match
+ *        -full-splice_match 
 ---------------------------------------------------*/
 process filter_sqanti {
   publishDir "${params.outdir}/${params.name}/sqanti3-filtered/", mode: 'copy'
@@ -545,10 +545,10 @@ ch_sample_gtf.into{
 /*--------------------------------------------------
 Six-Frame Translation
  * Generates a fasta file of all possible protein sequences
- * that could be generated from each transcript by translating
+ * derivable from each PacBio transcript, by translating the
  * fasta file in all six frames (3+, 3-). This is used to examine
  * what peptides could theoretically match the peptides found via
- * Gencode
+ * a mass spectrometry search against GENCODE. 
 ---------------------------------------------------*/
 process six_frame_translation {
     cpus 1
@@ -576,9 +576,9 @@ process six_frame_translation {
 
 /*--------------------------------------------------
 Transcriptome Summary
- * Compares the CPM generated from long-read sequencing
- * to the TPM generated from short-read sequencing that 
- * has undergone analysis via kalisto
+ * Compares the abundance (CPM) based on long-read sequencing
+ * to the abundances (TPM) inferred from short-read sequencing,
+ * as computed by Kallisto (analyzed outside of this pipeline).
  * Additionally produces a pacbio-gene reference table
 ---------------------------------------------------*/
 process transcriptome_summary {
@@ -620,23 +620,20 @@ ch_pb_gene.into{
 
 /*--------------------------------------------------
 CPAT
- * CPAT is a bioinformatics tool to predict RNA’s coding probability 
+ * CPAT is a bioinformatics tool to predict an RNA’s coding probability 
  * based on the RNA sequence characteristics. 
- * To achieve this goal, CPAT calculates scores of these 4 linguistic features 
- * from a set of known protein-coding genes and another set of non-coding genes.
+ * To achieve this goal, CPAT calculates scores of sequence-based features 
+ * from a set of known protein-coding genes and background set of non-coding genes.
  *     ORF size
  *     ORF coverage
- *     Fickett TESTCODE
+ *     Fickett score
  *     Hexamer usage bias
  * 
  * CPAT will then builds a logistic regression model using these 4 features as 
  * predictor variables and the “protein-coding status” as the response variable. 
  * After evaluating the performance and determining the probability cutoff, 
  * the model can be used to predict new RNA sequences.
-
- * Wang, L., Park, H. J., Dasari, S., Wang, S., Kocher, J.-P., & Li, W. (2013). 
- * CPAT: Coding-Potential Assessment Tool using an alignment-free logistic regression model. 
- * Nucleic Acids Research, 41(6), e74. doi:10.1093/nar/gkt006
+ *
  * https://cpat.readthedocs.io/en/latest/
 ---------------------------------------------------*/
 process cpat {
@@ -682,15 +679,16 @@ ch_cpat_protein_fasta.into{
 
 /*--------------------------------------------------
 ORF Calling 
- * Calls ORF of each transcript using the following information
- *    comparison of start ATG to reference(Gencode) 
- *        - uses ORF that matches reference if available
+ * Selects the most plausible ORF from each pacbio transcript,
+ * using the following information
+ *    comparison of ATG start to reference (GENCODE) 
+ *        - selects ORF with ATG start matching the one in the reference, if it exists 
  *    coding probability score from CPAT
- *    number of upstream ATG's from ORF
+ *    number of upstream ATGs for the candidate ORF
  *        - decrease score as number of upstream ATGs increases 
  *         using sigmoid function
  *  Additionally provides calling confidence of each ORF called
- *      - Clear Best ORF  : best score and fewest upstream ATG's of all called ORFs
+ *      - Clear Best ORF  : best score and fewest upstream ATGs of all called ORFs
  *      - Plausible ORF   : not clear best, but decent CPAT coding_score (>0.364) 
  *      - Low Quality ORF : low CPAT coding_score (<0.364)       
 ---------------------------------------------------*/
@@ -739,8 +737,8 @@ Refined DB Generation
  *   with a CPAT coding score above a threshold (default 0.0)
  * - Filters ORFs to only include ORFs that have a stop codon 
  * - Collapses transcripts that produce the same protein
- *   into one entry, keeping a base accession (first alphanumeric)
- *   and combining CPM
+ *   into one entry, keeping a base accession (first alphanumeric).
+ *   Abundances of transcripts (CPM) are collapsed during this process.
 ---------------------------------------------------*/
 process refine_orf_database {
   cpus 1
@@ -778,7 +776,7 @@ ch_refined_info.into{
 
 /*--------------------------------------------------
 PacBio CDS GTF 
- * make GTF file that includes the ORF regions (as CDS features)
+ * derive a GTF file that includes the ORF regions (as CDS features)
 ---------------------------------------------------*/
 process make_pacbio_cds_gtf {
   cpus 1
@@ -822,7 +820,7 @@ ch_pb_cds.into{
 
 /*--------------------------------------------------
 Rename CDS to Exon
- * Preprocessing step to Sqanti Protein
+ * Preprocessing step to SQANTI Protein
  * CDS is renamed to exon and transcript stop and start
  * locations are updated to reflect CDS start and stop
 ---------------------------------------------------*/
@@ -851,7 +849,7 @@ process rename_cds_to_exon{
         """
 }
 /*--------------------------------------------------
-Sqanti Protein
+SQANTI Protein
  * Classify protein splice sites and calculates additional
  * statistics for start and stop of ORF
 ---------------------------------------------------*/
@@ -883,7 +881,7 @@ process sqanti_protein{
 5' UTR Status
  * Intermediate step for protein classification
  * Dtermines the 5' UTR status of the protein in order 
- * to better classify protien
+ * to classify protein category in latter step
 ---------------------------------------------------*/
 process five_prime_utr{
   // publishDir "${params.outdir}/${params.name}/5p_utr/", mode: 'copy'
@@ -916,18 +914,17 @@ process five_prime_utr{
 
 /*--------------------------------------------------
 Protein Classification
- Classifies protein based on splicing and start site
- main classifications are 
-    FPM : full-protein-match
-      - protein fully matches a gencode protein
-    IPM : incomplete-protein-match
-      - protein only partially matches gencode protein
-    NIC : novel-in-catelog
-      - protein composed of known exons in novel combenation
-      and has known start site
-    NNC : novel-not-in-catelog
-      - protein composed of novel exons, has novel start site,
-      -  has novel stop site, or combination of the three
+ * Classifies protein based on splicing and start site
+ * main classifications are 
+ *   pFSM: full-protein-match
+ *     - protein fully matches a gencode protein
+ *   pISM: incomplete-protein-match
+ *     - protein only partially matches gencode protein
+ *     - considered an N- or C-terminus truncation artifact
+ *   pNIC: novel-in-catelog
+ *     - protein composed of known N-term, splicing, and/or C-term in new combinations
+ *   pNNC: novel-not-in-catelog
+ *     - protein composed of novel N-term, splicing, and/or C-terminus
 ---------------------------------------------------*/
 process protein_classification{
   publishDir "${params.outdir}/${params.name}/protein_classification/", mode: 'copy'
@@ -965,9 +962,10 @@ ch_pr_genes.into{
 
 /*--------------------------------------------------
 Protein Gene Rename
- Sets gene to match found when running sqanti-protein 
- rather than found in transcript. 
- Used due to some transcripts mapping multiple genes
+ * Mapings of PacBio transcripts/proteins to GENCODE genes.
+ * Some PacBio transcripts and the associated PacBio
+ * predicted protein can map two different genes.
+ * Some transcripts can also map to multiple genes.
 ---------------------------------------------------*/
 process protein_gene_rename{
   publishDir "${params.outdir}/${params.name}/protein_gene_rename/", mode: 'copy'
@@ -1009,10 +1007,10 @@ ch_renamed_refined_cds.into{
 
 /*--------------------------------------------------
 Protein Filtering
- Filteres out proteins that are not FPM,NIC or that 
- have more than min_junc_after_stop_codon (default 2)
- junctions after the stop codon
- Also filters out all proteins that are not FPM,NIC,NNC,IPM
+ * Filters out proteins that are:
+ *  - not pFSM, pNIC, pNNC
+ *  - are pISMs (either N-terminus or C-terminus truncations)
+ *  - pNNC with junctions after the stop codon (default 2)  
 ---------------------------------------------------*/
 process filter_protein{
   publishDir "${params.outdir}/${params.name}/protein_filter/", mode: 'copy'
@@ -1048,11 +1046,12 @@ ch_filtered_protein_fasta.into{
 
 /*--------------------------------------------------
 Protein Hybrid Database
- Makes a hybrid database that is composed of 
- high-confidence PacBio proteins and Gencode proteins
- for genes that are not in the high-confidence space
- High-confidence is defined as genes with an average
- size of 1-4kb and a total of 3 CPM per gene
+ * Makes a hybrid database that is composed of 
+ * high-confidence PacBio proteins and GENCODE proteins
+ * for genes that are not in the high-confidence space
+ * High-confidence is defined as genes in which the PacBio
+ * sampling is adequate (average transcript length 1-4kb
+ * and a total of 3 CPM per gene
 ---------------------------------------------------*/
 process make_hybrid_database{
   publishDir "${params.outdir}/${params.name}/hybrid_protein_database/", mode: 'copy'
@@ -1098,7 +1097,7 @@ ch_sample_hybrid_fasta.into{
 
 /*--------------------------------------------------
 Mass Spec File Conversion
- Convert MS .raw files into .mzml files
+ * Convert MS .raw files into .mzml files
 ---------------------------------------------------*/
 process mass_spec_raw_convert{
     // publishDir "${params.outdir}/${params.name}/raw_convert/", mode: 'copy'
@@ -1128,8 +1127,8 @@ ch_mass_spec_combined.into{
 
 
 /*--------------------------------------------------
-Metamorpheus Gencode
- Runs Metamorpheus on Gencode database
+Metamorpheus GENCODE 
+ * Runs Metamorpheus MS search using the GENCODE database
 ---------------------------------------------------*/
 process metamorpheus_with_gencode_database{
     label 'metamorpheus'
@@ -1164,7 +1163,7 @@ process metamorpheus_with_gencode_database{
 
 /*--------------------------------------------------
 Metamorpheus UniProt
- Runs Metamorpheus on UniProt database
+ * Runs Metamorpheus MS search using the UniProt database
 ---------------------------------------------------*/
 process metamorpheus_with_uniprot_database{
     label 'metamorpheus'
@@ -1200,8 +1199,8 @@ process metamorpheus_with_uniprot_database{
 
 /*--------------------------------------------------
 Peptide Analysis
- prepares a table comparing mass spec MM peptide results from gencode 
- against the fasta sequences of various orf calling methods
+ * Generate a table comparing MS peptide results
+ * between the PacBio and GENCODE databases. 
 ---------------------------------------------------*/
 process peptide_analysis{
   publishDir "${params.outdir}/${params.name}/peptide_analysis/", mode: 'copy'
@@ -1239,7 +1238,7 @@ process peptide_analysis{
 
 /*--------------------------------------------------
 MetaMorpheus with Sample Specific Database - Refined
- Runs Metamorpheus on refined database
+ * Runs Metamorpheus MS search using the PacBio refined database
 ---------------------------------------------------*/
 process metamorpheus_with_sample_specific_database_refined{
     label 'metamorpheus'
@@ -1281,7 +1280,7 @@ ch_pacbio_peptides_refined_track_viz
 
 /*--------------------------------------------------
 MetaMorpheus with Sample Specific Database - Filtered
- Runs Metamorpheus on filtered database
+ * Runs Metamorpheus MS search using the PacBio filtered database
 ---------------------------------------------------*/
 process metamorpheus_with_sample_specific_database_filtered{
     label 'metamorpheus'
@@ -1322,8 +1321,8 @@ ch_pacbio_peptides_filtered_track_viz
 }
 
 /*--------------------------------------------------
-MetaMorpheus with Sample Specific Database - Hybrid
- Runs Metamorpheus on hybrid database
+MetaMorpheus with Sample Specific Database - Hybrid 
+ * Runs Metamorpheus MS search using the PacBio hybrid database
 ---------------------------------------------------*/
 process metamorpheus_with_sample_specific_database_hybrid{
     label 'metamorpheus'
@@ -1365,9 +1364,13 @@ ch_pacbio_peptides_hybrid.into{
 }
 
 /*--------------------------------------------------
-MetaMorpheus using Rescue-Resolve Algorithm
- Runs Metamorpheus on hybrid database
- using rescue resolve algorithm
+MetaMorpheus using "Rescue and Resolve" Algorithm
+ * Runs Metamorpheus MS search using the hybrid database
+ * and the version of Metamorpheus containing the
+ * "Rescue and Resolve" algorithm. This algorithm allows for
+ * "Rescue" of protein isoforms that are normally discarded
+ * during protein parsimony, given that the protein isoform
+ * has strong evidence of transcriptional expression.
 ---------------------------------------------------*/
 process metamorpheus_with_sample_specific_database_rescue_resolve{
     label 'metamorpheus'
@@ -1402,9 +1405,9 @@ process metamorpheus_with_sample_specific_database_rescue_resolve{
 
 /*--------------------------------------------------
 Protein Track Visualization
- Creates tracks to use in UCSC Genome Browser for 
- refined, filtered, and hybrid database
- Shades tracks based on CPM and protien classification
+ * Creates tracks to use in UCSC Genome Browser for 
+ * refined, filtered, and hybrid PacBio databases.
+ * Shades tracks based on abundance (CPMs) and protein classification.
 ---------------------------------------------------*/
 process protein_track_visualization{
   publishDir "${params.outdir}/${params.name}/track_visualization/refined/protein", pattern: "*_refined_*"
@@ -1492,9 +1495,11 @@ process gencode_track_visualization{
 
 
 /*--------------------------------------------------
-Multiregion
- makes multiregion for UCSC genome browser for 
- refined, filtered, and hybrid databases
+Multiregion BED generation
+ * Makes multiregion BED file for UCSC genome browser for 
+ * refined, filtered, and hybrid databases. Regions in the
+ * BED correpond to coding regions, thereby allowing for
+ * intronic regions to be minimized for easier isoform viewing.
 ---------------------------------------------------*/
 process make_multiregion{
   publishDir "${params.outdir}/${params.name}/track_visualization/refined", pattern: "*_refined_*"
@@ -1529,8 +1534,8 @@ process make_multiregion{
 
 /*--------------------------------------------------
 Peptide Track Visualization
-Makes peptide tracks for UCSC Genome Browser 
-for refined, filtered and hybrid databases
+ * Makes peptide tracks for UCSC Genome Browser 
+ * for refined, filtered and hybrid databases
 ---------------------------------------------------*/
 process peptide_track_visualization{
   publishDir "${params.outdir}/${params.name}/track_visualization/refined/peptide", pattern: "*_refined_*"
@@ -1632,8 +1637,8 @@ process peptide_track_visualization{
 
 /*--------------------------------------------------
 Accession Mapping 
- Maps Gencode, UniProt and PacBio databases to one
- another based on sequence similarity 
+ * Maps protein entries within GENCODE, UniProt and PacBio databases to one
+ * another based on sequence similarity 
 ---------------------------------------------------*/
 process accession_mapping{
   publishDir "${params.outdir}/${params.name}/accession_mapping/", mode: 'copy'
@@ -1661,8 +1666,8 @@ process accession_mapping{
 
 /*--------------------------------------------------
 Protein Group Comparison
-d etermine the relationship between protein groups identified in Metamorpheus 
-using gencode, uniprot, and/or pacbio databases
+ * Determine the relationship between protein groups identified in Metamorpheus 
+ * using GENCODE, UniProt, and/or PacBio databases
 ---------------------------------------------------*/
 process protein_group_compare{
     publishDir "${params.outdir}/${params.name}/protein_group_compare/", mode: 'copy'
@@ -1699,10 +1704,10 @@ process protein_group_compare{
 
 /*--------------------------------------------------
 Novel Peptides
- Finds novel peptides between sample database and Gencode
- Novel peptide is defined as a peptide found in PacBio that 
- could not be found in Gencode
- Novel peptides found for refined, filtered, and hybrid databases
+ * Finds novel peptides between sample database and GENCODE 
+ * Novel peptide is defined as a peptide found in PacBio that 
+ * could not be found in Gencode
+ * Novel peptides found for refined, filtered, and hybrid databases
 ---------------------------------------------------*/
 process peptide_novelty_analysis{
   publishDir "${params.outdir}/${params.name}/novel_peptides/", mode: 'copy'
@@ -1742,9 +1747,6 @@ process peptide_novelty_analysis{
     """
 
 }
-// TODO - implement Rachel's code that does a cross-comparison of protein groups
-// NOTE - her code requires a map from the accession mapping module
-
 
 
 def logHeader() {
