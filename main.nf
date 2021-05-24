@@ -1727,7 +1727,7 @@ process peptide_novelty_analysis{
     peptide_novelty_analysis.py \
     --pacbio_peptides $peptides_refined \
     --gencode_fasta $gencode_fasta \
-    --name ${params.name}_hybrid
+    --name ${params.name}_refined
 
     #--------------------------
     # Filtered
@@ -1735,7 +1735,7 @@ process peptide_novelty_analysis{
     peptide_novelty_analysis.py \
     --pacbio_peptides $peptides_filtered \
     --gencode_fasta $gencode_fasta \
-    --name ${params.name}_hybrid
+    --name ${params.name}_filtered
 
     #--------------------------
     # High Confidence
