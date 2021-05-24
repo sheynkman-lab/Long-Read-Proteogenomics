@@ -63,7 +63,7 @@ def filter_protein_coding(classification, protein_coding_filename, ensg_gene_fil
     orfs : pandass DataFrame
         called ORFs
     protein_coding_filename : filename
-        file of protien-coding genes. text file seperated by lines
+        file of protein-coding genes. text file seperated by lines
     """
     logging.info("Filtering for only protein coding genes")
     with open(protein_coding_filename, 'r') as file:

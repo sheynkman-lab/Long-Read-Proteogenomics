@@ -170,8 +170,8 @@ process generate_reference_tables {
 
 // partition channels for use by multiple modules
 ch_protein_coding_genes.into{
-  ch_protein_coding_genes_db
-  ch_protein_coding_genes_filter
+  ch_protein_coding_genes_gencode_fasta
+  ch_protein_coding_genes_filter_sqanti
 }
 
 ch_ensg_gene.into{
@@ -229,7 +229,7 @@ process make_gencode_database {
 
   input:
   file(gencode_translation_fasta) from ch_gencode_translation_fasta_uncompressed
-  
+  file(protein_coding_genes) from ch_protein_coding_genes_gencode_fasta
   output:
   file("gencode_protein.fasta") into ch_gencode_protein_fasta
   file("gencode_isoname_clusters.tsv")
@@ -238,6 +238,7 @@ process make_gencode_database {
   """
   make_gencode_database.py \
   --gencode_fasta $gencode_translation_fasta \
+  --protein_coding_genes $protein_coding_genes \
   --output_fasta gencode_protein.fasta \
   --output_cluster gencode_isoname_clusters.tsv
   """
@@ -246,7 +247,7 @@ process make_gencode_database {
 ch_gencode_protein_fasta.into{
   ch_gencode_protein_fasta_metamorpheus
   ch_gencode_protein_fasta_mapping
-  ch_gencode_protein_fasta_aggregate
+  ch_gencode_protein_fasta_hybrid
   ch_gencode_protein_fasta_novel
 
 }
@@ -487,7 +488,7 @@ process filter_sqanti {
     file(classification) from ch_sample_unfiltered_classification
     file(sample_fasta) from ch_sample_unfiltered_fasta
     file(sample_gtf) from ch_sample_unfiltered_gtf
-    file(protein_coding_genes) from ch_protein_coding_genes
+    file(protein_coding_genes) from ch_protein_coding_genes_filter_sqanti
     file(ensg_gene) from ch_ensg_gene_filter
 
   output:
@@ -751,7 +752,7 @@ process refine_orf_database {
   input:
   file(best_orfs) from ch_best_orf_refine
   file(sample_fasta) from ch_sample_fasta_refine
-  file(protein_coding_genes) from ch_protein_coding_genes_db
+  
   
   output:
   // file("*")
@@ -1061,7 +1062,7 @@ process make_hybrid_database{
     file(protein_classification) from ch_filtered_protein_classification
     file(gene_lens) from ch_gene_lens_aggregate
     file(pb_fasta) from ch_filtered_protein_fasta_aggregate
-    file(gc_fasta) from ch_gencode_protein_fasta_aggregate
+    file(gc_fasta) from ch_gencode_protein_fasta_hybrid
     file(refined_info) from ch_refined_info_aggregate
     file(sample_cds) from ch_filtered_cds_agg
   output:
