@@ -1043,6 +1043,7 @@ ch_filtered_cds.into{
 ch_filtered_protein_fasta.into{
   ch_filtered_protein_fasta_metamorpheus
   ch_filtered_protein_fasta_aggregate
+  ch_filtered_protein_fasta_pep_analysis
 }
 
 /*--------------------------------------------------
@@ -1093,6 +1094,7 @@ ch_sample_hybrid_fasta.into{
   ch_sample_hybrid_fasta_normal
   ch_sample_hybrid_fasta_rescue
   ch_sample_hybrid_fasta_track_viz
+  ch_sample_hybrid_fasta_pep_analysis
 }
 
 
@@ -1212,11 +1214,9 @@ process peptide_analysis{
       file(gencode_peptides) from ch_gencode_peptides
       file(gene_isoname) from ch_gene_isoname_pep_analysis
       file(refined_fasta) from ch_refined_fasta_pep_analysis
-      file(six_frame) from ch_six_frame
+      file(filtered_fasta) from ch_filtered_protein_fasta_pep_analysis
+      file(hybrid_fasta) from ch_sample_hybrid_fasta_pep_analysis
       file(pb_gene) from ch_pb_gene_peptide_analysis
-      file(cpat_all_orfs) from ch_cpat_all_orfs_for_peptide_analysis
-      file(cpat_best_orf) from ch_cpat_best_orf
-      file(cpat_protein_fasta) from ch_cpat_protein_fasta_peptide_analysis
 
     output:
       file("*")
@@ -1225,13 +1225,11 @@ process peptide_analysis{
       """
       peptide_analysis.py \
       -gmap $gene_isoname \
-      -gc $gencode_peptides \
-      -pb $refined_fasta \
-      -sft $six_frame \
+      --gencode_peptides $gencode_peptides \
+      --pb_refined_fasta $refined_fasta \
+      --pb_filtered_fasta $filtered_fasta \
+      --pb_hybrid_fasta $hybrid_fasta \
       --pb_gene $pb_gene \
-      --cpat_all_orfs $cpat_all_orfs \
-      --cpat_best_orf $cpat_best_orf \
-      --cpat_orf_protein_fasta $cpat_protein_fasta \
       -odir ./
       """
 }
@@ -1398,11 +1396,40 @@ process metamorpheus_with_sample_specific_database_rescue_resolve{
     script:
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings settings 
-        dotnet /metamorpheus/CMD.dll -d $orf_fasta -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results --orf $orf_meta --cpm 25
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results --orf $orf_meta --cpm 25
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.rescue_resolve.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.rescue_resolve.tsv
         """
 }
+
+/*--------------------------------------------------
+Reference Track Visualization
+ * Creates tracks to use in UCSC Genome Browser for 
+ * Gencode database.
+---------------------------------------------------*/
+process gencode_track_visualization{
+    publishDir "${params.outdir}/${params.name}/track_visualization/reference"
+
+  input:
+    file(reference_gtf) from ch_gencode_gtf
+  output:
+    file("gencode_shaded.bed12")
+    file("gencode.filtered.gtf") into ch_gencode_filtered_gtf
+  script:
+    """
+    gencode_filter_protein_coding.py \
+    --reference_gtf $reference_gtf
+
+    gtfToGenePred gencode.filtered.gtf gencode.filtered.genePred
+    genePredToBed gencode.filtered.genePred gencode.filtered.bed12
+
+    gencode_add_rgb_to_bed.py \
+    --gencode_bed gencode.filtered.bed12 \
+    --rgb 0,0,140 \
+    --version V35
+  """
+}
+
 
 /*--------------------------------------------------
 Protein Track Visualization
@@ -1471,27 +1498,7 @@ process protein_track_visualization{
 }
 
 
-process gencode_track_visualization{
-    publishDir "${params.outdir}/${params.name}/track_visualization/reference"
 
-  input:
-    file(reference_gtf) from ch_gencode_gtf
-  output:
-    file("gencode_shaded.bed12")
-  script:
-    """
-    gencode_filter_protein_coding.py \
-    --reference_gtf $reference_gtf
-
-    gtfToGenePred gencode.filtered.gtf gencode.filtered.genePred
-    genePredToBed gencode.filtered.genePred gencode.filtered.bed12
-
-    gencode_add_rgb_to_bed.py \
-    --gencode_bed gencode.filtered.bed12 \
-    --rgb 0,0,140 \
-    --version V35
-  """
-}
 
 
 
@@ -1503,13 +1510,13 @@ Multiregion BED generation
  * intronic regions to be minimized for easier isoform viewing.
 ---------------------------------------------------*/
 process make_multiregion{
-  publishDir "${params.outdir}/${params.name}/track_visualization/refined", pattern: "*_refined_*"
-  publishDir "${params.outdir}/${params.name}/track_visualization/filtered", pattern: "*_filtered_*"
-  publishDir "${params.outdir}/${params.name}/track_visualization/hybrid", pattern: "*_high_confidence_*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/refined", pattern: "*_refined*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/filtered", pattern: "*_filtered*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/hybrid", pattern: "*_high_confidence*"
   input:
     file(refined_gtf) from ch_pb_cds_multiregion
     file(filtered_gtf) from ch_filtered_cds_multiregion
-    file(reference_gtf) from ch_gencode_gtf
+    file(reference_gtf) from ch_gencode_filtered_gtf
     file(high_conf_gtf) from ch_high_confidence_cds_multiregion
   output:
     file("*")
@@ -1609,8 +1616,9 @@ process peptide_track_visualization{
     gtfToGenePred ${params.name}_refined_peptides.gtf ${params.name}_refined_peptides.genePred
     genePredToBed ${params.name}_refined_peptides.genePred ${params.name}_refined_peptides.bed12
     # add rgb to colorize specific peptides 
-    echo 'track name=refined_peptide_w_specificity itemRgb=On' > ${params.name}_refined_peptides_rgb.bed12
-    cat ${params.name}_refined_peptides.bed12 | awk '{ if (\$4 ~ /-1\$/) {\$9="0,102,0"; print \$0} else {\$9="0,51,0"; print \$0} }' >> ${params.name}_refined_peptides_rgb.bed12
+    finalize_peptide_bed.py \
+    --bed ${params.name}_refined_peptides.bed12 \
+    --name ${params.name}_refined
 
     #--------------------------
     # Filtered
@@ -1618,18 +1626,18 @@ process peptide_track_visualization{
     gtfToGenePred ${params.name}_filtered_peptides.gtf ${params.name}_filtered_peptides.genePred
     genePredToBed ${params.name}_filtered_peptides.genePred ${params.name}_filtered_peptides.bed12
     # add rgb to colorize specific peptides 
-    echo 'track name=filtered_peptide_w_specificity itemRgb=On' > ${params.name}_filtered_peptides_rgb.bed12
-    cat ${params.name}_filtered_peptides.bed12 | awk '{ if (\$4 ~ /-1\$/) {\$9="0,102,0"; print \$0} else {\$9="0,51,0"; print \$0} }' >> ${params.name}_filtered_peptides_rgb.bed12
-
+    finalize_peptide_bed.py \
+    --bed ${params.name}_filtered_peptides.bed12 \
+    --name ${params.name}_filtered
     #--------------------------
     # High Confidence
     #--------------------------
     gtfToGenePred ${params.name}_hybrid_peptides.gtf ${params.name}_hybrid_peptides.genePred
     genePredToBed ${params.name}_hybrid_peptides.genePred ${params.name}_hybrid_peptides.bed12
     # add rgb to colorize specific peptides 
-    echo 'track name=hybrid_peptide_w_specificity itemRgb=On' > ${params.name}_hybrid_peptides_rgb.bed12
-    cat ${params.name}_hybrid_peptides.bed12 | awk '{ if (\$4 ~ /-1\$/) {\$9="0,102,0"; print \$0} else {\$9="0,51,0"; print \$0} }' >> ${params.name}_hybrid_peptides_rgb.bed12
-
+    finalize_peptide_bed.py \
+    --bed ${params.name}_hybrid_peptides.bed12 \
+    --name ${params.name}_hybrid
     """
   
 }

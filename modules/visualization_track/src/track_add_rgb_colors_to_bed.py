@@ -83,11 +83,13 @@ def add_rgb_shading_cpm(name, bed,split_size):
     
     # shaded['cpm_int'] = shaded['cpm'].apply(lambda x: str(round(x)).split('.')[0])
     if split_size==3:
-        bed_shaded['new_acc_full'] = bed_shaded.apply(lambda row: f'{row.gene:_<{max_gene+1}}{row.pb_acc:_<{max_pb+1}}{row.cpm:_>{cpm_len+1}}', axis = 1)
+        bed_shaded['new_acc_full'] = bed_shaded['acc_full']
+        # bed_shaded['new_acc_full'] = bed_shaded.apply(lambda row: f'{row.gene:_<{max_gene+1}}{row.pb_acc:_<{max_pb+1}}{row.cpm:_>{cpm_len+1}}', axis = 1)
         # bed_shaded['new_acc_full'] = bed_shaded.apply(lambda row: f'{row.gene}_{row.pb_acc:_<{max_pb+1}}{row.cpm:_>{cpm_len+1}}', axis = 1)
 
     if split_size==4:
-        bed_shaded['new_acc_full'] = bed_shaded.apply(lambda row: f'{row.gene:_<{max_gene+1}}{row.pb_acc:_<{max_pb+1}}{row.pclass}{row.cpm:_>{cpm_len+1}}', axis = 1)
+        bed_shaded['new_acc_full'] = bed_shaded['acc_full']
+        # bed_shaded['new_acc_full'] = bed_shaded.apply(lambda row: f'{row.gene:_<{max_gene+1}}{row.pb_acc:_<{max_pb+1}}{row.pclass}{row.cpm:_>{cpm_len+1}}', axis = 1)
         # bed_shaded['new_acc_full'] = bed_shaded.apply(lambda row: f'{row.gene}_{row.pb_acc:_<{max_pb+1}}{row.pclass}{row.cpm:_>{cpm_len+1}}', axis = 1)
 
     # join in the rgb data and new accession
@@ -120,8 +122,8 @@ def add_rgb_shading_pclass(name,bed):
     cpm_len = max(cpm_sizes)
     
 
-    
-    bed['new_acc_full'] = bed.apply(lambda row: f'{row.gene:_<{max_gene+1}}{row.pb_acc:_<{max_pb+1}}{row.pclass}{row.cpm:_>{cpm_len+1}}', axis = 1)
+    bed['new_acc_full'] = bed['acc_full']
+    # bed['new_acc_full'] = bed.apply(lambda row: f'{row.gene:_<{max_gene+1}}{row.pb_acc:_<{max_pb+1}}{row.pclass}{row.cpm:_>{cpm_len+1}}', axis = 1)
         # bed['new_acc_full'] = bed.apply(lambda row: f'{row.gene}_{row.pb_acc:_<{max_pb+1}}{row.pclass}{row.cpm:_>{cpm_len+1}}', axis = 1)
 
 

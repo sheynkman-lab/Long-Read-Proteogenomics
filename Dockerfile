@@ -28,6 +28,6 @@ RUN mamba env export --name ${ENV_NAME} > ${ENV_NAME}_exported.yml
 
 # Copy additional scripts from bin and add to PATH
 RUN mkdir /opt/bin
-COPY modules/*/src/* /opt/bin/
+COPY modules/*/src/*.py /opt/bin/
 RUN chmod +x /opt/bin/*
 ENV PATH="$PATH:/opt/bin/"
