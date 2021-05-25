@@ -28,7 +28,7 @@ def tsv_filter(tsv, col_to_keep=['Protein Accession', 'Gene', 'Unique Peptides',
     """   
     tsvfilter = tsv
     tsvfilter = tsvfilter.loc[(tsvfilter['Protein QValue'] <= 0.01)] #filter for 1%FDR
-    tsvfilter = tsvfilter.loc[(tsvfilter['Protein Decoy/Contaminant/Target'] == "T")]
+    tsvfilter = tsvfilter.loc[(tsvfilter['Protein Decoy/Contaminant/Target'].str.contains("T"))]
     for col in tsv.columns:
         if col not in col_to_keep:
             del tsvfilter[col]
