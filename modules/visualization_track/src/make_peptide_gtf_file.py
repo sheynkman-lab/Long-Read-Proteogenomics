@@ -81,7 +81,7 @@ def process_psmtsv(psmtsv_file, gene_map):
     pep.columns = ['pep', 'pb_acc', 'targ', 'qval', 'prev_aa','next_aa']
     # TODO add back in proper filter
     # pep = pep[pep.targ == 'T']
-    pep = pep[(pep.targ.str.contains('T')) & (pep.qval <= 0.01)]
+    pep = pep[(pep.targ =='T') & (pep.qval <= 0.01)]
     # for now, all accessions
     # TODO - decide how to deal with multiple PBs mapped to peptide
     pep['pb_acc'] = pep['pb_acc'].str.split('|')
