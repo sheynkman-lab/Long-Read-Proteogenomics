@@ -97,7 +97,7 @@ def add_rgb_shading_cpm(name, bed,split_size):
     bed_shaded = bed_shaded[['chrom', 'chromStart', 'chromStop', 'new_acc_full', 'score', 'strand', 'thickStart', 'thickEnd', 'rgb', 'blockCount', 'blockSizes', 'blockStarts']]
 
     with open(f'{name}_shaded_cpm.bed12', 'w') as ofile:
-        ofile.write(f'track name={name}_cds_w_cpm_rgb_shade itemRgb=On\n')
+        ofile.write(f'track name="{name.capitalize()} PacBio Protein" itemRgb=On\n')
         bed_shaded.to_csv(ofile, sep='\t', index=None, header=None)
 
 
@@ -130,7 +130,7 @@ def add_rgb_shading_pclass(name,bed):
     filter_names = ['chrom','chromStart','chromStop','new_acc_full','score','strand','thickStart','thickEnd','rgb','blockCount','blockSizes','blockStarts']
     bed = bed[filter_names]
     with open(f'{name}_shaded_protein_class.bed12', 'w') as ofile:
-        ofile.write(f'track name={name}_cds_w_pclass_rgb_shade itemRgb=On\n')
+        ofile.write(f'track name="{name.capitalize()} PacBio Protein" itemRgb=On\n')
         bed.to_csv(ofile, sep='\t', index=None, header=None)
     
 def add_rgb_shading(name, bed_file):

@@ -23,5 +23,5 @@ bed['rgb'] = '0,51,0'
 filter_names = ['chrom','chromStart','chromStop','acc_full','score','strand','thickStart','thickEnd','rgb','blockCount','blockSizes','blockStarts']
 bed = bed[filter_names]
 with open(f'{name}_shaded_peptides.bed12', 'w') as ofile:
-    ofile.write(f'track name={name}_shaded_peptides itemRgb=On\n')
+    ofile.write(f'track name="{name} PacBio Peptides" itemRgb=On\n')
     bed.to_csv(ofile, sep='\t', index=None, header=None)

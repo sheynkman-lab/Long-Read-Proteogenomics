@@ -10,7 +10,7 @@ def add_rgb_colors(bed_file, rgb, version):
     filter_names = ['chrom','chromStart','chromStop','acc_full','score','strand','thickStart','thickEnd','rgb','blockCount','blockSizes','blockStarts']
     bed = bed[filter_names]
     with open('gencode_shaded.bed12', 'w') as ofile:
-        ofile.write(f'track name=GENCODE.{version} itemRgb=On\n')
+        ofile.write(f'track name="GENCODE version {version}" itemRgb=On\n')
         bed.to_csv(ofile, sep='\t', index=None, header=None)
 
 def main():
