@@ -13,6 +13,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--pacbio_peptides',action='store',dest='peptides')
 parser.add_argument('--gencode_fasta',action='store',dest='gencode_fasta')
+parser.add_argument('--uniprot_fasta', action='store',dest='uniprot_fasta')
 parser.add_argument('--name',action='store',dest='name')
 args = parser.parse_args()
 
@@ -35,20 +36,35 @@ peps_pb = peps[peps['acc'].str.startswith('PB')]
 sample_peptides = peps_pb['seq'].to_list()
 
 # import all the sequences from gencode into a big string
-gc = [str(rec.seq) for rec in SeqIO.parse(args.gencode_fasta, 'fasta')]
-gc_agg = ','.join(gc)
+gencode_seq = [str(rec.seq) for rec in SeqIO.parse(args.gencode_fasta, 'fasta')]
+gencode_all_sequences = ','.join(gencode_seq)
 
+uniprot_seq = [str(rec.seq) for rec in SeqIO.parse(args.uniprot_fasta, 'fasta')]
+uniprot_all_sequences = ','.join(uniprot_seq)
 # find novel peptides
-pacbio_peps = []
+novel_peps = set()
+novel_peps_to_gencode = set()
+novel_peps_to_uniprot = set()
+
 for pep in sample_peptides:
     # some peptides are indistinguishable (have I/L), take first one
     if '|' in pep:
         pep = pep.split('|')[0]
     # is the base peptide sequence in the ref database
-    if pep not in gc_agg:
-        pacbio_peps.append(pep)
+    if pep not in gencode_all_sequences:
+        novel_peps_to_gencode.append(pep)
+    if pep not in uniprot_all_sequences:
+        novel_peps_to_uniprot.append(pep)
+novel_peps = novel_peps_to_gencode.intersection(novel_peps_to_uniprot)
 
 # write out the pacbio accession and genename for each novel peptide
-peps_novel = peps[peps['seq'].isin(pacbio_peps)]
+peps_novel = peps[peps['seq'].isin(novel_peps)]
 peps_novel.to_csv(f'{args.name}.pacbio_novel_peptides.tsv', sep='\t', index=None)
+
+peps_novel_to_gencode = peps[peps['seq'].isin(novel_peps_to_gencode)]
+peps_novel_to_gencode.to_csv(f'{args.name}.pacbio_novel_peptides_to_gencode.tsv', sep='\t', index=None)
+
+
+peps_novel_to_uniprot= peps[peps['seq'].isin(novel_peps_to_uniprot)]
+peps_novel_to_uniprot.to_csv(f'{args.name}.pacbio_novel_peptides_to_uniprot.tsv', sep='\t', index=None)
 

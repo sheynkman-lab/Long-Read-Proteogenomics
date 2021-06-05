@@ -1725,6 +1725,7 @@ process peptide_novelty_analysis{
     file(peptides_filtered) from ch_pacbio_peptides_filtered_novel
     file(peptides_hybrid) from ch_pacbio_peptides_hybrid_novel
     file(gencode_fasta) from ch_gencode_protein_fasta_novel
+    file(uniprot_fasta) from ch_uniprot_protein_fasta
   output:
     file("*")
   
@@ -1736,6 +1737,7 @@ process peptide_novelty_analysis{
     peptide_novelty_analysis.py \
     --pacbio_peptides $peptides_refined \
     --gencode_fasta $gencode_fasta \
+    --uniprot_fasta $uniprot_fasta \
     --name ${params.name}_refined
 
     #--------------------------
@@ -1744,6 +1746,7 @@ process peptide_novelty_analysis{
     peptide_novelty_analysis.py \
     --pacbio_peptides $peptides_filtered \
     --gencode_fasta $gencode_fasta \
+    --uniprot_fasta $uniprot_fasta \
     --name ${params.name}_filtered
 
     #--------------------------
@@ -1752,6 +1755,7 @@ process peptide_novelty_analysis{
     peptide_novelty_analysis.py \
     --pacbio_peptides $peptides_hybrid \
     --gencode_fasta $gencode_fasta \
+    --uniprot_fasta $uniprot_fasta \
     --name ${params.name}_hybrid
     """
 
