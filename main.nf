@@ -99,12 +99,9 @@ ch_uniprot_protein_fasta = Channel.value(file(params.uniprot_protein_fasta))
 // if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
 ch_fastq_reads = Channel.from(params.fastq_read_1, params.fastq_read_2).filter(String).flatMap{ files(it) }
 
-if (params.metamorpheus_toml==false){
-  ch_metamorpheus_toml = Channel.from("NO_TOML_FILE")
-}
-else{
-  ch_metamorpheus_toml = Channel.value(file(params.metamorpheus_toml))
-}
+if (!params.metamorpheus_toml) exit 1, "Cannot find any file for parameter --metamorpheus_toml: ${params.metamorpheus_toml}"
+ch_metamorpheus_toml = Channel.value(file(params.metamorpheus_toml))
+
 ch_metamorpheus_toml.into{
   ch_metamorpheus_toml_gencode
   ch_metamorpheus_toml_uniprot
@@ -1157,7 +1154,7 @@ process metamorpheus_with_gencode_database{
         def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
-        dotnet /metamorpheus/CMD.dll -d $gencode_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        dotnet /metamorpheus/CMD.dll -d $gencode_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results
 
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.Gencode.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv
@@ -1193,7 +1190,7 @@ process metamorpheus_with_uniprot_database{
         def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
-        dotnet /metamorpheus/CMD.dll -d $uniprot_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        dotnet /metamorpheus/CMD.dll -d $uniprot_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results
 
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.UniProt.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.UniProt.tsv
@@ -1265,7 +1262,7 @@ process metamorpheus_with_sample_specific_database_refined{
         def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
-        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results
 
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.refined.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.refined.tsv
@@ -1307,7 +1304,7 @@ process metamorpheus_with_sample_specific_database_filtered{
         def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
-        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results
 
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.filtered.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.filtered.tsv
@@ -1349,7 +1346,7 @@ process metamorpheus_with_sample_specific_database_hybrid{
         def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
-        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results
 
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.hybrid.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.hybrid.tsv
