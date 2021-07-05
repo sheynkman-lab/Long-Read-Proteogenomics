@@ -199,27 +199,24 @@ Follow the steps for obtaining a token from [jhpoelen](https://github.com/jhpoel
 
 ii. Create the repository. upload to **Zenodo**
 
-There are several files in this so we have a script, `upload-to-zenodo.sh`.   The `zenodo-upload` procedure has execution from the cloned repository of `zenodo-upload`
+There are several files in this so we have a script, `upload-to-zenodo.sh`.   The `zenodo-upload` procedure has execution from the cloned repository of `zenodo-upload
+
+A script was created to upload the files that have been downloaded and the two files that have been tar'd and zipped (`mass_spec.tar.gz` and `star_genome.tar.gz`)
+
+Now we upload them to the new deposit, save and publish on the Zenodo site
+
+i. From the `Long-Read-Proteogenomics` subdirectory
+
+The script was designed to run from the `Long-Read-Proteogenomics` subdirectory, move there if not already there
 
 ```bash
- ./zenodo_upload.sh 4625710 ../methylseq/data/hg19_lambda/hg19_lambda.tar.gz
+bash upload_to_zenodo.sh
  ```
- 
 
-ii.  and `Bisulfite_Genome.tar.gz`
- 
- ```bash
-  ./zenodo_upload.sh 4625710 ../methylseq/data/hg19_lambda/Bisulfite_Genome.tar.gz
-  ```
-then uploaded using cloudOS on Google and we have transfered the files from an aws s3 bucket to make it even more accessible through zenodo.
-transfer speeds lightening fast in the cloud!
-
+ii. 
 ## downloading from Zenodo
 
-
-<p align="center"><img src="https://github.com/lifebit-ai/dry-bench-skills-for-researchers/blob/adds-mini-courses/assets/lifebitCloudOS.png"  width="250" align="right" ></p>
-
-i.  Using Lifebit's CloudOS system, start a `jupyterlab notebook` (8 vCPU, 64 GB, n2-highmem-8 on Google), with 1500 GB.
+i.  Using Lifebit's CloudOS system, start a `jupyterlab notebook` (), with 1500 GB.
 
 ii. Start a `bash command shell`
 
@@ -244,11 +241,11 @@ git clone https://github.com/sheynkman-lab/Long-Read-Proteogenomics.git
 cd Long-Read-Proteogenomics/data
 ```
 
-v. Download your files
+v. Download and Reconstruct
+
+A bash script was created to pull the version of files that are stored within Zenodo
+
 
 ```bash
-mkdir data
-cd data
-wget https://zenodo.org/record/4625710/files/Bisulfite_Genome.tar.gz
-wget https://zenodo.org/record/4625710/files/hg19_lambda.fa.tar.gz
+bash download_and_reconstruct.sh
 ```
