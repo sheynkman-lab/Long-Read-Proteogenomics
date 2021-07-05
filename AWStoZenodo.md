@@ -213,10 +213,12 @@ The script was designed to run from the `Long-Read-Proteogenomics` subdirectory,
 bash upload_to_zenodo.sh
  ```
 
-ii. 
-## downloading from Zenodo
 
-i.  Using Lifebit's CloudOS system, start a `jupyterlab notebook` (), with 1500 GB.
+## Download and Reconstruct
+
+Now that the files are in Zenodo, we can download them and reconstruct the files as necessary
+
+i.  Using Lifebit's CloudOS system, start a `jupyterlab notebook` (`2 CPUs with 16 GB RAM`), with 1500 GB.
 
 ii. Start a `bash command shell`
 
@@ -241,7 +243,7 @@ git clone https://github.com/sheynkman-lab/Long-Read-Proteogenomics.git
 cd Long-Read-Proteogenomics/data
 ```
 
-v. Download and Reconstruct
+## Download and Reconstruct
 
 A bash script was created to pull the version of files that are stored within Zenodo
 
