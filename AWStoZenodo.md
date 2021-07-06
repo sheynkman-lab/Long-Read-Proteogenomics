@@ -11,7 +11,7 @@ The data were prepared and stored in the development of the `Sheynkman Lab Long-
 
 <p align="center"><img src="https://github.com/lifebit-ai/dry-bench-skills-for-researchers/blob/adds-mini-courses/assets/lifebitCloudOS.png"  width="250" align="right" ></p>
 
-We used `Lifebit's CloudOS`, use conda to organize our environment, this maybe repeated in an appropriate sized terminal, running a unix environment.
+We used `Lifebit's CloudOS`, use conda to organize our environment.  The documentation here is to be transparent about the data that were moved from the Amazon S3 buckets to Zenodo.  Similar steps may be performed on other datasets following the same step-by-step procedure in an appropriate sized terminal, running a unix environment.
 
 ### i. initialize the bash environment
 
