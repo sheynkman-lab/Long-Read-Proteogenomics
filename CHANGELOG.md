@@ -32,3 +32,30 @@ Enables use of `--config` as a parameter
 ### `Dependencies`
 
 None added
+
+## (Optional new version)
+
+PR: https://github.com/sheynkman-lab/Long-Read-Proteogenomics/pull/140
+
+Added documentation, scripts to pull data from AWS buckets to Zenodo.
+
+The main reasons why ZENODO vs AWS S3 is a good idea:
+
+1. `Data` versioning (number 1 important reason).  In S3 data can be overwritten for the same path at any point possibly breaking the pipeline.
+2. `Cost`, removing data from S3. These data are tiny but the principle stays: The less storage the better
+3. `Access`, Academic users familiarity/accessibility - Most reviewers, readers of the pipeline and paper will know ZENODO and will be able to use the data, AWS has an entry barrier for this group of people
+
+### `Added`
+- `AWStoZenodo.md` - detail steps for downloading data files from Amazon S3 buckets and upload procedure to `Zenodo`
+- `download_aws.sh` - documentation of the files that were extracted from `Amazon S3` buckets.
+- `upload_to_zenodo.sh - documentation of the files that were deposited into `Zenodo` repository for use by the `Long-Read-Protegenomics` pipeline.
+- `download_and_reconstruct.sh` - script to download files from `Zenodo` for use in execution of the pipeline.
+
+### `Fixed`
+
+None:  To Do:  Modify [`cloudos_jurkat_merged_bam.config`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/main/conf/cloudos_jurkat_merged_bam.config) file to use the files from Zenodo in the execution of the `main.nf` pipeline
+
+### `Dependencies`
+
+
+
