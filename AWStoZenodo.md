@@ -34,8 +34,10 @@ Now with the environment ready - begin the pre-requisites
 git clone https://github.com/jhpoelen/zenodo-upload.git
 ```
 
-## Satisfy the Pre-requisites for zenodo upload
+## Satisfy the Pre-requisites for [`zenodo-upload`](https://github.com/jhpoelen/zenodo-upload)
 
+Following the instructions from [`README.md`](https://github.com/jhpoelen/zenodo-upload#readme).
+The following steps were performed.
 
 ### i. Install [`jq`](https://stedolan.github.io/jq/).  
 
@@ -85,7 +87,9 @@ We do this with tar (system provided) and [pigz](http://zlib.net/pigz/)
 
 ## tar and pigz
 
-For each previously arranged file that was in a folder, we will create a tar and zipped folder. We will use [pigz](http://zlib.net/pigz/) after using tar.   
+For each previously arranged file that was in a folder, to make them programmatically accessible the `Nextflow` workflow, we will create a tar and zipped folder.
+
+We will use [pigz](http://zlib.net/pigz/) after using tar.   
 
 Searching [Anaconda](https://anaconda.org/conda-forge/pigz), we find a `conda install`.   Committed to managing our environments with `conda`.   A faster way of installing packages is to use a tool called `mamba` which we choose now to install.
 
@@ -132,7 +136,7 @@ The output of the function is the file `mass_spec.tar`.
 tar cvf mass_spec.tar mass_spec
 ```
 
-### iv. [pigz](http://zlib.net/pigz/) the file for upload
+### v. [pigz](http://zlib.net/pigz/) the file for upload
 
 The [pigz](http://zlib.net/pigz/) is a compression function that is rapid because it runs the compression in parallel. 
 The input to this function is the `mass_spec.tar` file. 
@@ -144,7 +148,8 @@ pigz mass_spec.tar
 
 ## star_genome folder
 
-The genome information required for `star` are in a folder in the AWS S3 Bucket.
+The genome information required for `star` are in a folder in the AWS S3 Bucket.  To make this programmatically accessible through a `Channel` in a `Nextflow` workflow, we will use `tar` and `pigz` to create a `tar.gz`.
+
 Assuming we are in `Long-Read-Proteogenomics/data` directory.
 
 ### i. Make a directory within `Long-Read-Proteogenomics/data` directory
@@ -266,16 +271,17 @@ conda create -n lrp -y
 conda activate lrp
 ```
 
-v. clone the `Long-Read-Proteogenomics` repository
+### iv. clone the `Long-Read-Proteogenomics` repository
 
 ```bash
 git clone https://github.com/sheynkman-lab/Long-Read-Proteogenomics.git
 cd Long-Read-Proteogenomics/data
 ```
 
-## Download and Reconstruct
+### v. Run the `download_and_reconstruct.sh` script
 
 A bash script was created to pull the version of files that are stored within Zenodo
+This may be run from any unix terminal within an appropriately sized machine (2 vCPUs 16GB).
 
 Please run this script from the `Long-Read-Proteogenomics/data` directory.
 
