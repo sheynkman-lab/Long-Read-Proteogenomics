@@ -1,8 +1,11 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5076056.svg)](https://doi.org/10.5281/zenodo.5076056)
+
 # Using Zenodo
 
 To make the data more accessible and FAIR, the indexed files were transfered to Zenodo using [`zenodo-upload`](https://github.com/jhpoelen/zenodo-upload) from the `University of Virginia's Gloria Sheynkman Lab` Amazon `S3` buckets.
 
 The data were prepared and stored in the development of the `Sheynkman Lab Long-read Proteogenomics Pipeline`
+
 
 ## Prepare your environment
 
@@ -10,14 +13,14 @@ The data were prepared and stored in the development of the `Sheynkman Lab Long-
 
 We used `Lifebit's CloudOS`, use conda to organize our environment, this maybe repeated in an appropriate sized terminal, running a unix environment.
 
-i. initialize the bash environment
+### i. initialize the bash environment
 
 ```bash
 conda init bash
 exec -l bash
 ```
 
-ii. create and activate a new conda environment `lrp`.
+### ii. create and activate a new conda environment `lrp`.
 ```bash
 conda create -n lrp
 conda activate lrp
@@ -34,19 +37,19 @@ git clone https://github.com/jhpoelen/zenodo-upload.git
 ## Satisfy the Pre-requisites for zenodo upload
 
 
-i. Install [`jq`](https://stedolan.github.io/jq/).  
+### i. Install [`jq`](https://stedolan.github.io/jq/).  
 
 ```bash
 conda install -c conda-forge jq -y
 ```
 
-ii. Installed `curl`
+### ii. Installed `curl`
 
 ```bash
 conda install -c conda-forge curl -y
 ```
 
-iii. Bash
+### iii. Bash
 
 already satisfied.
 
@@ -57,19 +60,19 @@ already satisfied.
 Data were on aws.  Add `awscli` the command line library for AWS S3 buckets.
 For organizational principals, begin in the data directory of the recently cloned file.
 
-i. install command-line interface to Amazon Web Services `awscli`
+### i. install command-line interface to Amazon Web Services `awscli`
 
 ```bash
 conda install -c conda-forge awscli -y
 ```
 
-ii. clone the repository
+### ii. clone the repository
 
 ```bash
 git clone https://github.com/sheynkman-lab/Long-Read-Proteogenomics.git
 ```
 
-iii. download the files
+### iii. download the files
 
 ```bash
 cd Long-Read-Proteogenomics/data
@@ -101,25 +104,39 @@ The fractionated proteomic data files were arranged in a folder in the AWS S3 bu
 
 Assuming we are in `Long-Read-Proteogenomics/data` directory.
 
-i. Make the directory within `Long-Read-Proteogenomics/data` directory
+### i. Make the directory within `Long-Read-Proteogenomics/data` directory
 
 ```bash
 mkdir mass_spec
 ```
 
-ii. Move the mass_spec files to the directory just created
+### ii. Move the mass_spec files to the directory just created
 
 ```bash
 mv 120426_* mass_spec
 ```
 
-iii. Tar the files 
+### iii. Inspect the files
+
+Check to make sure the files have been successfully transferred.
+
+### iv. `tar` the files 
+
+Using the unix command `tar`, we create 'c', verify 'v' the file
+following specified with the option 'f'.  Assembled into the single command `tar cvf`.
+
+The input to the `tar cvf` function is the directory `mass_spec`.
+The output of the function is the file `mass_spec.tar`.
 
 ```bash
 tar cvf mass_spec.tar mass_spec
 ```
 
-iv. Pigz zip the tar file
+### iv. [pigz](http://zlib.net/pigz/) the file for upload
+
+The [pigz](http://zlib.net/pigz/) is a compression function that is rapid because it runs the compression in parallel. 
+The input to this function is the `mass_spec.tar` file. 
+The output of this function is the smaller `mass_spec.tar.gz`
 
 ```bash
 pigz mass_spec.tar
@@ -130,13 +147,13 @@ pigz mass_spec.tar
 The genome information required for `star` are in a folder in the AWS S3 Bucket.
 Assuming we are in `Long-Read-Proteogenomics/data` directory.
 
-i. Make a directory within `Long-Read-Proteogenomics/data` directory
+### i. Make a directory within `Long-Read-Proteogenomics/data` directory
 
 ```bash
 mkdir star_genome
 ```
 
-ii. Move the `star_genome` files into the directory just created
+### ii. Move the `star_genome` files into the directory just created
 
 Move the star_genome files from the `Long-Read-Proteogenomics/data` directory to the 
 newly created directory `Long-Read-Proteogenomics/data/star_genome/`.
@@ -145,7 +162,7 @@ newly created directory `Long-Read-Proteogenomics/data/star_genome/`.
 bash ../star_genome.sh
 ```
 
-iii. Inspect and then tar
+### iii. Inspect the directory regarding its contents.
 
 ```bash
 ls star_genome
@@ -165,71 +182,84 @@ star_genome/sjdbList.fromGTF.out.tab
 star_genome/transcriptInfo.tab
 ```
 
-iv. tar these files in the subdirectory
+### iv. tar these files in the subdirectory
+
+Using the tar command we create 'c', verify 'v' the file
+following specified with the option 'f'.  Assembled into the single command `tar cvf`.
+The input to the `tar cvf` function is the directory `star_genome`.
+The output of the function is the file `star_genome.tar`.
 
 ```bash
 tar cvf star_genome.tar star_genome
 ```
 
-v. pigz zip the file for upload
+### v. [pigz](http://zlib.net/pigz/) the file for upload
+
+The [pigz](http://zlib.net/pigz/) is a compression function that is rapid because it runs the compression in parallel. 
+The input to this `parallel` zip function `pzip` is the `star_genome.tar` file.
+The output of the [pigz](http://zlib.net/pigz/) function is the `star_genome.tar.gz` file.
 
 ```bash
 pigz star_genome.tar
 ```
 
+### vi.  Inspect the contents (optional)
+
+To inspect the contents of this now tar'd and zip'd file, run the following command.  The large `SA` file will take a while for the inspection to work through, so do not be surprised by the delay.
+
+```bash
+tar --list star_genome.tar.gz
+```
 
 ## upload to Zenodo
 
-Uploaded after reserving the `DOI` from Zenodo and getting a personal `zenodo token`, following the instructions [zenodo-upload](https://github.com/jhpoelen/zenodo-upload), I set the ZENODO_TOKEN environment variable.  
+To upload files to Zenodo, we take advantage of the application [zenodo-upload](https://github.com/jhpoelen/zenodo-upload).  Following the directions from the site: creating a repository, obtaining a `Zenodo Token` and executing the script to upload the files to the repository.
+
+### i. Create a Repository on Zenodo.
+
+Either create a new repository, or create a new version of your repository, to put your data into the repository.  Be sure you have created and saved but not published the repository on Zenodo.  This puts the data in a state ready to receive new data.  
+
+Pressing `Save` places the repository into a ready-state able to receive your data.  
+Pressing `Publish`, places the version of the repository into a closed state, no longer ready to receive updates to the data repository.  
+
+If you have pressed `Save` you are ready to go,
+If you have pressed `Save` and `Publish` you are not and need to make a new version of the repository to put the repository back into the `ready-to-receive` state.
+
+Press `Save` but do not `publish`. Now the repository is ready for data.
+
+### ii. Obtain a personal `Zenodo Token`.
+
+Uploaded after reserving the `DOI` from Zenodo and getting a personal `Zenodo Token`, following the instructions [zenodo-upload](https://github.com/jhpoelen/zenodo-upload).  In short, under profile at the time of this writing on the upper right side of the browser window, scroll down and select `applications`.  There you will be able to generate a personal token.   The Deposit needs to be in a state where it can receive the data by this programmatic upload, so the new repository or version of the repository must be in a `Save` state and not yet `Published`.   The steps are outlined in further detail below.
+
+Once you have your token, copy it, as it will disappear, the token is a secret key to allow you to upload the file.   Once copied, inside a terminal window, set an environment variable `ZENODO_TOKEN`.
 
 ```bash
 export ZENODO_TOKEN=[`set to your own personal zenodo token`]
 ```
 
-## Create or make a new version of a Zenodo repository and obtain a personal upload token
+### iii.  Upload the files to `Zenodo`
 
-First, be sure you have created and saved but not published the repository on Zenodo.  
-If you need to make an update to the respository, you need to make a new version and repeat to `Save` but do not `publish`.   This allows you to upload the files.  Second, you will need to obtain a `Zenodo token`
-
-Therefore two requirements need to be satisfied to upload data to Zenodo
-
-i. You have an account on Zenodo and you have obtained a token.
-
-Follow the steps for obtaining a token from [jhpoelen](https://github.com/jhpoelen/zenodo-upload#usage)
-
-ii. Create the repository. upload to **Zenodo**
-
-There are several files in this so we have a script, `upload-to-zenodo.sh`.   The `zenodo-upload` procedure has execution from the cloned repository of `zenodo-upload
-
-A script was created to upload the files that have been downloaded and the two files that have been tar'd and zipped (`mass_spec.tar.gz` and `star_genome.tar.gz`)
-
-Now we upload them to the new deposit, save and publish on the Zenodo site
-
-i. From the `Long-Read-Proteogenomics` subdirectory
-
-The script was designed to run from the `Long-Read-Proteogenomics` subdirectory, move there if not already there
+The script documenting the uploading of the prepared files in `Long-Read-Proteogenomics/data` directory is `upload_to_zenodo.sh`
+Run from `Long-Read-Proteogenomics` directory.
 
 ```bash
 bash upload_to_zenodo.sh
  ```
 
-
 ## Download and Reconstruct
 
 Now that the files are in Zenodo, we can download them and reconstruct the files as necessary
 
-i.  Using Lifebit's CloudOS system, start a `jupyterlab notebook` (`2 CPUs with 16 GB RAM`), with 1500 GB.
+### i.  Using Lifebit's CloudOS system, start a `jupyterlab notebook` (`2 CPUs with 16 GB RAM`), with 500 GB.
 
-ii. Start a `bash command shell`
-
-iii. Initialize `bash`
+### ii. Initialize `bash`
 
 ```bash
 conda init bash
 exec -l bash
 ```
 
-iv. Create a `conda` environment
+### iii. Create a `conda` environment
 
 ```bash
 conda create -n lrp -y
@@ -247,6 +277,7 @@ cd Long-Read-Proteogenomics/data
 
 A bash script was created to pull the version of files that are stored within Zenodo
 
+Please run this script from the `Long-Read-Proteogenomics/data` directory.
 
 ```bash
 bash download_and_reconstruct.sh
