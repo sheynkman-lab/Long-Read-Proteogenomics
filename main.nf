@@ -437,12 +437,8 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
 
           script:
           """
-          # Decompress STAR index if compressed
-          if [[ $genome_dir == *.tar.gz ]]; then
-              tar -xvzf $genome_dir
-          fi
           STAR --runThreadN ${task.cpus} \
-          --genomeDir ${genome_dir.toString().minus('.tar.gz')}  \
+          --genomeDir $genome_dir  \
           --outFileNamePrefix ./${params.name} \
           --readFilesIn $fastq_reads \
           --readFilesCommand zcat
