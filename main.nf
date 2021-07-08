@@ -113,11 +113,14 @@ ch_metamorpheus_toml.into{
   ch_metamorpheus_toml_pacbio_hybrid
 }
 
-if(params.mass_spec != false){
-  ch_mass_spec_raw = Channel.fromPath("${params.mass_spec}/*.raw")
-  ch_mass_spec_mzml = Channel.fromPath("${params.mass_spec}/*.{mzml,mzML}")
+if(params.mass_spec != false) && !params.mass_spec_endsWith("tar.gz")) {
+   ch_mass_spec_raw = Channel.fromPath("${params.mass_spec}/*.raw")
+   ch_mass_spec_mzml = Channel.fromPath("${params.mass_spec}/*.{mzml,mzML}")
 }
-else{
+if(params.mass_spec != false && params.mass_spec.endsWith("tar.gz")){
+   ch_mass_spec_raw_mzml_tar_gz = Channel.fromPath("${params.mass_spec}")
+}
+if (!params.mass_spec) {
   ch_mass_spec_raw = Channel.from("no mass spec")
   ch_mass_spec_mzml = Channel.from("no mass spec")
 }
@@ -130,6 +133,28 @@ if (params.mass_spec != false & params.rescue_resolve_toml == false){
   ch_rr_toml = Channel.from("no mass spec")
 }
 
+/*--------------------------------------------------
+Untar & decompress
+---------------------------------------------------*/
+if (params.mass_spec.endsWith("tar.gz")) {
+   process untar_mass_spec {
+      tag "${raw_mzml_tar_gz}"
+      cpus 1
+
+      input:
+      file(raw_mzml_tar_gz) from ch_mass_spec_raw_mzml_tar_gz
+
+      output:
+      file("${raw_mzml_tar_gz.simpleName)/*.raw") optional true into ch_mass_spec_raw
+      file("${raw_mzml_tar_gz.simpleName}/*.{mzml,mzML}") optional true into ch_mass_spec_mz
+
+      script:
+      """
+      tar xvzf $raw_mzml_tar_gz
+      """
+
+    }
+}
 
 /*--------------------------------------------------
 Reference Tables 
@@ -386,8 +411,12 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
 
           script:
           """
+          # Decompress STAR index if compressed
+          if [[ $genome_dir == *.tar.gz ]]; then
+              tar -xvzf $genome_dir
+          fi
           STAR --runThreadN ${task.cpus} \
-          --genomeDir $genome_dir \
+          --genomeDir ${genome_dir.toString().minus('.tar.gz')}  \
           --outFileNamePrefix ./${params.name} \
           --readFilesIn $fastq_reads \
           --readFilesCommand zcat
