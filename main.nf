@@ -113,14 +113,16 @@ ch_metamorpheus_toml.into{
   ch_metamorpheus_toml_pacbio_hybrid
 }
 
-if (params.mass_spec != false) && !params.mass_spec.endsWith("tar.gz")) {
-   ch_mass_spec_raw = Channel.fromPath("${params.mass_spec}/*.raw")
-   ch_mass_spec_mzml = Channel.fromPath("${params.mass_spec}/*.{mzml,mzML}")
+if(params.mass_spec != false && !params.mass_spec.endsWith("tar.gz")){
+  ch_mass_spec_raw = Channel.fromPath("${params.mass_spec}/*.raw")
+  ch_mass_spec_mzml = Channel.fromPath("${params.mass_spec}/*.{mzml,mzML}")
 }
-if (params.mass_spec != false && params.mass_spec.endsWith("tar.gz")){
-   ch_mass_spec_raw_mzml_tar_gz = Channel.fromPath("${params.mass_spec}")
+
+if(params.mass_spec != false && params.mass_spec.endsWith("tar.gz")){
+  ch_mass_spec_raw_mzml_tar_gz = Channel.fromPath("${params.mass_spec}")
 }
-if (!params.mass_spec) {
+
+if(!params.mass_spec){
   ch_mass_spec_raw = Channel.from("no mass spec")
   ch_mass_spec_mzml = Channel.from("no mass spec")
 }
@@ -136,8 +138,9 @@ if (params.mass_spec != false & params.rescue_resolve_toml == false){
 /*--------------------------------------------------
 Untar & decompress
 ---------------------------------------------------*/
+
 if (params.mass_spec.endsWith("tar.gz")) {
-   process untar_mass_spec {
+    process untar_mass_spec {
       tag "${raw_mzml_tar_gz}"
       cpus 1
 
@@ -145,14 +148,13 @@ if (params.mass_spec.endsWith("tar.gz")) {
       file(raw_mzml_tar_gz) from ch_mass_spec_raw_mzml_tar_gz
 
       output:
-      file("${raw_mzml_tar_gz.simpleName)/*.raw") optional true into ch_mass_spec_raw
-      file("${raw_mzml_tar_gz.simpleName}/*.{mzml,mzML}") optional true into ch_mass_spec_mz
+      file("${raw_mzml_tar_gz.simpleName}/*.raw") optional true into ch_mass_spec_raw
+      file("${raw_mzml_tar_gz.simpleName}/*.{mzml,mzML}") optional true into ch_mass_spec_mzml
 
       script:
       """
       tar xvzf $raw_mzml_tar_gz
       """
-
     }
 }
 
