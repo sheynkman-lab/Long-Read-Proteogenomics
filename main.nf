@@ -113,7 +113,7 @@ ch_metamorpheus_toml.into{
   ch_metamorpheus_toml_pacbio_hybrid
 }
 
-if (params.mass_spec != false) && !params.mass_spec_endsWith("tar.gz")) {
+if (params.mass_spec != false) && !params.mass_spec.endsWith("tar.gz")) {
    ch_mass_spec_raw = Channel.fromPath("${params.mass_spec}/*.raw")
    ch_mass_spec_mzml = Channel.fromPath("${params.mass_spec}/*.{mzml,mzML}")
 }
