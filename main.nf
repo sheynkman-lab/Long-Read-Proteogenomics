@@ -59,10 +59,8 @@ log.info "hexamer                               : ${params.hexamer}"
 log.info "logit_model                           : ${params.logit_model}"
 log.info "sample_kallisto_tpm                   : ${params.sample_kallisto_tpm}"
 log.info "normalized_ribo_kallisto              : ${params.normalized_ribo_kallisto}"
-log.info "uniprot_fasta                         : ${params.uniprot_fasta}"
 log.info "uniprot_protein_fasta                 : ${params.uniprot_protein_fasta}"
-log.info "protein_coding_only                   : ${params.protein_coding_only}"
-log.info "refine_cutoff                         : ${params.refine_cutoff}"
+log.info "coding_score_cutoff                         : ${params.coding_score_cutoff}"
 log.info "mass_spec                             : ${params.mass_spec}"
 log.info ""
 
@@ -188,10 +186,6 @@ ch_gene_isoname.into{
   ch_gene_isoname_pep_viz
   ch_gene_isoname_pep_analysis
 }
-
-
-
-
 
 
 if (params.gencode_translation_fasta.endsWith('.gz')) {
@@ -743,7 +737,7 @@ Refined DB Generation
 ---------------------------------------------------*/
 process refine_orf_database {
   cpus 1
-  tag "${best_orfs}, ${sample_fasta}, ${params.protein_coding_only}, ${protein_coding_genes}, ${params.refine_cutoff}" 
+  tag "${best_orfs}, ${sample_fasta}, ${params.coding_score_cutoff}" 
 
   publishDir "${params.outdir}/${params.name}/refined_database/", mode: 'copy'
 
@@ -763,7 +757,7 @@ process refine_orf_database {
   --name ${params.name} \
   --orfs $best_orfs \
   --pb_fasta $sample_fasta \
-  --coding_score_cutoff ${params.refine_cutoff} \
+  --coding_score_cutoff ${params.coding_score_cutoff} \
   """
 }
 ch_refined_info.into{
@@ -1063,7 +1057,7 @@ process make_hybrid_database{
     file(gene_lens) from ch_gene_lens_aggregate
     file(pb_fasta) from ch_filtered_protein_fasta_aggregate
     file(gc_fasta) from ch_gencode_protein_fasta_hybrid
-    file(refined_info) from ch_refined_info_aggregate
+    file(refined_info) from ch_renamed_refined_info
     file(sample_cds) from ch_filtered_cds_agg
   output:
     file("*")
@@ -1198,40 +1192,6 @@ process metamorpheus_with_uniprot_database{
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.UniProt.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.UniProt.tsv
         """
-}
-
-/*--------------------------------------------------
-Peptide Analysis
- * Generate a table comparing MS peptide results
- * between the PacBio and GENCODE databases. 
----------------------------------------------------*/
-process peptide_analysis{
-  publishDir "${params.outdir}/${params.name}/peptide_analysis/", mode: 'copy'
-    when:
-      params.mass_spec != false
-    
-    input:
-      file(gencode_peptides) from ch_gencode_peptides
-      file(gene_isoname) from ch_gene_isoname_pep_analysis
-      file(refined_fasta) from ch_refined_fasta_pep_analysis
-      file(filtered_fasta) from ch_filtered_protein_fasta_pep_analysis
-      file(hybrid_fasta) from ch_sample_hybrid_fasta_pep_analysis
-      file(pb_gene) from ch_pb_gene_peptide_analysis
-
-    output:
-      file("*")
-
-    script:
-      """
-      peptide_analysis.py \
-      -gmap $gene_isoname \
-      --gencode_peptides $gencode_peptides \
-      --pb_refined_fasta $refined_fasta \
-      --pb_filtered_fasta $filtered_fasta \
-      --pb_hybrid_fasta $hybrid_fasta \
-      --pb_gene $pb_gene \
-      -odir ./
-      """
 }
 
 
@@ -1401,6 +1361,42 @@ process metamorpheus_with_sample_specific_database_rescue_resolve{
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.rescue_resolve.tsv
         """
 }
+
+/*--------------------------------------------------
+Peptide Analysis
+ * Generate a table comparing MS peptide results
+ * between the PacBio and GENCODE databases. 
+---------------------------------------------------*/
+process peptide_analysis{
+  publishDir "${params.outdir}/${params.name}/peptide_analysis/", mode: 'copy'
+    when:
+      params.mass_spec != false
+    
+    input:
+      file(gencode_peptides) from ch_gencode_peptides
+      file(gene_isoname) from ch_gene_isoname_pep_analysis
+      file(refined_fasta) from ch_refined_fasta_pep_analysis
+      file(filtered_fasta) from ch_filtered_protein_fasta_pep_analysis
+      file(hybrid_fasta) from ch_sample_hybrid_fasta_pep_analysis
+      file(pb_gene) from ch_pb_gene_peptide_analysis
+
+    output:
+      file("*")
+
+    script:
+      """
+      peptide_analysis.py \
+      -gmap $gene_isoname \
+      --gencode_peptides $gencode_peptides \
+      --pb_refined_fasta $refined_fasta \
+      --pb_filtered_fasta $filtered_fasta \
+      --pb_hybrid_fasta $hybrid_fasta \
+      --pb_gene $pb_gene \
+      -odir ./
+      """
+}
+
+
 
 /*--------------------------------------------------
 Reference Track Visualization
