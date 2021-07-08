@@ -119,7 +119,7 @@ if(params.mass_spec != false && !params.mass_spec.endsWith("tar.gz")){
 }
 
 if(params.mass_spec != false && params.mass_spec.endsWith("tar.gz")){
-  ch_mass_spec_raw_mzml_tar_gz = Channel.value(file(params.mass_spec_raw_mzml_tar_gz))
+  ch_mass_spec_raw_mzml_tar_gz = Channel.value(file(params.mass_spec))
 }
 
 if(!params.mass_spec){
