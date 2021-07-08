@@ -135,6 +135,8 @@ if (params.mass_spec != false & params.rescue_resolve_toml == false){
   ch_rr_toml = Channel.from("no mass spec")
 }
 
+
+
 /*--------------------------------------------------
 Untar & decompress
 ---------------------------------------------------*/
@@ -363,13 +365,13 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
    *   - generate star genome index (skipped if provided) 
    *   - star read alignment 
   ---------------------------------------------------*/
-  if(params.star_genome_dir != false){
+  if(params.star_genome_dir != false && !params.star_genome_dir.endsWith("tar.gz")){
       Channel
       .fromPath(params.star_genome_dir, type:'dir')
       .set{ch_genome_dir}
   }
-  else{
-   if(params.star_genome_dir != false && params.star_genome_dir.endsWith("tar.gz")){
+ 
+  if(params.star_genome_dir != false && params.star_genome_dir.endsWith("tar.gz")){
     Channel
       .fromPath(params.star_genome_dir)
       .set{ch_genome_dir_tar_gz}
@@ -390,10 +392,10 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
       """
     }
   }
-  
+
+
   if(!params.star_genome_dir){
-  
-      process star_generate_genome{
+    process star_generate_genome{
           cpus params.max_cpus
           publishDir "${params.outdir}/${params.name}/star_index", mode: "copy"
           
@@ -438,7 +440,7 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
           script:
           """
           STAR --runThreadN ${task.cpus} \
-          --genomeDir $genome_dir  \
+          --genomeDir $genome_dir \
           --outFileNamePrefix ./${params.name} \
           --readFilesIn $fastq_reads \
           --readFilesCommand zcat
