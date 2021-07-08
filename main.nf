@@ -369,6 +369,30 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
       .set{ch_genome_dir}
   }
   else{
+   if(params.star_genome_dir != false && params.star_genome_dir.endsWith("tar.gz")){
+    Channel
+      .fromPath(params.star_genome_dir)
+      .set{ch_genome_dir_tar_gz}
+
+    process untar_star_genome_dir {
+      tag "${genome_dir_tar_gz}"
+      cpus 1
+
+      input:
+      file(genome_dir_tar_gz) from ch_genome_dir_tar_gz
+
+      output:
+      file("star_genome") into ch_genome_dir
+
+      script:
+      """
+      tar xvzf $genome_dir_tar_gz
+      """
+    }
+  }
+  
+  if(!params.star_genome_dir){
+  
       process star_generate_genome{
           cpus params.max_cpus
           publishDir "${params.outdir}/${params.name}/star_index", mode: "copy"
