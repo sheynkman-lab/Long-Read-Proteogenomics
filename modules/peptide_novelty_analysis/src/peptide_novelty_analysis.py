@@ -67,4 +67,3 @@ peps_novel_to_gencode.to_csv(f'{args.name}.pacbio_novel_peptides_to_gencode.tsv'
 
 peps_novel_to_uniprot= peps[peps['seq'].isin(novel_peps_to_uniprot)]
 peps_novel_to_uniprot.to_csv(f'{args.name}.pacbio_novel_peptides_to_uniprot.tsv', sep='\t', index=None)
-
