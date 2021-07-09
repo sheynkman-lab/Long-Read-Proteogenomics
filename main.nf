@@ -105,6 +105,7 @@ if (params.metamorpheus_toml==false){
 else{
   ch_metamorpheus_toml = Channel.value(file(params.metamorpheus_toml))
 }
+
 ch_metamorpheus_toml.into{
   ch_metamorpheus_toml_gencode
   ch_metamorpheus_toml_uniprot
