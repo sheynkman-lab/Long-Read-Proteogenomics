@@ -6,6 +6,13 @@ To make the data more accessible and FAIR, the indexed files were transfered to 
 
 The data were prepared and stored in the development of the `Sheynkman Lab Long-read Proteogenomics Pipeline`
 
+Using Nextflow, configuration items can access locations in Google Compute Platform (GCP) buckets (`gs://`), Amazon Web Services (AWS) buckets (`s3://`) and Zenodo locations (`https://`) seamlessly.
+
+The main reasons why ZENODO vs AWS S3: or GCP GS: are:
+
+1. `Data versioning`: (number 1 important reason), In S3 or GS, data can be overwritten for the same path at any point possibly breaking the pipeline.
+2. `Cost`: These data are tiny but the principle stays: The less storage the better
+3. `Access`: Most reviewers, readers of the pipeline and paper will know `ZENODO` and will be able to use the data, AWS and GCP has an entry barrier for many.
 
 ## Prepare your environment
 
@@ -278,10 +285,13 @@ git clone https://github.com/sheynkman-lab/Long-Read-Proteogenomics.git
 cd Long-Read-Proteogenomics/data
 ```
 
-### v. Run the `download_and_reconstruct.sh` script
+### v. Run the `download_and_reconstruct.sh` script (optional)
 
-A bash script was created to pull the version of files that are stored within Zenodo
-This may be run from any unix terminal within an appropriately sized machine (2 vCPUs 16GB).
+To run this pipeline using the `ZENODO` location does not require any downloading or movement of data.
+
+Nevertheless, a bash script is provided to illustrate how one could pull the version of files that are stored within Zenodo.  This may be run from any unix terminal within an appropriately sized machine (2 vCPUs 16GB).
+
+In general, it is not best practice to move data, download data or copy data.  Data movement should be minimized and discouraged to prevent integrity, limit costs, and ensoure consistency with the results.
 
 Please run this script from the `Long-Read-Proteogenomics/data` directory.
 
