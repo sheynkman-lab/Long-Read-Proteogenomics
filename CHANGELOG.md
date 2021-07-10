@@ -57,5 +57,19 @@ None:  To Do:  Modify [`cloudos_jurkat_merged_bam.config`](https://github.com/sh
 
 ### `Dependencies`
 
+## v0.2.1
+
+PR: https://github.com/sheynkman-lab/Long-Read-Proteogenomics/pull/145
+
+### `Added`
+- Optional input into pipeline - metamorpheus_toml for user controlled toml file used in search
+
+### `Fixed`
+- novel peptide: set had 'append' rather than 'add' command - bug from change from list to set after incorporating UniProt 
+
+### `Dependencies`
+
+None Added
+
 
 

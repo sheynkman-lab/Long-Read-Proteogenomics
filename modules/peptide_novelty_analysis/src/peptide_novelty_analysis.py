@@ -52,9 +52,9 @@ for pep in sample_peptides:
         pep = pep.split('|')[0]
     # is the base peptide sequence in the ref database
     if pep not in gencode_all_sequences:
-        novel_peps_to_gencode.append(pep)
+        novel_peps_to_gencode.add(pep)
     if pep not in uniprot_all_sequences:
-        novel_peps_to_uniprot.append(pep)
+        novel_peps_to_uniprot.add(pep)
 novel_peps = novel_peps_to_gencode.intersection(novel_peps_to_uniprot)
 
 # write out the pacbio accession and genename for each novel peptide
@@ -67,4 +67,3 @@ peps_novel_to_gencode.to_csv(f'{args.name}.pacbio_novel_peptides_to_gencode.tsv'
 
 peps_novel_to_uniprot= peps[peps['seq'].isin(novel_peps_to_uniprot)]
 peps_novel_to_uniprot.to_csv(f'{args.name}.pacbio_novel_peptides_to_uniprot.tsv', sep='\t', index=None)
-
