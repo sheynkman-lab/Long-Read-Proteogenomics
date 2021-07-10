@@ -67,6 +67,7 @@ log.info "mass_spec                             : ${params.mass_spec}"
 log.info "sqanti classification                 : ${params.sqanti_classification}"
 log.info "sqanti fasta                          : ${params.sqanti_fasta}"
 log.info "sqanti gtf                            : ${params.sqanti_gtf}"
+log.info "metamorpheus toml                     : ${params.metamorpheus_toml}"
 log.info ""
 
 if (!params.gencode_gtf) exit 1, "Cannot find gtf file for parameter --gencode_gtf: ${params.gencode_gtf}"
@@ -127,7 +128,7 @@ ch_sample_kallisto = Channel.value(file(params.sample_kallisto_tpm))
 if (!params.normalized_ribo_kallisto) exit 1, "Cannot find any normalized_ribo_kallisto file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}"
 ch_normalized_ribo_kallisto = Channel.value(file(params.normalized_ribo_kallisto))
 
-if (!params.metamorpheus_toml) exit 1, "Cannot find any file for parameter --metamorpheus_toml: ${params.metamorpheus_toml}
+if (!params.metamorpheus_toml) exit 1, "Cannot find any file for parameter --metamorpheus_toml: ${params.metamorpheus_toml}"
 
 // if (!params.fastq_read_1) exit 1, "No file found for the parameter --fastq_read_1 at the location ${params.fastq_read_1}"
 // if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
