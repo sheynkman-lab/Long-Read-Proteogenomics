@@ -196,65 +196,6 @@ if (params.mass_spec.endsWith("tar.gz")) {
     }
 }
 
-/*--------------------------------------------------
-Reference Tables 
----------------------------------------------------*/
-
-process generate_reference_tables {
-  tag "${gencode_gtf}, ${gencode_transcript_fasta}"
-  cpus 1
-  publishDir "${params.outdir}/${params.name}/reference_tables/", mode: 'copy'
-
-  input:
-  file(gencode_gtf) from ch_gencode_gtf
-  file(gencode_transcript_fasta) from ch_gencode_transcript_fasta_uncompressed
-  
-  output:
-  file("ensg_gene.tsv") into ch_ensg_gene
-  file("enst_isoname.tsv") into ch_enst_isoname
-  file("gene_ensp.tsv") into ch_gene_ensp
-  file("gene_isoname.tsv") into ch_gene_isoname
-  file("isoname_lens.tsv") into ch_isoname_lens
-  file("gene_lens.tsv") into ch_gene_lens
-  file("protein_coding_genes.txt") into ch_protein_coding_genes
-  
-  script:
-  """
-  prepare_reference_tables.py \
-  --gtf $gencode_gtf \
-  --fa $gencode_transcript_fasta \
-  --ensg_gene ensg_gene.tsv \
-  --enst_isoname enst_isoname.tsv \
-  --gene_ensp gene_ensp.tsv \
-  --gene_isoname gene_isoname.tsv \
-  --isoname_lens isoname_lens.tsv \
-  --gene_lens gene_lens.tsv \
-  --protein_coding_genes protein_coding_genes.txt
-  """
-}
-
-// partition channels for use by multiple modules
-ch_protein_coding_genes.into{
-  ch_protein_coding_genes_gencode_fasta
-  ch_protein_coding_genes_filter_sqanti
-}
-
-ch_ensg_gene.into{
-  ch_ensg_gene_filter
-  ch_ensg_gene_six_frame
-  ch_ensg_gene_pclass
-}
-ch_gene_lens.into{
-  ch_gene_lens_transcriptome
-  ch_gene_lens_aggregate
-}
-
-ch_gene_isoname.into{
-  ch_gene_isoname_pep_viz
-  ch_gene_isoname_pep_analysis
-}
-
-
 if (params.gencode_translation_fasta.endsWith('.gz')) {
   process gunzip_gencode_translation_fasta {
   tag "decompress gzipped gencode translation fasta"
@@ -344,6 +285,66 @@ if (params.uniprot_protein_fasta.endsWith('.gz')) {
   """
   }
 }
+
+/*--------------------------------------------------
+Reference Tables 
+---------------------------------------------------*/
+
+process generate_reference_tables {
+  tag "${gencode_gtf}, ${gencode_transcript_fasta}"
+  cpus 1
+  publishDir "${params.outdir}/${params.name}/reference_tables/", mode: 'copy'
+
+  input:
+  file(gencode_gtf) from ch_gencode_gtf
+  file(gencode_transcript_fasta) from ch_gencode_transcript_fasta_uncompressed
+  
+  output:
+  file("ensg_gene.tsv") into ch_ensg_gene
+  file("enst_isoname.tsv") into ch_enst_isoname
+  file("gene_ensp.tsv") into ch_gene_ensp
+  file("gene_isoname.tsv") into ch_gene_isoname
+  file("isoname_lens.tsv") into ch_isoname_lens
+  file("gene_lens.tsv") into ch_gene_lens
+  file("protein_coding_genes.txt") into ch_protein_coding_genes
+  
+  script:
+  """
+  prepare_reference_tables.py \
+  --gtf $gencode_gtf \
+  --fa $gencode_transcript_fasta \
+  --ensg_gene ensg_gene.tsv \
+  --enst_isoname enst_isoname.tsv \
+  --gene_ensp gene_ensp.tsv \
+  --gene_isoname gene_isoname.tsv \
+  --isoname_lens isoname_lens.tsv \
+  --gene_lens gene_lens.tsv \
+  --protein_coding_genes protein_coding_genes.txt
+  """
+}
+
+// partition channels for use by multiple modules
+ch_protein_coding_genes.into{
+  ch_protein_coding_genes_gencode_fasta
+  ch_protein_coding_genes_filter_sqanti
+}
+
+ch_ensg_gene.into{
+  ch_ensg_gene_filter
+  ch_ensg_gene_six_frame
+  ch_ensg_gene_pclass
+}
+ch_gene_lens.into{
+  ch_gene_lens_transcriptome
+  ch_gene_lens_aggregate
+}
+
+ch_gene_isoname.into{
+  ch_gene_isoname_pep_viz
+  ch_gene_isoname_pep_analysis
+}
+
+
 
 /*--------------------------------------------------
 GENCODE Database
