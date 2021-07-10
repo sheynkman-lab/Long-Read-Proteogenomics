@@ -80,6 +80,36 @@ if (params.gencode_translation_fasta.endsWith('.gz')){
   ch_gencode_translation_fasta_uncompressed = Channel.value(file(params.gencode_translation_fasta))
 }
 
+if (params.gencode_transcript_fasta.endsWith('.gz')){
+  ch_gencode_transcript_fasta = Channel.value(file(params.gencode_transcript_fasta))
+} else {
+  ch_gencode_transcript_fasta_uncompressed = Channel.value(file(params.gencode_transcript_fasta))
+}
+
+if (params.gencode_fasta.endsWith('.gz')){
+  ch_gencode_fasta = Channel.value(file(params.gencode_fasta))
+} else {
+  ch_gencode_fasta_uncompressed = Channel.value(file(params.gencode_fasta))
+}
+
+if (params.genome_fasta.endsWith('.gz')){
+  ch_genome_fasta = Channel.value(file(params.genome_fasta))
+} else {
+  ch_genome_fasta_uncompressed = Channel.value(file(params.genome_fasta))
+}
+
+if (params.uniprot_protein_fasta.endsWith('.gz')){
+  ch_uniprot_protein_fasta = Channel.value(file(params.uniprot_protein_fasta))
+} else {
+  ch_uniprot_protein_fasta_uncompressed = Channel.value(file(params.uniprot_protein_fasta))
+}
+
+if (params.sqanti_fasta.endsWith('.gz')){
+  ch_sqanti_fasta = Channel.value(file(params.sqanti_fasta))
+} else {
+  ch_sqanti_fasta_uncompressed = Channel.value(file(params.sqanti_fasta))
+}
+
 if (!params.hexamer) exit 1, "Cannot find headmer file for parameter --hexamer: ${params.hexamer}"
 ch_hexamer = Channel.value(file(params.hexamer))
 
@@ -91,9 +121,6 @@ ch_sample_kallisto = Channel.value(file(params.sample_kallisto_tpm))
 
 if (!params.normalized_ribo_kallisto) exit 1, "Cannot find any normalized_ribo_kallisto file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}"
 ch_normalized_ribo_kallisto = Channel.value(file(params.normalized_ribo_kallisto))
-
-if (!params.uniprot_protein_fasta) exit 1, "Cannot find any file for parameter --uniprot_protein_fasta: ${params.uniprot_protein_fasta}"
-ch_uniprot_protein_fasta = Channel.value(file(params.uniprot_protein_fasta))
 
 // if (!params.fastq_read_1) exit 1, "No file found for the parameter --fastq_read_1 at the location ${params.fastq_read_1}"
 // if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
@@ -137,9 +164,8 @@ if (params.mass_spec != false & params.rescue_resolve_toml == false){
 }
 
 
-
 /*--------------------------------------------------
-Untar & decompress
+Untar & decompress mass spec file
 ---------------------------------------------------*/
 
 if (params.mass_spec.endsWith("tar.gz")) {
@@ -172,7 +198,7 @@ process generate_reference_tables {
 
   input:
   file(gencode_gtf) from ch_gencode_gtf
-  file(gencode_transcript_fasta) from ch_gencode_transcript_fasta
+  file(gencode_transcript_fasta) from ch_gencode_transcript_fasta_uncompressed
   
   output:
   file("ensg_gene.tsv") into ch_ensg_gene
@@ -220,13 +246,9 @@ ch_gene_isoname.into{
 }
 
 
-
-
-
-
 if (params.gencode_translation_fasta.endsWith('.gz')) {
   process gunzip_gencode_translation_fasta {
-  tag "decompress gzipped fasta"
+  tag "decompress gzipped gencode translation fasta"
   cpus 1
 
   input:
@@ -242,7 +264,77 @@ if (params.gencode_translation_fasta.endsWith('.gz')) {
   }
 }
 
+if (params.gencode_transcript_fasta.endsWith('.gz')) {
+  process gunzip_gencode_transcript_fasta {
+  tag "decompress gzipped gencode transcript fasta"
+  cpus 1
 
+  input:
+  file(gencode_transcript_fasta) from ch_gencode_transcript_fasta
+
+  output:
+  file("*.{fa,fasta}") into ch_gencode_transcript_fasta_uncompressed
+
+  script:
+  """
+  gunzip -f ${gencode_transcript_fasta}
+  """
+  }
+}
+
+if (params.gencode_fasta.endsWith('.gz')) {
+  process gunzip_gencode_fasta {
+  tag "decompress gzipped gencode fasta"
+  cpus 1
+
+  input:
+  file(gencode_fasta) from ch_gencode_fasta
+
+  output:
+  file("*.{fa,fasta}") into ch_gencode_fasta_uncompressed
+
+  script:
+  """
+  gunzip -f ${gencode_fasta}
+  """
+  }
+}
+
+if (params.genome_fasta.endsWith('.gz')) {
+  process gunzip_gencome_fasta {
+  tag "decompress gzipped genome fasta"
+  cpus 1
+
+  input:
+  file(genome_fasta) from ch_genome_fasta
+
+  output:
+  file("*.{fa,fasta}") into ch_genome_fasta_uncompressed
+
+  script:
+  """
+  gunzip -f ${genome_fasta}
+  """
+  }
+}
+
+if (params.uniprot_protein_fasta.endsWith('.gz')) {
+  process gunzip_uniprot_protein_fasta {
+  tag "decompress gzipped uniprot protein fasta"
+  cpus 1
+
+  input:
+  file(uniprot_protein_fasta) from ch_uniprot_protein_fasta
+
+  output:
+  file("*.{fa,fasta}") into ch_uniprot_protein_fasta_uncompressed
+
+  script:
+  """
+  gunzip -f ${uniprot_protein_fasta}
+  """
+  }
+}
 
 /*--------------------------------------------------
 GENCODE Database
@@ -293,8 +385,8 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
   ch_primers_fasta = Channel.value(file(params.primers_fasta))
 
   if (!params.genome_fasta) exit 1, "Cannot find any seq file for parameter --genome_fasta: ${params.genome_fasta}"
-  ch_genome_fasta = Channel.value(file(params.genome_fasta))
-  ch_genome_fasta.into{
+  
+  ch_genome_fasta_uncompressed.into{
     ch_genome_fasta_star
     ch_genome_fasta_isoseq
     ch_genome_fasta_sqanti
@@ -514,7 +606,8 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
 } 
 else{
   ch_sample_unfiltered_classification = Channel.value(file(params.sqanti_classification))
-  ch_sample_unfiltered_fasta = Channel.value(file(params.sqanti_fasta))
+//  ch_sample_unfiltered_fasta = Channel.value(file(params.sqanti_fasta))
+  ch_sample_unfiltered_fasta = ch_sqanti_fasta_uncompressed
   ch_sample_unfiltered_gtf = Channel.value(file(params.sqanti_gtf))
 }
 
@@ -1171,6 +1264,12 @@ process mass_spec_raw_convert{
         """
 }
 
+ch_uniprot_protein_fasta_uncompressed.into {
+  ch_uniprot_protein_fasta_for_metamorphisis
+  ch_uniprot_protein_fasta_for_accession_mapping
+  ch_uniprot_protein_fasta_for_peptide_novelty
+}
+
 ch_mass_spec_combined = ch_mass_spec_mzml.concat(ch_mass_spec_converted)
 ch_mass_spec_combined.into{
   ch_mass_spec_for_pacbio_refined
@@ -1232,7 +1331,7 @@ process metamorpheus_with_uniprot_database{
 
     input:
         file(toml_file) from ch_metamorpheus_toml_uniprot
-        file(uniprot_fasta) from ch_uniprot_protein_fasta
+        file(uniprot_fasta) from ch_uniprot_protein_fasta_for_metamorphisis
         file(mass_spec) from ch_mass_spec_for_uniprot.collect()
 
     output:
@@ -1711,7 +1810,7 @@ process accession_mapping{
   input:
     file(pacbio_fasta) from ch_refined_fasta_mapping
     file(gencode_fasta) from ch_gencode_protein_fasta_mapping
-    file(uniprot_fasta) from ch_uniprot_protein_fasta
+    file(uniprot_fasta) from ch_uniprot_protein_fasta_for_accession_mapping
   
   output:
     file("accession_map_gencode_uniprot_pacbio.tsv") into ch_accession_map
@@ -1779,7 +1878,7 @@ process peptide_novelty_analysis{
     file(peptides_filtered) from ch_pacbio_peptides_filtered_novel
     file(peptides_hybrid) from ch_pacbio_peptides_hybrid_novel
     file(gencode_fasta) from ch_gencode_protein_fasta_novel
-    file(uniprot_fasta) from ch_uniprot_protein_fasta
+    file(uniprot_fasta) from ch_uniprot_protein_fasta_for_peptide_novelty
   output:
     file("*")
   
