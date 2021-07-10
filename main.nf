@@ -62,8 +62,11 @@ log.info "normalized_ribo_kallisto              : ${params.normalized_ribo_kalli
 log.info "uniprot_fasta                         : ${params.uniprot_fasta}"
 log.info "uniprot_protein_fasta                 : ${params.uniprot_protein_fasta}"
 log.info "protein_coding_only                   : ${params.protein_coding_only}"
-log.info "refine_cutoff                         : ${params.refine_cutoff}"
+log.info "coding_score_cutoff                   : ${params.coding_score_cutoff}"
 log.info "mass_spec                             : ${params.mass_spec}"
+log.info "sqanti classification                 : ${params.sqanti_classification}"
+log.info "sqanti fasta                          : ${params.sqanti_fasta}"
+log.info "sqanti gtf                            : ${params.sqanti_gtf}"
 log.info ""
 
 if (!params.gencode_gtf) exit 1, "Cannot find gtf file for parameter --gencode_gtf: ${params.gencode_gtf}"
@@ -73,6 +76,8 @@ if (!params.gencode_transcript_fasta) exit 1, "Cannot find any file for paramete
 ch_gencode_transcript_fasta= Channel.value(file(params.gencode_transcript_fasta))
 
 if (!params.gencode_translation_fasta) exit 1, "Cannot find any file for parameter --gencode_translation_fasta: ${params.gencode_translation_fasta}"
+
+if (!params.uniprot_protein_fasta) exit 1, "Cannot find any file for parameter --uniprot_protein_fasta: ${params.uniprot_protein_fasta}"
 
 if (params.gencode_translation_fasta.endsWith('.gz')){
   ch_gencode_translation_fasta = Channel.value(file(params.gencode_translation_fasta))
@@ -104,7 +109,7 @@ if (params.uniprot_protein_fasta.endsWith('.gz')){
   ch_uniprot_protein_fasta_uncompressed = Channel.value(file(params.uniprot_protein_fasta))
 }
 
-if (params.sqanti_fasta.endsWith('.gz')){
+if (!params.sqanti_fasta == false) && (params.sqanti_fasta.endsWith('.gz')){
   ch_sqanti_fasta = Channel.value(file(params.sqanti_fasta))
 } else {
   ch_sqanti_fasta_uncompressed = Channel.value(file(params.sqanti_fasta))
@@ -121,6 +126,8 @@ ch_sample_kallisto = Channel.value(file(params.sample_kallisto_tpm))
 
 if (!params.normalized_ribo_kallisto) exit 1, "Cannot find any normalized_ribo_kallisto file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}"
 ch_normalized_ribo_kallisto = Channel.value(file(params.normalized_ribo_kallisto))
+
+if (!params.metamorpheus_toml) exit 1, "Cannot find any file for parameter --metamorpheus_toml: ${params.metamorpheus_toml}
 
 // if (!params.fastq_read_1) exit 1, "No file found for the parameter --fastq_read_1 at the location ${params.fastq_read_1}"
 // if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
@@ -890,7 +897,7 @@ Refined DB Generation
 ---------------------------------------------------*/
 process refine_orf_database {
   cpus 1
-  tag "${best_orfs}, ${sample_fasta}, ${params.protein_coding_only}, ${protein_coding_genes}, ${params.refine_cutoff}" 
+  tag "${best_orfs}, ${sample_fasta}, ${params.protein_coding_only}, ${protein_coding_genes}, ${params.coding_score_cutoff}" 
 
   publishDir "${params.outdir}/${params.name}/refined_database/", mode: 'copy'
 
@@ -910,7 +917,7 @@ process refine_orf_database {
   --name ${params.name} \
   --orfs $best_orfs \
   --pb_fasta $sample_fasta \
-  --coding_score_cutoff ${params.refine_cutoff} \
+  --coding_score_cutoff ${params.coding_score_cutoff} \
   """
 }
 ch_refined_info.into{
@@ -1310,7 +1317,7 @@ process metamorpheus_with_gencode_database{
         def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
-        dotnet /metamorpheus/CMD.dll -d $gencode_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+        dotnet /metamorpheus/CMD.dll -d $gencode_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results
 
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.Gencode.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv
@@ -1418,8 +1425,8 @@ process metamorpheus_with_sample_specific_database_refined{
         def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
-        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
-
+	dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results
+	
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.refined.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.refined.tsv
         """
@@ -1460,7 +1467,7 @@ process metamorpheus_with_sample_specific_database_filtered{
         def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
-        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+	dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results
 
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.filtered.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.filtered.tsv
@@ -1502,7 +1509,7 @@ process metamorpheus_with_sample_specific_database_hybrid{
         def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
-        dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t toml/SearchTask.toml -v normal --mmsettings settings -o ./search_results
+	dotnet /metamorpheus/CMD.dll -d $orf_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results --orf $orf_meta --cpm 25
 
         mv search_results/Task1SearchTask/AllPeptides.psmtsv search_results/Task1SearchTask/AllPeptides.${params.name}.hybrid.psmtsv
         mv search_results/Task1SearchTask/AllQuantifiedProteinGroups.tsv search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.hybrid.tsv
