@@ -70,6 +70,7 @@ log.info "sqanti gtf                            : ${params.sqanti_gtf}"
 log.info "metamorpheus toml                     : ${params.metamorpheus_toml}"
 log.info ""
 
+
 if (!params.gencode_gtf) exit 1, "Cannot find gtf file for parameter --gencode_gtf: ${params.gencode_gtf}"
 ch_gencode_gtf = Channel.value(file(params.gencode_gtf))
 
@@ -79,6 +80,30 @@ ch_gencode_transcript_fasta= Channel.value(file(params.gencode_transcript_fasta)
 if (!params.gencode_translation_fasta) exit 1, "Cannot find any file for parameter --gencode_translation_fasta: ${params.gencode_translation_fasta}"
 
 if (!params.uniprot_protein_fasta) exit 1, "Cannot find any file for parameter --uniprot_protein_fasta: ${params.uniprot_protein_fasta}"
+
+if (!params.hexamer) exit 1, "Cannot find headmer file for parameter --hexamer: ${params.hexamer}"
+ch_hexamer = Channel.value(file(params.hexamer))
+
+if (!params.logit_model) exit 1, "Cannot find any logit model file for parameter --logit_model: ${params.logit_model}"
+ch_logit_model =  Channel.value(file(params.logit_model))
+
+if (!params.sample_kallisto_tpm) exit 1, "Cannot find any sample_kallisto_tpm file for parameter --sample_kallisto_tpm: ${params.sample_kallisto_tpm}"
+ch_sample_kallisto = Channel.value(file(params.sample_kallisto_tpm))
+
+if (!params.normalized_ribo_kallisto) exit 1, "Cannot find any normalized_ribo_kallisto file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}"
+ch_normalized_ribo_kallisto = Channel.value(file(params.normalized_ribo_kallisto))
+
+if (!params.metamorpheus_toml) exit 1, "Cannot find any file for parameter --metamorpheus_toml: ${params.metamorpheus_toml}"
+
+// if (!params.fastq_read_1) exit 1, "No file found for the parameter --fastq_read_1 at the location ${params.fastq_read_1}"
+// if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
+if (params.mass_spec != false & params.rescue_resolve_toml == false){
+  exit 1, "Cannot find file for parameter --rescue_resolve_toml: ${params.rescue_resolve_toml}"
+}else if (params.mass_spec != false & params.rescue_resolve_toml != false){
+  ch_rr_toml = Channel.value(file(params.rescue_resolve_toml))
+}else{
+  ch_rr_toml = Channel.from("no mass spec")
+}
 
 if (params.gencode_translation_fasta.endsWith('.gz')){
   ch_gencode_translation_fasta = Channel.value(file(params.gencode_translation_fasta))
@@ -116,22 +141,6 @@ if (!params.sqanti_fasta == false && params.sqanti_fasta.endsWith('.gz')) {
   ch_sqanti_fasta_uncompressed = Channel.value(file(params.sqanti_fasta))
 }
 
-if (!params.hexamer) exit 1, "Cannot find headmer file for parameter --hexamer: ${params.hexamer}"
-ch_hexamer = Channel.value(file(params.hexamer))
-
-if (!params.logit_model) exit 1, "Cannot find any logit model file for parameter --logit_model: ${params.logit_model}"
-ch_logit_model =  Channel.value(file(params.logit_model))
-
-if (!params.sample_kallisto_tpm) exit 1, "Cannot find any sample_kallisto_tpm file for parameter --sample_kallisto_tpm: ${params.sample_kallisto_tpm}"
-ch_sample_kallisto = Channel.value(file(params.sample_kallisto_tpm))
-
-if (!params.normalized_ribo_kallisto) exit 1, "Cannot find any normalized_ribo_kallisto file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}"
-ch_normalized_ribo_kallisto = Channel.value(file(params.normalized_ribo_kallisto))
-
-if (!params.metamorpheus_toml) exit 1, "Cannot find any file for parameter --metamorpheus_toml: ${params.metamorpheus_toml}"
-
-// if (!params.fastq_read_1) exit 1, "No file found for the parameter --fastq_read_1 at the location ${params.fastq_read_1}"
-// if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
 ch_fastq_reads = Channel.from(params.fastq_read_1, params.fastq_read_2).filter(String).flatMap{ files(it) }
 
 if (params.metamorpheus_toml==false){
@@ -163,13 +172,6 @@ if(!params.mass_spec){
   ch_mass_spec_mzml = Channel.from("no mass spec")
 }
 
-if (params.mass_spec != false & params.rescue_resolve_toml == false){
-  exit 1, "Cannot find file for parameter --rescue_resolve_toml: ${params.rescue_resolve_toml}"
-}else if (params.mass_spec != false & params.rescue_resolve_toml != false){
-  ch_rr_toml = Channel.value(file(params.rescue_resolve_toml))
-}else{
-  ch_rr_toml = Channel.from("no mass spec")
-}
 
 
 /*--------------------------------------------------
