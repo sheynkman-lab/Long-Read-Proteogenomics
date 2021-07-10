@@ -136,7 +136,9 @@ if (params.uniprot_protein_fasta.endsWith('.gz')){
 if (!params.sqanti_fasta == false && params.sqanti_fasta.endsWith('.gz')) {
   ch_sqanti_fasta = Channel.value(file(params.sqanti_fasta))
 } else {
-  ch_sqanti_fasta_uncompressed = Channel.value(file(params.sqanti_fasta))
+  if (!params.sqanti_fasta == false) {
+     ch_sqanti_fasta_uncompressed = Channel.value(file(params.sqanti_fasta))
+  }
 }
 
 ch_fastq_reads = Channel.from(params.fastq_read_1, params.fastq_read_2).filter(String).flatMap{ files(it) }
