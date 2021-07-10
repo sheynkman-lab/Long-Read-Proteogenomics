@@ -141,6 +141,7 @@ if (!params.sqanti_fasta == false && params.sqanti_fasta.endsWith('.gz')) {
 
 ch_fastq_reads = Channel.from(params.fastq_read_1, params.fastq_read_2).filter(String).flatMap{ files(it) }
 
+<<<<<<< HEAD
 if (params.metamorpheus_toml==false){
   ch_metamorpheus_toml = Channel.from("NO_TOML_FILE")
 }
