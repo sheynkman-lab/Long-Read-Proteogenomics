@@ -73,7 +73,6 @@ if (!params.gencode_gtf) exit 1, "Cannot find gtf file for parameter --gencode_g
 ch_gencode_gtf = Channel.value(file(params.gencode_gtf))
 
 if (!params.gencode_transcript_fasta) exit 1, "Cannot find any file for parameter --gencode_transcript_fasta: ${params.gencode_transcript_fasta}"
-ch_gencode_transcript_fasta= Channel.value(file(params.gencode_transcript_fasta))
 
 if (!params.gencode_translation_fasta) exit 1, "Cannot find any file for parameter --gencode_translation_fasta: ${params.gencode_translation_fasta}"
 
