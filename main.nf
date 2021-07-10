@@ -109,7 +109,7 @@ if (params.uniprot_protein_fasta.endsWith('.gz')){
   ch_uniprot_protein_fasta_uncompressed = Channel.value(file(params.uniprot_protein_fasta))
 }
 
-if (!params.sqanti_fasta == false) && (params.sqanti_fasta.endsWith('.gz')){
+if (!params.sqanti_fasta == false && (params.sqanti_fasta.endsWith('.gz')){
   ch_sqanti_fasta = Channel.value(file(params.sqanti_fasta))
 } else {
   ch_sqanti_fasta_uncompressed = Channel.value(file(params.sqanti_fasta))
