@@ -21,7 +21,7 @@ We acknowledge Lifebit and the use of their platform Lifebit's CloudOS key in de
 
 This workflow was used end-to-end in the publication as shown with the Nextflow main.nf workflow.  However, processes within this workflow maybe useful for others and are self-contained with clear idenfication of inputs and outputs.  These are documented on the wiki within this repository.
 
-You can clone this GitHub repository and run this on an appropriately sized machine.   Running on a MacBook pro with 16GB of ram and 1 CPU and 8 cores.
+You can clone this GitHub repository and run this on an appropriately sized machine.  
 
 ## Quick Start
 
