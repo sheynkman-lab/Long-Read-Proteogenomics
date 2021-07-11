@@ -132,10 +132,10 @@ if (params.uniprot_protein_fasta.endsWith('.gz')){
   ch_uniprot_protein_fasta_uncompressed = Channel.value(file(params.uniprot_protein_fasta))
 }
 
-if (!params.sqanti_fasta == false && params.sqanti_fasta.endsWith('.gz')) {
-  ch_sqanti_fasta = Channel.value(file(params.sqanti_fasta))
-} else {
-  if (!params.sqanti_fasta == false) {
+if (!params.sqanti_fasta == false) {
+  if (params.sqanti_fasta.endsWith('.gz')) {
+     ch_sqanti_fasta = Channel.value(file(params.sqanti_fasta))
+  } else {
      ch_sqanti_fasta_uncompressed = Channel.value(file(params.sqanti_fasta))
   }
 }
@@ -157,26 +157,33 @@ ch_metamorpheus_toml.into{
   ch_metamorpheus_toml_pacbio_hybrid
 }
 
-if(params.mass_spec != false && !params.mass_spec.endsWith("tar.gz")){
-  ch_mass_spec_raw = Channel.fromPath("${params.mass_spec}/*.raw")
-  ch_mass_spec_mzml = Channel.fromPath("${params.mass_spec}/*.{mzml,mzML}")
-}
-
-if(params.mass_spec != false && params.mass_spec.endsWith("tar.gz")){
-  ch_mass_spec_raw_mzml_tar_gz = Channel.value(file(params.mass_spec))
-}
-
-if(!params.mass_spec){
+if (!params.mass_spec == false) {
+  if (!params.mass_spec.endsWith("tar.gz")) {
+     ch_mass_spec_raw = Channel.fromPath("${params.mass_spec}/*.raw")
+     ch_mass_spec_mzml = Channel.fromPath("${params.mass_spec}/*.{mzml,mzML}")
+  } else {
+     if (params.mass_spec.endsWith("tar.gz")){
+         ch_mass_spec_raw_mzml_tar_gz = Channel.value(file(params.mass_spe))
+     }
+  }
+} else {
   ch_mass_spec_raw = Channel.from("no mass spec")
   ch_mass_spec_mzml = Channel.from("no mass spec")
 }
 
-
+if (!params.star_genome_dir == false) {
+  if (!params.star_genome_dir.endsWith("tar.gz")) {
+      ch_genome_dir = Channel.fromPath(params.star_genome_dir, type:'dir')
+  } else {
+    if (params.star_genome_dir.endsWith("tar.gz")) {
+       ch_genome_dir_tar_gz = Channel.fromPath(params.star_genome_dir)
+    }
+  }
+}
 
 /*--------------------------------------------------
 Untar & decompress mass spec file
 ---------------------------------------------------*/
-
 if (params.mass_spec.endsWith("tar.gz")) {
     process untar_mass_spec {
       tag "${raw_mzml_tar_gz}"
@@ -196,6 +203,9 @@ if (params.mass_spec.endsWith("tar.gz")) {
     }
 }
 
+/*--------------------------------------------------
+Decompress gencode translation fasta file
+---------------------------------------------------*/
 if (params.gencode_translation_fasta.endsWith('.gz')) {
   process gunzip_gencode_translation_fasta {
   tag "decompress gzipped gencode translation fasta"
@@ -214,6 +224,9 @@ if (params.gencode_translation_fasta.endsWith('.gz')) {
   }
 }
 
+/*--------------------------------------------------
+Decompress gencode transcript fasta file
+---------------------------------------------------*/
 if (params.gencode_transcript_fasta.endsWith('.gz')) {
   process gunzip_gencode_transcript_fasta {
   tag "decompress gzipped gencode transcript fasta"
@@ -232,6 +245,9 @@ if (params.gencode_transcript_fasta.endsWith('.gz')) {
   }
 }
 
+/*--------------------------------------------------
+Decompress gencode fasta file
+---------------------------------------------------*/
 if (params.gencode_fasta.endsWith('.gz')) {
   process gunzip_gencode_fasta {
   tag "decompress gzipped gencode fasta"
@@ -250,6 +266,9 @@ if (params.gencode_fasta.endsWith('.gz')) {
   }
 }
 
+/*--------------------------------------------------
+Decompress genome fasta file
+---------------------------------------------------*/
 if (params.genome_fasta.endsWith('.gz')) {
   process gunzip_gencome_fasta {
   tag "decompress gzipped genome fasta"
@@ -268,6 +287,9 @@ if (params.genome_fasta.endsWith('.gz')) {
   }
 }
 
+/*--------------------------------------------------
+Decompress uniprot protein fasta file
+---------------------------------------------------*/
 if (params.uniprot_protein_fasta.endsWith('.gz')) {
   process gunzip_uniprot_protein_fasta {
   tag "decompress gzipped uniprot protein fasta"
@@ -284,6 +306,28 @@ if (params.uniprot_protein_fasta.endsWith('.gz')) {
   gunzip -f ${uniprot_protein_fasta}
   """
   }
+}
+
+/*--------------------------------------------------
+Untar & Decompress star genome directory
+---------------------------------------------------*/
+if (params.star_genome.endsWidth("tar.gz")) {
+
+    process untar_star_genome_dir {
+      tag "${genome_dir_tar_gz}"
+      cpus 1
+
+      input:
+      file(genome_dir_tar_gz) from ch_genome_dir_tar_gz
+
+      output:
+      file("star_genome") into ch_genome_dir
+
+      script:
+      """
+      tar xvzf $genome_dir_tar_gz
+      """
+    }
 }
 
 /*--------------------------------------------------
@@ -468,35 +512,6 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
    *   - generate star genome index (skipped if provided) 
    *   - star read alignment 
   ---------------------------------------------------*/
-  if(params.star_genome_dir != false && !params.star_genome_dir.endsWith("tar.gz")){
-      Channel
-      .fromPath(params.star_genome_dir, type:'dir')
-      .set{ch_genome_dir}
-  }
- 
-  if(params.star_genome_dir != false && params.star_genome_dir.endsWith("tar.gz")){
-    Channel
-      .fromPath(params.star_genome_dir)
-      .set{ch_genome_dir_tar_gz}
-
-    process untar_star_genome_dir {
-      tag "${genome_dir_tar_gz}"
-      cpus 1
-
-      input:
-      file(genome_dir_tar_gz) from ch_genome_dir_tar_gz
-
-      output:
-      file("star_genome") into ch_genome_dir
-
-      script:
-      """
-      tar xvzf $genome_dir_tar_gz
-      """
-    }
-  }
-
-
   if(!params.star_genome_dir){
     process star_generate_genome{
           cpus params.max_cpus
