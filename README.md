@@ -23,37 +23,46 @@ This workflow was used end-to-end in the publication as shown with the Nextflow 
 
 You can clone this GitHub repository and run this on an appropriately sized machine.   Running on a MacBook pro with 16GB of ram and 1 CPU and 8 cores.
 
-### Quick Start
+## Quick Start
 
-#### Prepare your environment
+### `1. Create the environment`
 
-##### Initialize the bash environment
+Always best practice to work within a controled environment.  We use [`conda`] to create this environment.
 
 ```bash
 conda init bash
 exec -l bash
 ```
-
-##### Create and activate a new conda environment `lrp`.
+Create and activate a new conda environment `lrp`.
 
 ```bash
 conda create -n lrp
 conda activate lrp
 ```
+### `2. Download nextflow`
 
-Now with the environment ready - you can either clone the environment or run it without cloning (if all pre-requisites are satisfied - see wiki for details).
-
-##### Run without cloning
+Download Nextflow (use [`anaconda search`] for the correct syntax.  Searching shows [`Nextflow`] is available on the `Bioconda` channel.
 
 ```bash
-nextflow run sheynkman-lab/Long-Read-Proteogenomics -profile test
+conda install -c bioconda nextflow -y
 ```
-See [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) for all of the available options when running the pipeline.
 
-##### Clone the [Long-Read-Proteomics](https://github.com/sheynkman-lab/Long-Read-Proteogenomics) repository
+### `3. Clone this repository`
+
+Now with the environment ready - you can either clone the environment or run the repository without cloning See [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) for all of the available options when running the pipeline.
+
+Clone the [Long-Read-Proteomics](https://github.com/sheynkman-lab/Long-Read-Proteogenomics) repository
 
 ```bash
 git clone https://github.com/sheynkman-lab/Long-Read-Proteogenomics.git
+```
+
+### `4. Execute the workflow`
+
+Now we execute, using the configuration file that is stored on [`Zenodo`] to retrieve the file.
+
+```bash
+nextflow run main.nf -c conf/cloudos_jurkat_merged_bam_zenodo_test.config --mass_spec_sample_subset 2 --cpus_med 2 --cpus_high 2 --max_cpus 2
 ```
 
 ## Documentation and Pipeline Vignette
