@@ -66,8 +66,6 @@ The sheynkman-lab/Long-Read-Proteogenomics pipeline comes with details about eac
 4. [`Pipeline Processes Descriptions`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Pipeline-Processes)
 5. [`Pipeline vignette`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Pipeline-Vignette)
 
-
-
 ## Pipeline overview
 
 The pipeline accepts as input raw Pac-Bio data and performs the assembly of an accurate list of protein isoforms with high probability of existing in the sample. This database is then used in [MetaMorpheus](https://github.com/smith-chem-wisc/MetaMorpheus) to search raw mass spectrometry data against the Pac-Bio reference. MetaMorpheus will use protein isoform read counts during protein inference. Two other protein databases are employed for the purposes of comparison. One is from [UniProt](https://www.uniprot.org/) and the other is from [GENCODE](https://www.gencodegenes.org/). A Jupyter notebook performs all final comparisons and data analysis. 
