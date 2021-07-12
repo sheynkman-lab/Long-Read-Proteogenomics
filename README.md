@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5076056.svg)](https://doi.org/10.5281/zenodo.5076056)
+0;276;0c[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5076056.svg)](https://doi.org/10.5281/zenodo.5076056)
 
 # Sheynkman-Lab/Long-Read-Proteogenomics
 
@@ -103,7 +103,7 @@ Bottom-up mass spectrometry is the premier method for protein identification. Ma
 
 ## Using Zenodo
 
-To make the data more accessible and FAIR, the indexed files were transfered to Zenodo using [`zenodo-upload`](https://github.com/jhpoelen/zenodo-upload) from the `University of Virginia's Gloria Sheynkman Lab` Amazon `S3` buckets.
+To make the data more accessible and FAIR, the indexed files were transferred to Zenodo using [`zenodo-upload`](https://github.com/jhpoelen/zenodo-upload) from the `University of Virginia's Gloria Sheynkman Lab` Amazon `S3` buckets.
 
 The data were prepared and stored in the development of the `Sheynkman Lab Long-read Proteogenomics Pipeline`
 
