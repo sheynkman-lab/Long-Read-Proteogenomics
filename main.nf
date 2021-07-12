@@ -95,113 +95,113 @@ if (!params.metamorpheus_toml) exit 1, "Cannot find any file for parameter --met
 // if (!params.fastq_read_1) exit 1, "No file found for the parameter --fastq_read_1 at the location ${params.fastq_read_1}"
 // if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
 if (params.mass_spec != false & params.rescue_resolve_toml == false){
-  exit 1, "Cannot find file for parameter --rescue_resolve_toml: ${params.rescue_resolve_toml}"
-}else if (params.mass_spec != false & params.rescue_resolve_toml != false){
-  ch_rr_toml = Channel.value(file(params.rescue_resolve_toml))
-}else{
-  ch_rr_toml = Channel.from("no mass spec")
+   exit 1, "Cannot find file for parameter --rescue_resolve_toml: ${params.rescue_resolve_toml}"
+} else if (params.mass_spec != false & params.rescue_resolve_toml != false){
+   ch_rr_toml = Channel.value(file(params.rescue_resolve_toml))
+} else{
+   ch_rr_toml = Channel.from("no mass spec")
 }
 
 if (params.gencode_translation_fasta.endsWith('.gz')){
-  ch_gencode_translation_fasta = Channel.value(file(params.gencode_translation_fasta))
+   ch_gencode_translation_fasta = Channel.value(file(params.gencode_translation_fasta))
 } else {
-  ch_gencode_translation_fasta_uncompressed = Channel.value(file(params.gencode_translation_fasta))
+   ch_gencode_translation_fasta_uncompressed = Channel.value(file(params.gencode_translation_fasta))
 }
 
 if (params.gencode_transcript_fasta.endsWith('.gz')){
-  ch_gencode_transcript_fasta = Channel.value(file(params.gencode_transcript_fasta))
+   ch_gencode_transcript_fasta = Channel.value(file(params.gencode_transcript_fasta))
 } else {
-  ch_gencode_transcript_fasta_uncompressed = Channel.value(file(params.gencode_transcript_fasta))
+   ch_gencode_transcript_fasta_uncompressed = Channel.value(file(params.gencode_transcript_fasta))
 }
 
 if (params.gencode_fasta.endsWith('.gz')){
-  ch_gencode_fasta = Channel.value(file(params.gencode_fasta))
+   ch_gencode_fasta = Channel.value(file(params.gencode_fasta))
 } else {
-  ch_gencode_fasta_uncompressed = Channel.value(file(params.gencode_fasta))
+   ch_gencode_fasta_uncompressed = Channel.value(file(params.gencode_fasta))
 }
 
 if (params.genome_fasta.endsWith('.gz')){
-  ch_genome_fasta = Channel.value(file(params.genome_fasta))
+   ch_genome_fasta = Channel.value(file(params.genome_fasta))
 } else {
-  ch_genome_fasta_uncompressed = Channel.value(file(params.genome_fasta))
+   ch_genome_fasta_uncompressed = Channel.value(file(params.genome_fasta))
 }
 
 if (params.uniprot_protein_fasta.endsWith('.gz')){
-  ch_uniprot_protein_fasta = Channel.value(file(params.uniprot_protein_fasta))
+   ch_uniprot_protein_fasta = Channel.value(file(params.uniprot_protein_fasta))
 } else {
-  ch_uniprot_protein_fasta_uncompressed = Channel.value(file(params.uniprot_protein_fasta))
+   ch_uniprot_protein_fasta_uncompressed = Channel.value(file(params.uniprot_protein_fasta))
 }
 
 if (!params.sqanti_fasta == false) {
-  if (params.sqanti_fasta.endsWith('.gz')) {
-     ch_sqanti_fasta = Channel.value(file(params.sqanti_fasta))
-  } else {
-     ch_sqanti_fasta_uncompressed = Channel.value(file(params.sqanti_fasta))
-  }
+   if (params.sqanti_fasta.endsWith('.gz')) {
+      ch_sqanti_fasta = Channel.value(file(params.sqanti_fasta))
+   } else {
+      ch_sqanti_fasta_uncompressed = Channel.value(file(params.sqanti_fasta))
+   }
 }
 
 ch_fastq_reads = Channel.from(params.fastq_read_1, params.fastq_read_2).filter(String).flatMap{ files(it) }
 
 if (params.metamorpheus_toml==false){
-  ch_metamorpheus_toml = Channel.from("NO_TOML_FILE")
+   ch_metamorpheus_toml = Channel.from("NO_TOML_FILE")
 }
 else{
-  ch_metamorpheus_toml = Channel.value(file(params.metamorpheus_toml))
+   ch_metamorpheus_toml = Channel.value(file(params.metamorpheus_toml))
 }
 
 ch_metamorpheus_toml.into{
-  ch_metamorpheus_toml_gencode
-  ch_metamorpheus_toml_uniprot
-  ch_metamorpheus_toml_pacbio_refined
-  ch_metamorpheus_toml_pacbio_filtered
-  ch_metamorpheus_toml_pacbio_hybrid
+   ch_metamorpheus_toml_gencode
+   ch_metamorpheus_toml_uniprot
+   ch_metamorpheus_toml_pacbio_refined
+   ch_metamorpheus_toml_pacbio_filtered
+   ch_metamorpheus_toml_pacbio_hybrid
 }
 
 if (!params.mass_spec == false) {
-  if (!params.mass_spec.endsWith("tar.gz")) {
-     ch_mass_spec_raw = Channel.fromPath("${params.mass_spec}/*.raw")
-     ch_mass_spec_mzml = Channel.fromPath("${params.mass_spec}/*.{mzml,mzML}")
-  } else {
-     if (params.mass_spec.endsWith("tar.gz")){
+   if (!params.mass_spec.endsWith("tar.gz")) {
+      ch_mass_spec_raw = Channel.fromPath("${params.mass_spec}/*.raw")
+      ch_mass_spec_mzml = Channel.fromPath("${params.mass_spec}/*.{mzml,mzML}")
+   } else {
+      if (params.mass_spec.endsWith("tar.gz")){
          ch_mass_spec_raw_mzml_tar_gz = Channel.value(file(params.mass_spe))
-     }
-  }
+      }
+   }
 } else {
-  ch_mass_spec_raw = Channel.from("no mass spec")
-  ch_mass_spec_mzml = Channel.from("no mass spec")
+   ch_mass_spec_raw = Channel.from("no mass spec")
+   ch_mass_spec_mzml = Channel.from("no mass spec")
 }
 
 if (!params.star_genome_dir == false) {
-  if (!params.star_genome_dir.endsWith("tar.gz")) {
+   if (!params.star_genome_dir.endsWith("tar.gz")) {
       ch_genome_dir = Channel.fromPath(params.star_genome_dir, type:'dir')
-  } else {
-    if (params.star_genome_dir.endsWith("tar.gz")) {
-       ch_genome_dir_tar_gz = Channel.fromPath(params.star_genome_dir)
-    }
-  }
+   } else {
+      if (params.star_genome_dir.endsWith("tar.gz")) {
+         ch_genome_dir_tar_gz = Channel.fromPath(params.star_genome_dir)
+      }
+   }
 }
 
 /*--------------------------------------------------
 Untar & decompress mass spec file
 ---------------------------------------------------*/
 if (params.mass_spec != false) {
-  if (params.mass_spec.endsWith("tar.gz")) {
-     process untar_mass_spec {
-        tag "${raw_mzml_tar_gz}"
-        cpus 1
+   if (params.mass_spec.endsWith("tar.gz")) {
+      process untar_mass_spec {
+         tag "${raw_mzml_tar_gz}"
+         cpus 1
 
-        input:
-        file(raw_mzml_tar_gz) from ch_mass_spec_raw_mzml_tar_gz
+         input:
+         file(raw_mzml_tar_gz) from ch_mass_spec_raw_mzml_tar_gz
 
-        output:
-        file("${raw_mzml_tar_gz.simpleName}/*.raw") optional true into ch_mass_spec_raw
-        file("${raw_mzml_tar_gz.simpleName}/*.{mzml,mzML}") optional true into ch_mass_spec_mzml
+         output:
+         file("${raw_mzml_tar_gz.simpleName}/*.raw") optional true into ch_mass_spec_raw
+         file("${raw_mzml_tar_gz.simpleName}/*.{mzml,mzML}") optional true into ch_mass_spec_mzml
 
-        script:
-        """
-        tar xvzf $raw_mzml_tar_gz
-        """
-     }
+         script:
+         """
+         tar xvzf $raw_mzml_tar_gz
+         """
+      }
    }
 }
 
@@ -209,112 +209,112 @@ if (params.mass_spec != false) {
 Decompress gencode translation fasta file
 ---------------------------------------------------*/
 if (params.gencode_translation_fasta.endsWith('.gz')) {
-  process gunzip_gencode_translation_fasta {
-  tag "decompress gzipped gencode translation fasta"
-  cpus 1
+   process gunzip_gencode_translation_fasta {
+   tag "decompress gzipped gencode translation fasta"
+   cpus 1
 
-  input:
-  file(gencode_translation_fasta) from ch_gencode_translation_fasta
+   input:
+   file(gencode_translation_fasta) from ch_gencode_translation_fasta
 
-  output:
-  file("*.{fa,fasta}") into ch_gencode_translation_fasta_uncompressed
+   output:
+   file("*.{fa,fasta}") into ch_gencode_translation_fasta_uncompressed
 
-  script:
-  """
-  gunzip -f ${gencode_translation_fasta}
-  """
-  }
+   script:
+   """
+   gunzip -f ${gencode_translation_fasta}
+   """
+   }
 }
 
 /*--------------------------------------------------
 Decompress gencode transcript fasta file
 ---------------------------------------------------*/
 if (params.gencode_transcript_fasta.endsWith('.gz')) {
-  process gunzip_gencode_transcript_fasta {
-  tag "decompress gzipped gencode transcript fasta"
-  cpus 1
+   process gunzip_gencode_transcript_fasta {
+   tag "decompress gzipped gencode transcript fasta"
+   cpus 1
 
-  input:
-  file(gencode_transcript_fasta) from ch_gencode_transcript_fasta
+   input:
+   file(gencode_transcript_fasta) from ch_gencode_transcript_fasta
 
-  output:
-  file("*.{fa,fasta}") into ch_gencode_transcript_fasta_uncompressed
+   output:
+   file("*.{fa,fasta}") into ch_gencode_transcript_fasta_uncompressed
 
-  script:
-  """
-  gunzip -f ${gencode_transcript_fasta}
-  """
-  }
+   script:
+   """
+   gunzip -f ${gencode_transcript_fasta}
+   """
+   }
 }
 
 /*--------------------------------------------------
 Decompress gencode fasta file
 ---------------------------------------------------*/
 if (params.gencode_fasta.endsWith('.gz')) {
-  process gunzip_gencode_fasta {
-  tag "decompress gzipped gencode fasta"
-  cpus 1
+   process gunzip_gencode_fasta {
+   tag "decompress gzipped gencode fasta"
+   cpus 1
 
-  input:
-  file(gencode_fasta) from ch_gencode_fasta
+   input:
+   file(gencode_fasta) from ch_gencode_fasta
 
-  output:
-  file("*.{fa,fasta}") into ch_gencode_fasta_uncompressed
+   output:
+   file("*.{fa,fasta}") into ch_gencode_fasta_uncompressed
 
-  script:
-  """
-  gunzip -f ${gencode_fasta}
-  """
-  }
+   script:
+   """
+   gunzip -f ${gencode_fasta}
+   """
+   }
 }
 
 /*--------------------------------------------------
 Decompress genome fasta file
 ---------------------------------------------------*/
 if (params.genome_fasta.endsWith('.gz')) {
-  process gunzip_gencome_fasta {
-  tag "decompress gzipped genome fasta"
-  cpus 1
+   process gunzip_gencome_fasta {
+   tag "decompress gzipped genome fasta"
+   cpus 1
 
-  input:
-  file(genome_fasta) from ch_genome_fasta
+   input:
+   file(genome_fasta) from ch_genome_fasta
 
-  output:
-  file("*.{fa,fasta}") into ch_genome_fasta_uncompressed
+   output:
+   file("*.{fa,fasta}") into ch_genome_fasta_uncompressed
 
-  script:
-  """
-  gunzip -f ${genome_fasta}
-  """
-  }
+   script:
+   """
+   gunzip -f ${genome_fasta}
+   """
+   }
 }
 
 /*--------------------------------------------------
 Decompress uniprot protein fasta file
 ---------------------------------------------------*/
 if (params.uniprot_protein_fasta.endsWith('.gz')) {
-  process gunzip_uniprot_protein_fasta {
-  tag "decompress gzipped uniprot protein fasta"
-  cpus 1
+   process gunzip_uniprot_protein_fasta {
+   tag "decompress gzipped uniprot protein fasta"
+   cpus 1
 
-  input:
-  file(uniprot_protein_fasta) from ch_uniprot_protein_fasta
+   input:
+   file(uniprot_protein_fasta) from ch_uniprot_protein_fasta
 
-  output:
-  file("*.{fa,fasta}") into ch_uniprot_protein_fasta_uncompressed
+   output:
+   file("*.{fa,fasta}") into ch_uniprot_protein_fasta_uncompressed
 
-  script:
-  """
-  gunzip -f ${uniprot_protein_fasta}
-  """
-  }
+   script:
+   """
+   gunzip -f ${uniprot_protein_fasta}
+   """
+   }
 }
 
 /*--------------------------------------------------
 Untar & Decompress star genome directory
 ---------------------------------------------------*/
 if (params.star_genome != false) {
-   if ((params.star_genome.endsWidth("tar.gz")) {
+   if (params.star_genome.endsWidth("tar.gz")) {
 
       process untar_star_genome_dir {
          tag "${genome_dir_tar_gz}"
