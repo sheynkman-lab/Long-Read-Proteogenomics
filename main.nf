@@ -185,7 +185,7 @@ if (!params.star_genome_dir == false) {
 Untar & decompress mass spec file
 ---------------------------------------------------*/
 if (params.mass_spec != false) {
-  if ((params.mass_spec.endsWith("tar.gz")) {
+  if (params.mass_spec.endsWith("tar.gz")) {
      process untar_mass_spec {
         tag "${raw_mzml_tar_gz}"
         cpus 1
