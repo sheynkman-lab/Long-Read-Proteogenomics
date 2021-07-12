@@ -191,19 +191,19 @@ Decompress Logit Model
 ---------------------------------------------------*/
 if (params.logit_model.endsWith('.gz')) {
    process gunzip_logit_model {
-   tag "decompress logit model"
-   cpus 1
+      tag "decompress logit model"
+      cpus 1
 
-   input:
-   file(logit_model)) from ch_logit_model
+      input:
+      file(logit_model) from ch_logit_model
 
-   output:
-   file("*.RData") into ch_logit_model_uncompressed
+      output:
+      file("*.RData") into ch_logit_model_uncompressed
 
-   script:
-   """
-   gunzip -f ${logit_model}
-   """
+      script:
+      """
+      gunzip -f ${logit_model}
+      """
    }
 }
 
