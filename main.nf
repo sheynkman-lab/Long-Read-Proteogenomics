@@ -82,7 +82,6 @@ if (!params.hexamer) exit 1, "Cannot find headmer file for parameter --hexamer: 
 ch_hexamer = Channel.value(file(params.hexamer))
 
 if (!params.logit_model) exit 1, "Cannot find any logit model file for parameter --logit_model: ${params.logit_model}"
-ch_logit_model =  Channel.value(file(params.logit_model))
 
 if (!params.sample_kallisto_tpm) exit 1, "Cannot find any sample_kallisto_tpm file for parameter --sample_kallisto_tpm: ${params.sample_kallisto_tpm}"
 ch_sample_kallisto = Channel.value(file(params.sample_kallisto_tpm))
@@ -132,6 +131,12 @@ if (params.uniprot_protein_fasta.endsWith('.gz')){
    ch_uniprot_protein_fasta_uncompressed = Channel.value(file(params.uniprot_protein_fasta))
 }
 
+if (params.logit_model.endsWith('.gz')) {
+   ch_logit_model = Channel.value(file(params.logit_model))
+} else {
+   ch_logit_model_uncompressed = Channel.value(file(params.logit_model))
+}
+
 if (!params.sqanti_fasta == false) {
    if (params.sqanti_fasta.endsWith('.gz')) {
       ch_sqanti_fasta = Channel.value(file(params.sqanti_fasta))
@@ -178,6 +183,27 @@ if (!params.star_genome_dir == false) {
       if (params.star_genome_dir.endsWith("tar.gz")) {
          ch_genome_dir_tar_gz = Channel.fromPath(params.star_genome_dir)
       }
+   }
+}
+
+/*--------------------------------------------------
+Decompress Logit Model
+---------------------------------------------------*/
+if (params.logit_model.endsWith('.gz')) {
+   process gunzip_logit_model {
+   tag "decompress logit model"
+   cpus 1
+
+   input:
+   file(logit_model)) from ch_logit_model
+
+   output:
+   file("*.RData") into ch_logit_model_uncompressed
+
+   script:
+   """
+   gunzip -f ${logit_model}
+   """
    }
 }
 
@@ -821,7 +847,7 @@ process cpat {
 
   input:
   file(hexamer) from ch_hexamer
-  file(logit_model) from ch_logit_model
+  file(logit_model) from ch_logit_model_uncompressed
   file(sample_fasta) from ch_sample_fasta_cpat
 
   output:
