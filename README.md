@@ -27,7 +27,7 @@ You can clone this GitHub repository and run this on an appropriately sized mach
 
 ### `1. Create the environment`
 
-Always best practice to work within a controled environment.  We use [`conda`] to create this environment.
+Always best practice to work within a controlled environment.  We use [`conda`] to create this environment.
 
 ```bash
 conda init bash
@@ -58,9 +58,9 @@ git clone https://github.com/sheynkman-lab/Long-Read-Proteogenomics.git
 ```
 
 ### `4. Execute the workflow as a test`
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5091701.svg)](https://doi.org/10.5281/zenodo.5091701)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5092314.svg)](https://doi.org/10.5281/zenodo.5092314)
 
-One test that can be run uses a test configuration file stored on [`Zenodo`](https://doi.org/10.5281/zenodo.5091701).
+One test that can be run uses a test configuration file stored on [`Zenodo`](https://doi.org/10.5281/zenodo.5092314).
 
 Running a test from the clone can be done with the command
 

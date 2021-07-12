@@ -263,6 +263,14 @@ In general, it is not best practice to move data, download data or copy data.  D
 The script documenting the uploading of the prepared files in `Long-Read-Proteogenomics/data` directory is `upload_to_zenodo.sh`
 Run from `Long-Read-Proteogenomics` directory.
 
+The pattern of upload is as follows:
+```bash
+cd zenodo-upload
+./zenodo_upload.sh https://zenodo.org/deposit/5076056 ../Long-Read-Proteogenomics/data/gencode.v35.annotation.canonical.gtf
+```
+
+Since we have several files we are uploading, these are held within a simple bash script.
+
 ```bash
 bash upload_to_zenodo.sh
  ```
