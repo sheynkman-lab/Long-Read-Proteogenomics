@@ -51,19 +51,23 @@ conda install -c bioconda nextflow -y
 
 Now with the environment ready - you can either clone the environment or run the repository without cloning See [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) for all of the available options when running the pipeline.
 
-Clone the [Long-Read-Proteomics](https://github.com/sheynkman-lab/Long-Read-Proteogenomics) repository
+Optionally, clone the [Long-Read-Proteomics](https://github.com/sheynkman-lab/Long-Read-Proteogenomics) repository
 
 ```bash
 git clone https://github.com/sheynkman-lab/Long-Read-Proteogenomics.git
 ```
 
-### `4. Execute the workflow`
+### `4. Execute the workflow as a test`
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5091701.svg)](https://doi.org/10.5281/zenodo.5091701)
 
-Now we execute, using the configuration file that is stored on [`Zenodo`] to retrieve the file.
+One test that can be run uses a test configuration file stored on [`Zenodo`](https://doi.org/10.5281/zenodo.5091701).
+
+Running a test from the clone can be done with the command
 
 ```bash
-nextflow run main.nf -c conf/cloudos_jurkat_merged_bam_zenodo_test.config --mass_spec_sample_subset 2 --cpus_med 2 --cpus_high 2 --max_cpus 2
+nextflow run main.nf -profile test
 ```
+This was done on a MacBook Pro running BigSur Version 11.4 with 16 GB 2667 MHz DDR48 RAM and a 2.3 GHz 8-Core Intel Core i9 processor.  
 
 ## Documentation and Pipeline Vignette
 
