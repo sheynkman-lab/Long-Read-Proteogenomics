@@ -19,7 +19,7 @@ We acknowledge Lifebit and the use of their platform Lifebit's CloudOS key in de
 
 ## How to use this repository and Quick Start
 
-This workflow was used end-to-end in the publication as shown with the Nextflow main.nf workflow.  However, processes within this workflow maybe useful for others and are self-contained with clear idenfication of inputs and outputs.  These are documented on the wiki within this repository.
+This workflow was used end-to-end in the publication as shown with the Nextflow main.nf workflow.  However, processes within this workflow maybe useful for others and are self-contained with clear idenfication of inputs and outputs.  These are documented on the [`wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) within this repository.
 
 You can clone this GitHub repository and run this on an appropriately sized machine.  
 
