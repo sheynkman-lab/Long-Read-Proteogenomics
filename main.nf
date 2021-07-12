@@ -184,23 +184,25 @@ if (!params.star_genome_dir == false) {
 /*--------------------------------------------------
 Untar & decompress mass spec file
 ---------------------------------------------------*/
-if (params.mass_spec.endsWith("tar.gz")) {
-    process untar_mass_spec {
-      tag "${raw_mzml_tar_gz}"
-      cpus 1
+if (params.mass_spec != false) {
+  if ((params.mass_spec.endsWith("tar.gz")) {
+     process untar_mass_spec {
+        tag "${raw_mzml_tar_gz}"
+        cpus 1
 
-      input:
-      file(raw_mzml_tar_gz) from ch_mass_spec_raw_mzml_tar_gz
+        input:
+        file(raw_mzml_tar_gz) from ch_mass_spec_raw_mzml_tar_gz
 
-      output:
-      file("${raw_mzml_tar_gz.simpleName}/*.raw") optional true into ch_mass_spec_raw
-      file("${raw_mzml_tar_gz.simpleName}/*.{mzml,mzML}") optional true into ch_mass_spec_mzml
+        output:
+        file("${raw_mzml_tar_gz.simpleName}/*.raw") optional true into ch_mass_spec_raw
+        file("${raw_mzml_tar_gz.simpleName}/*.{mzml,mzML}") optional true into ch_mass_spec_mzml
 
-      script:
-      """
-      tar xvzf $raw_mzml_tar_gz
-      """
-    }
+        script:
+        """
+        tar xvzf $raw_mzml_tar_gz
+        """
+     }
+   }
 }
 
 /*--------------------------------------------------
@@ -311,23 +313,25 @@ if (params.uniprot_protein_fasta.endsWith('.gz')) {
 /*--------------------------------------------------
 Untar & Decompress star genome directory
 ---------------------------------------------------*/
-if (params.star_genome.endsWidth("tar.gz")) {
+if (params.star_genome != false) {
+   if ((params.star_genome.endsWidth("tar.gz")) {
 
-    process untar_star_genome_dir {
-      tag "${genome_dir_tar_gz}"
-      cpus 1
+      process untar_star_genome_dir {
+         tag "${genome_dir_tar_gz}"
+         cpus 1
 
-      input:
-      file(genome_dir_tar_gz) from ch_genome_dir_tar_gz
+         input:
+         file(genome_dir_tar_gz) from ch_genome_dir_tar_gz
 
-      output:
-      file("star_genome") into ch_genome_dir
+         output:
+         file("star_genome") into ch_genome_dir
 
-      script:
-      """
-      tar xvzf $genome_dir_tar_gz
-      """
-    }
+         script:
+         """
+         tar xvzf $genome_dir_tar_gz
+         """
+      }
+   }
 }
 
 /*--------------------------------------------------
