@@ -1,6 +1,5 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5076056.svg)](https://doi.org/10.5281/zenodo.5076056)
-[![Testing for Long Reads Proteogenomics](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci.yml/badge.svg)](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci.yml)
-(https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci.yml)
+[![Testing for Long Reads Proteogenomics(https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci.yml/badge.svg)](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci.yml)
 [![reviewdog misspell](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/catch_typos.yml/badge.svg)](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/catch_typos.yml)
 
 # Sheynkman-Lab/Long-Read-Proteogenomics
