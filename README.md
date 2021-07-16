@@ -59,11 +59,11 @@ git clone https://github.com/sheynkman-lab/Long-Read-Proteogenomics.git
 ```
 
 ### `4. Execute the workflow as a test`
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5092314.svg)](https://doi.org/10.5281/zenodo.5092314)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5109695.svg)](https://doi.org/10.5281/zenodo.5109695)
 
-One test that can be run uses a test configuration file stored on [`Zenodo`](https://doi.org/10.5281/zenodo.5092314).
+One test that can be run uses a test configuration file stored on [`Zenodo`](https://doi.org/10.5281/zenodo.5109695).
 
-Running a test from the clone can be done with the command
+Running a test from the clone can be done with the command - without metamorphesis
 
 ```bash
 nextflow run main.nf -profile test

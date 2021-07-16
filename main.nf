@@ -147,11 +147,10 @@ if (!params.sqanti_fasta == false) {
 
 ch_fastq_reads = Channel.from(params.fastq_read_1, params.fastq_read_2).filter(String).flatMap{ files(it) }
 
-if (params.metamorpheus_toml==false){
-   ch_metamorpheus_toml = Channel.from("NO_TOML_FILE")
-}
-else{
+if (params.mass_spec != false & params.metamorpheus_toml != false){
    ch_metamorpheus_toml = Channel.value(file(params.metamorpheus_toml))
+} else {
+   ch_metamorpheus_toml = Channel.value(file("NO_TOML_FILE"))
 }
 
 ch_metamorpheus_toml.into{
