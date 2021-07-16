@@ -1,4 +1,4 @@
-name: Testing for Long Reads Proteogenomics
+name: Testing for Long Reads Proteogenomics with Sqanti
 # This workflow runs the pipeline with the minimal test dataset to check that it completes without any syntax errors
 on:
   push:
@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         # Nextflow versions: check pipeline minimum and current latest
-        nxf_ver: ['19.10.0', '']
+        nxf_ver: ['20.0.1.0', '']
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@v2
@@ -28,4 +28,4 @@ jobs:
           sudo mv nextflow /usr/local/bin/
       - name: Run pipeline with test data
         run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test
+          nextflow run ${GITHUB_WORKSPACE} --config conf/test_with_sqanti.config
