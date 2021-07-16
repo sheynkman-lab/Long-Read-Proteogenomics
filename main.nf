@@ -167,7 +167,7 @@ if (!params.mass_spec == false) {
       ch_mass_spec_mzml = Channel.fromPath("${params.mass_spec}/*.{mzml,mzML}")
    } else {
       if (params.mass_spec.endsWith("tar.gz")){
-         ch_mass_spec_raw_mzml_tar_gz = Channel.value(file(params.mass_spe))
+         ch_mass_spec_raw_mzml_tar_gz = Channel.value(file(params.mass_spec))
       }
    }
 } else {
