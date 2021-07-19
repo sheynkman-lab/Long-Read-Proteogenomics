@@ -1304,9 +1304,11 @@ ch_sample_hybrid_fasta.into{
 /*--------------------------------------------------
 Mass Spec File Conversion
  * Convert MS .raw files into .mzml files
+ * by not specifying the output file, the input file is overwritten
 ---------------------------------------------------*/
 process mass_spec_raw_convert{
-    // publishDir "${params.outdir}/${params.name}/raw_convert/", mode: 'copy'
+
+    publishDir "${params.outdir}/${params.name}/raw_convert/", mode: 'copy'
     when:
       params.mass_spec != false
 
