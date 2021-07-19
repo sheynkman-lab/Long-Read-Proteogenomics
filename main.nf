@@ -340,7 +340,7 @@ if (params.uniprot_protein_fasta.endsWith('.gz')) {
 Untar & Decompress star genome directory
 ---------------------------------------------------*/
 if (params.star_genome_dir != false) {
-   if (params.star_genome_dir.endsWidth("tar.gz")) {
+   if (params.star_genome_dir.endsWith("tar.gz")) {
 
       process untar_star_genome_dir {
          tag "${genome_dir_tar_gz}"
