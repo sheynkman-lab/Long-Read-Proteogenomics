@@ -1269,8 +1269,8 @@ process make_hybrid_database{
     file(sample_cds) from ch_filtered_cds_agg
   output:
     file("*")
-    file("${params.name}_cds_high_confidence.gtf") into ch_high_confidence_cds
-    file("${params.name}_hybrid.fasta") into ch_sample_hybrid_fasta
+    file("${params.name}_cds_high_confidence.gtf")     into ch_high_confidence_cds
+    file("${params.name}_hybrid.fasta")                into ch_sample_hybrid_fasta
     file("${params.name}_refined_high_confidence.tsv") into ch_refined_info_high_conf
   script:
     """
@@ -1292,6 +1292,7 @@ ch_high_confidence_cds.into{
   ch_high_confidence_cds_track_viz
   ch_high_confidence_cds_multiregion
 }
+
 ch_sample_hybrid_fasta.into{
   ch_sample_hybrid_fasta_normal
   ch_sample_hybrid_fasta_rescue
@@ -1344,8 +1345,11 @@ Metamorpheus GENCODE
 process metamorpheus_with_gencode_database{
     label 'metamorpheus'
     tag "${mass_spec}"
+    
     cpus params.max_cpus
+    
     publishDir "${params.outdir}/${params.name}/metamorpheus/gencode", mode: 'copy'
+    
     when:
       params.mass_spec != false
 
@@ -1500,8 +1504,11 @@ MetaMorpheus with Sample Specific Database - Hybrid
 process metamorpheus_with_sample_specific_database_hybrid{
     label 'metamorpheus'
     tag "${mass_spec}"
+    
     cpus params.max_cpus
+    
     publishDir "${params.outdir}/${params.name}/metamorpheus/pacbio/hybrid", mode: 'copy'
+    
     when:
       params.mass_spec != false
 
