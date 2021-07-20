@@ -114,12 +114,6 @@ if (params.gencode_transcript_fasta.endsWith('.gz')){
    ch_gencode_transcript_fasta_uncompressed = Channel.value(file(params.gencode_transcript_fasta))
 }
 
-if (params.gencode_fasta.endsWith('.gz')){
-   ch_gencode_fasta = Channel.value(file(params.gencode_fasta))
-} else {
-   ch_gencode_fasta_uncompressed = Channel.value(file(params.gencode_fasta))
-}
-
 if (params.genome_fasta.endsWith('.gz')){
    ch_genome_fasta = Channel.value(file(params.genome_fasta))
 } else {
@@ -269,27 +263,6 @@ if (params.gencode_transcript_fasta.endsWith('.gz')) {
    script:
    """
    gunzip -f ${gencode_transcript_fasta}
-   """
-   }
-}
-
-/*--------------------------------------------------
-Decompress gencode fasta file
----------------------------------------------------*/
-if (params.gencode_fasta.endsWith('.gz')) {
-   process gunzip_gencode_fasta {
-   tag "decompress gzipped gencode fasta"
-   cpus 1
-
-   input:
-   file(gencode_fasta) from ch_gencode_fasta
-
-   output:
-   file("*.{fa,fasta}") into ch_gencode_fasta_uncompressed
-
-   script:
-   """
-   gunzip -f ${gencode_fasta}
    """
    }
 }
