@@ -90,7 +90,7 @@ ch_sample_kallisto = Channel.value(file(params.sample_kallisto_tpm))
 if (!params.normalized_ribo_kallisto) exit 1, "Cannot find any normalized_ribo_kallisto file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}"
 ch_normalized_ribo_kallisto = Channel.value(file(params.normalized_ribo_kallisto))
 
-if (!params.metamorpheus_toml) exit 1, "Cannot find any file for parameter --metamorpheus_toml: ${params.metamorpheus_toml}"
+//if (!params.metamorpheus_toml) exit 1, "Cannot find any file for parameter --metamorpheus_toml: ${params.metamorpheus_toml}"
 
 // if (!params.fastq_read_1) exit 1, "No file found for the parameter --fastq_read_1 at the location ${params.fastq_read_1}"
 // if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
@@ -310,30 +310,6 @@ if (params.uniprot_protein_fasta.endsWith('.gz')) {
 }
 
 /*--------------------------------------------------
-Untar & Decompress star genome directory
----------------------------------------------------*/
-if (params.star_genome_dir != false) {
-   if (params.star_genome_dir.endsWith("tar.gz")) {
-
-      process untar_star_genome_dir {
-         tag "${genome_dir_tar_gz}"
-         cpus 1
-
-         input:
-         file(genome_dir_tar_gz) from ch_genome_dir_tar_gz
-
-         output:
-         file("star_genome") into ch_genome_dir
-
-         script:
-         """
-         tar xvzf $genome_dir_tar_gz
-         """
-      }
-   }
-}
-
-/*--------------------------------------------------
 Reference Tables 
 ---------------------------------------------------*/
 
@@ -448,6 +424,7 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
     ch_genome_fasta_isoseq
     ch_genome_fasta_sqanti
   }
+  
   /*--------------------------------------------------
   IsoSeq3
    * Runs IsoSeq3 on CCS reads, aligning to genome and
@@ -507,10 +484,39 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
   }
 
   /*--------------------------------------------------
+   Untar & Decompress star genome directory
+  ---------------------------------------------------*/
+  if (params.star_genome_dir != false) {
+     if (params.star_genome_dir.endsWith("tar.gz")) {
+
+         process untar_star_genome_dir {
+            tag "${genome_dir_tar_gz}"
+            cpus 1
+
+            input:
+            file(genome_dir_tar_gz) from ch_genome_dir_tar_gz
+
+            output:
+            file("star_genome") into ch_genome_dir
+
+            script:
+            """
+            tar xvzf $genome_dir_tar_gz
+            """
+        }
+     }
+  }
+
+  /*--------------------------------------------------
   STAR Alignment
-   * STAR alignment is run if fastq reads are provided
-   * Junction alignments are fed to SQANTI3 where 
-   * information is used in classificaiton filtering
+   * STAR alignment is run only if sqanti has not been
+   *  previously been run and if fastq (short read RNAseq) files
+   *  have been provided.
+   *  if( params.sqanti_classification==false || params.sqanti_fasta==false || params.sqanti_gtf==false )
+   *  STAR alignment is run if fastq reads are provided
+   *  Junction alignments are fed to SQANTI3 where 
+   *  information is used in classificaiton filtering
+   *
    * STEPS
    *   - generate star genome index (skipped if provided) 
    *   - star read alignment 
