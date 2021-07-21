@@ -41,48 +41,48 @@ log.info "Longread Proteogenomics - N F  ~  version 0.1"
 log.info "====================================="
 // Header log info
 log.info "\nPARAMETERS SUMMARY"
-log.info "mainScript                            : ${params.mainScript}"
+log.info "coding_score_cutoff                   : ${params.coding_score_cutoff}"
 log.info "config                                : ${params.config}"
-log.info "max_cpus                              : ${params.max_cpus}"
-log.info "outdir                                : ${params.outdir}"
-log.info "name                                  : ${params.name}"
+log.info "fastq_read_1                          : ${params.fastq_read_1}"
+log.info "fastq_read_2                          : ${params.fastq_read_2}"
 log.info "gencode_gtf                           : ${params.gencode_gtf}"
 log.info "gencode_transcript_fasta              : ${params.gencode_transcript_fasta}"
 log.info "gencode_translation_fasta             : ${params.gencode_translation_fasta}"
 log.info "genome_fasta                          : ${params.genome_fasta}"
-log.info "fastq_read_1                          : ${params.fastq_read_1}"
-log.info "fastq_read_2                          : ${params.fastq_read_2}"
-log.info "star_genome_dir                       : ${params.star_genome_dir}"
-log.info "sample_ccs                            : ${params.sample_ccs}"
-log.info "primers_fasta                         : ${params.primers_fasta}"
 log.info "hexamer                               : ${params.hexamer}"
 log.info "logit_model                           : ${params.logit_model}"
-log.info "sample_kallisto_tpm                   : ${params.sample_kallisto_tpm}"
-log.info "normalized_ribo_kallisto              : ${params.normalized_ribo_kallisto}"
-log.info "uniprot_protein_fasta                 : ${params.uniprot_protein_fasta}"
-log.info "coding_score_cutoff                         : ${params.coding_score_cutoff}"
+log.info "mainScript                            : ${params.mainScript}"
 log.info "mass_spec                             : ${params.mass_spec}"
+log.info "max_cpus                              : ${params.max_cpus}"
+log.info "metamorpheus toml                     : ${params.metamorpheus_toml}"
+log.info "name                                  : ${params.name}"
+log.info "normalized_ribo_kallisto              : ${params.normalized_ribo_kallisto}"
+log.info "outdir                                : ${params.outdir}"
+log.info "primers_fasta                         : ${params.primers_fasta}"
+log.info "rescue and resolve toml               : ${params.rescue_resolve_toml}"
+log.info "sample_ccs                            : ${params.sample_ccs}"
+log.info "sample_kallisto_tpm                   : ${params.sample_kallisto_tpm}"
+log.info "sqanti classification                 : ${params.sqanti_classification}"
+log.info "sqanti fasta                          : ${params.sqanti_fasta}"
+log.info "sqanti gtf                            : ${params.sqanti_gtf}"
+log.info "star_genome_dir                       : ${params.star_genome_dir}"
+log.info "uniprot_protein_fasta                 : ${params.uniprot_protein_fasta}"
 log.info ""
+
 
 if (!params.gencode_gtf) exit 1, "Cannot find gtf file for parameter --gencode_gtf: ${params.gencode_gtf}"
 ch_gencode_gtf = Channel.value(file(params.gencode_gtf))
 
 if (!params.gencode_transcript_fasta) exit 1, "Cannot find any file for parameter --gencode_transcript_fasta: ${params.gencode_transcript_fasta}"
-ch_gencode_transcript_fasta= Channel.value(file(params.gencode_transcript_fasta))
 
 if (!params.gencode_translation_fasta) exit 1, "Cannot find any file for parameter --gencode_translation_fasta: ${params.gencode_translation_fasta}"
 
-if (params.gencode_translation_fasta.endsWith('.gz')){
-  ch_gencode_translation_fasta = Channel.value(file(params.gencode_translation_fasta))
-} else {
-  ch_gencode_translation_fasta_uncompressed = Channel.value(file(params.gencode_translation_fasta))
-}
+if (!params.uniprot_protein_fasta) exit 1, "Cannot find any file for parameter --uniprot_protein_fasta: ${params.uniprot_protein_fasta}"
 
 if (!params.hexamer) exit 1, "Cannot find headmer file for parameter --hexamer: ${params.hexamer}"
 ch_hexamer = Channel.value(file(params.hexamer))
 
 if (!params.logit_model) exit 1, "Cannot find any logit model file for parameter --logit_model: ${params.logit_model}"
-ch_logit_model =  Channel.value(file(params.logit_model))
 
 if (!params.sample_kallisto_tpm) exit 1, "Cannot find any sample_kallisto_tpm file for parameter --sample_kallisto_tpm: ${params.sample_kallisto_tpm}"
 ch_sample_kallisto = Channel.value(file(params.sample_kallisto_tpm))
@@ -90,41 +90,224 @@ ch_sample_kallisto = Channel.value(file(params.sample_kallisto_tpm))
 if (!params.normalized_ribo_kallisto) exit 1, "Cannot find any normalized_ribo_kallisto file for parameter --normalized_ribo_kallisto: ${params.normalized_ribo_kallisto}"
 ch_normalized_ribo_kallisto = Channel.value(file(params.normalized_ribo_kallisto))
 
-if (!params.uniprot_protein_fasta) exit 1, "Cannot find any file for parameter --uniprot_protein_fasta: ${params.uniprot_protein_fasta}"
-ch_uniprot_protein_fasta = Channel.value(file(params.uniprot_protein_fasta))
+//if (!params.metamorpheus_toml) exit 1, "Cannot find any file for parameter --metamorpheus_toml: ${params.metamorpheus_toml}"
 
 // if (!params.fastq_read_1) exit 1, "No file found for the parameter --fastq_read_1 at the location ${params.fastq_read_1}"
 // if (!params.fastq_read_2) exit 1, "No file found for the parameter --fastq_read_2 at the location ${params.fastq_read_2}"
+if (params.mass_spec != false & params.rescue_resolve_toml == false){
+   exit 1, "Cannot find file for parameter --rescue_resolve_toml: ${params.rescue_resolve_toml}"
+} else if (params.mass_spec != false & params.rescue_resolve_toml != false){
+   ch_rr_toml = Channel.value(file(params.rescue_resolve_toml))
+} else{
+   ch_rr_toml = Channel.from("no mass spec")
+}
+
+if (params.gencode_translation_fasta.endsWith('.gz')){
+   ch_gencode_translation_fasta = Channel.value(file(params.gencode_translation_fasta))
+} else {
+   ch_gencode_translation_fasta_uncompressed = Channel.value(file(params.gencode_translation_fasta))
+}
+
+if (params.gencode_transcript_fasta.endsWith('.gz')){
+   ch_gencode_transcript_fasta = Channel.value(file(params.gencode_transcript_fasta))
+} else {
+   ch_gencode_transcript_fasta_uncompressed = Channel.value(file(params.gencode_transcript_fasta))
+}
+
+if (params.genome_fasta.endsWith('.gz')){
+   ch_genome_fasta = Channel.value(file(params.genome_fasta))
+} else {
+   ch_genome_fasta_uncompressed = Channel.value(file(params.genome_fasta))
+}
+
+if (params.uniprot_protein_fasta.endsWith('.gz')){
+   ch_uniprot_protein_fasta = Channel.value(file(params.uniprot_protein_fasta))
+} else {
+   ch_uniprot_protein_fasta_uncompressed = Channel.value(file(params.uniprot_protein_fasta))
+}
+
+if (params.logit_model.endsWith('.gz')) {
+   ch_logit_model = Channel.value(file(params.logit_model))
+} else {
+   ch_logit_model_uncompressed = Channel.value(file(params.logit_model))
+}
+
+if (!params.sqanti_fasta == false) {
+   if (params.sqanti_fasta.endsWith('.gz')) {
+      ch_sqanti_fasta = Channel.value(file(params.sqanti_fasta))
+   } else {
+      ch_sqanti_fasta_uncompressed = Channel.value(file(params.sqanti_fasta))
+   }
+}
+
 ch_fastq_reads = Channel.from(params.fastq_read_1, params.fastq_read_2).filter(String).flatMap{ files(it) }
 
-if (!params.metamorpheus_toml) exit 1, "Cannot find any file for parameter --metamorpheus_toml: ${params.metamorpheus_toml}"
-ch_metamorpheus_toml = Channel.value(file(params.metamorpheus_toml))
+if (params.metamorpheus_toml != false){
+   ch_metamorpheus_toml = Channel.value(file(params.metamorpheus_toml))
+} else {
+   ch_metamorpheus_toml = Channel.value(file("NO_TOML_FILE"))
+}
 
 ch_metamorpheus_toml.into{
-  ch_metamorpheus_toml_gencode
-  ch_metamorpheus_toml_uniprot
-  ch_metamorpheus_toml_pacbio_refined
-  ch_metamorpheus_toml_pacbio_filtered
-  ch_metamorpheus_toml_pacbio_hybrid
+   ch_metamorpheus_toml_gencode
+   ch_metamorpheus_toml_uniprot
+   ch_metamorpheus_toml_pacbio_refined
+   ch_metamorpheus_toml_pacbio_filtered
+   ch_metamorpheus_toml_pacbio_hybrid
 }
 
-if(params.mass_spec != false){
-  ch_mass_spec_raw = Channel.fromPath("${params.mass_spec}/*.raw")
-  ch_mass_spec_mzml = Channel.fromPath("${params.mass_spec}/*.{mzml,mzML}")
-}
-else{
-  ch_mass_spec_raw = Channel.from("no mass spec")
-  ch_mass_spec_mzml = Channel.from("no mass spec")
-}
-
-if (params.mass_spec != false & params.rescue_resolve_toml == false){
-  exit 1, "Cannot find file for parameter --rescue_resolve_toml: ${params.rescue_resolve_toml}"
-}else if (params.mass_spec != false & params.rescue_resolve_toml != false){
-  ch_rr_toml = Channel.value(file(params.rescue_resolve_toml))
-}else{
-  ch_rr_toml = Channel.from("no mass spec")
+if (!params.mass_spec == false) {
+   if (!params.mass_spec.endsWith("tar.gz")) {
+      ch_mass_spec_raw = Channel.fromPath("${params.mass_spec}/*.raw")
+      ch_mass_spec_mzml = Channel.fromPath("${params.mass_spec}/*.{mzml,mzML}")
+   } else {
+      if (params.mass_spec.endsWith("tar.gz")){
+         ch_mass_spec_raw_mzml_tar_gz = Channel.value(file(params.mass_spec))
+      }
+   }
+} else {
+   ch_mass_spec_raw = Channel.from("no mass spec")
+   ch_mass_spec_mzml = Channel.from("no mass spec")
 }
 
+if (!params.star_genome_dir == false) {
+   if (!params.star_genome_dir.endsWith("tar.gz")) {
+      ch_genome_dir = Channel.fromPath(params.star_genome_dir, type:'dir')
+   } else {
+      if (params.star_genome_dir.endsWith("tar.gz")) {
+         ch_genome_dir_tar_gz = Channel.fromPath(params.star_genome_dir)
+      }
+   }
+}
+
+/*--------------------------------------------------
+Decompress Logit Model
+---------------------------------------------------*/
+if (params.logit_model.endsWith('.gz')) {
+   process gunzip_logit_model {
+      tag "decompress logit model"
+      cpus 1
+
+      input:
+      file(logit_model) from ch_logit_model
+
+      output:
+      file("*.RData") into ch_logit_model_uncompressed
+
+      script:
+      """
+      gunzip -f ${logit_model}
+      """
+   }
+}
+
+/*--------------------------------------------------
+Untar & decompress mass spec file
+---------------------------------------------------*/
+if (params.mass_spec != false) {
+   if (params.mass_spec.endsWith("tar.gz")) {
+      process untar_mass_spec {
+         tag "${raw_mzml_tar_gz}"
+         cpus 1
+
+         input:
+         file(raw_mzml_tar_gz) from ch_mass_spec_raw_mzml_tar_gz
+
+         output:
+         file("${raw_mzml_tar_gz.simpleName}/*.raw") optional true into ch_mass_spec_raw
+         file("${raw_mzml_tar_gz.simpleName}/*.{mzml,mzML}") optional true into ch_mass_spec_mzml
+
+         script:
+         """
+         tar xvzf $raw_mzml_tar_gz
+         """
+      }
+   }
+}
+
+/*--------------------------------------------------
+Decompress gencode translation fasta file
+---------------------------------------------------*/
+if (params.gencode_translation_fasta.endsWith('.gz')) {
+   process gunzip_gencode_translation_fasta {
+   tag "decompress gzipped gencode translation fasta"
+   cpus 1
+
+   input:
+   file(gencode_translation_fasta) from ch_gencode_translation_fasta
+
+   output:
+   file("*.{fa,fasta}") into ch_gencode_translation_fasta_uncompressed
+
+   script:
+   """
+   gunzip -f ${gencode_translation_fasta}
+   """
+   }
+}
+
+/*--------------------------------------------------
+Decompress gencode transcript fasta file
+---------------------------------------------------*/
+if (params.gencode_transcript_fasta.endsWith('.gz')) {
+   process gunzip_gencode_transcript_fasta {
+   tag "decompress gzipped gencode transcript fasta"
+   cpus 1
+
+   input:
+   file(gencode_transcript_fasta) from ch_gencode_transcript_fasta
+
+   output:
+   file("*.{fa,fasta}") into ch_gencode_transcript_fasta_uncompressed
+
+   script:
+   """
+   gunzip -f ${gencode_transcript_fasta}
+   """
+   }
+}
+
+/*--------------------------------------------------
+Decompress genome fasta file
+---------------------------------------------------*/
+if (params.genome_fasta.endsWith('.gz')) {
+   process gunzip_gencome_fasta {
+   tag "decompress gzipped genome fasta"
+   cpus 1
+
+   input:
+   file(genome_fasta) from ch_genome_fasta
+
+   output:
+   file("*.{fa,fasta}") into ch_genome_fasta_uncompressed
+
+   script:
+   """
+   gunzip -f ${genome_fasta}
+   """
+   }
+}
+
+/*--------------------------------------------------
+Decompress uniprot protein fasta file
+---------------------------------------------------*/
+if (params.uniprot_protein_fasta.endsWith('.gz')) {
+   process gunzip_uniprot_protein_fasta {
+   tag "decompress gzipped uniprot protein fasta"
+   cpus 1
+
+   input:
+   file(uniprot_protein_fasta) from ch_uniprot_protein_fasta
+
+   output:
+   file("*.{fa,fasta}") into ch_uniprot_protein_fasta_uncompressed
+
+   script:
+   """
+   gunzip -f ${uniprot_protein_fasta}
+   """
+   }
+}
 
 /*--------------------------------------------------
 Reference Tables 
@@ -137,7 +320,7 @@ process generate_reference_tables {
 
   input:
   file(gencode_gtf) from ch_gencode_gtf
-  file(gencode_transcript_fasta) from ch_gencode_transcript_fasta
+  file(gencode_transcript_fasta) from ch_gencode_transcript_fasta_uncompressed
   
   output:
   file("ensg_gene.tsv") into ch_ensg_gene
@@ -182,25 +365,6 @@ ch_gene_lens.into{
 ch_gene_isoname.into{
   ch_gene_isoname_pep_viz
   ch_gene_isoname_pep_analysis
-}
-
-
-if (params.gencode_translation_fasta.endsWith('.gz')) {
-  process gunzip_gencode_translation_fasta {
-  tag "decompress gzipped fasta"
-  cpus 1
-
-  input:
-  file(gencode_translation_fasta) from ch_gencode_translation_fasta
-
-  output:
-  file("*.{fa,fasta}") into ch_gencode_translation_fasta_uncompressed
-
-  script:
-  """
-  gunzip -f ${gencode_translation_fasta}
-  """
-  }
 }
 
 
@@ -254,12 +418,13 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
   ch_primers_fasta = Channel.value(file(params.primers_fasta))
 
   if (!params.genome_fasta) exit 1, "Cannot find any seq file for parameter --genome_fasta: ${params.genome_fasta}"
-  ch_genome_fasta = Channel.value(file(params.genome_fasta))
-  ch_genome_fasta.into{
+  
+  ch_genome_fasta_uncompressed.into{
     ch_genome_fasta_star
     ch_genome_fasta_isoseq
     ch_genome_fasta_sqanti
   }
+  
   /*--------------------------------------------------
   IsoSeq3
    * Runs IsoSeq3 on CCS reads, aligning to genome and
@@ -319,21 +484,45 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
   }
 
   /*--------------------------------------------------
+   Untar & Decompress star genome directory
+  ---------------------------------------------------*/
+  if (params.star_genome_dir != false) {
+     if (params.star_genome_dir.endsWith("tar.gz")) {
+
+         process untar_star_genome_dir {
+            tag "${genome_dir_tar_gz}"
+            cpus 1
+
+            input:
+            file(genome_dir_tar_gz) from ch_genome_dir_tar_gz
+
+            output:
+            file("star_genome") into ch_genome_dir
+
+            script:
+            """
+            tar xvzf $genome_dir_tar_gz
+            """
+        }
+     }
+  }
+
+  /*--------------------------------------------------
   STAR Alignment
-   * STAR alignment is run if fastq reads are provided
-   * Junction alignments are fed to SQANTI3 where 
-   * information is used in classificaiton filtering
+   * STAR alignment is run only if sqanti has not been
+   *  previously been run and if fastq (short read RNAseq) files
+   *  have been provided.
+   *  if( params.sqanti_classification==false || params.sqanti_fasta==false || params.sqanti_gtf==false )
+   *  STAR alignment is run if fastq reads are provided
+   *  Junction alignments are fed to SQANTI3 where 
+   *  information is used in classificaiton filtering
+   *
    * STEPS
    *   - generate star genome index (skipped if provided) 
    *   - star read alignment 
   ---------------------------------------------------*/
-  if(params.star_genome_dir != false){
-      Channel
-      .fromPath(params.star_genome_dir, type:'dir')
-      .set{ch_genome_dir}
-  }
-  else{
-      process star_generate_genome{
+  if(!params.star_genome_dir){
+    process star_generate_genome{
           cpus params.max_cpus
           publishDir "${params.outdir}/${params.name}/star_index", mode: "copy"
           
@@ -451,7 +640,8 @@ if( params.sqanti_classification==false || params.sqanti_fasta==false || params.
 } 
 else{
   ch_sample_unfiltered_classification = Channel.value(file(params.sqanti_classification))
-  ch_sample_unfiltered_fasta = Channel.value(file(params.sqanti_fasta))
+//  ch_sample_unfiltered_fasta = Channel.value(file(params.sqanti_fasta))
+  ch_sample_unfiltered_fasta = ch_sqanti_fasta_uncompressed
   ch_sample_unfiltered_gtf = Channel.value(file(params.sqanti_gtf))
 }
 
@@ -636,7 +826,7 @@ process cpat {
 
   input:
   file(hexamer) from ch_hexamer
-  file(logit_model) from ch_logit_model
+  file(logit_model) from ch_logit_model_uncompressed
   file(sample_fasta) from ch_sample_fasta_cpat
 
   output:
@@ -1058,8 +1248,8 @@ process make_hybrid_database{
     file(sample_cds) from ch_filtered_cds_agg
   output:
     file("*")
-    file("${params.name}_cds_high_confidence.gtf") into ch_high_confidence_cds
-    file("${params.name}_hybrid.fasta") into ch_sample_hybrid_fasta
+    file("${params.name}_cds_high_confidence.gtf")     into ch_high_confidence_cds
+    file("${params.name}_hybrid.fasta")                into ch_sample_hybrid_fasta
     file("${params.name}_refined_high_confidence.tsv") into ch_refined_info_high_conf
   script:
     """
@@ -1081,6 +1271,7 @@ ch_high_confidence_cds.into{
   ch_high_confidence_cds_track_viz
   ch_high_confidence_cds_multiregion
 }
+
 ch_sample_hybrid_fasta.into{
   ch_sample_hybrid_fasta_normal
   ch_sample_hybrid_fasta_rescue
@@ -1092,9 +1283,11 @@ ch_sample_hybrid_fasta.into{
 /*--------------------------------------------------
 Mass Spec File Conversion
  * Convert MS .raw files into .mzml files
+ * by not specifying the output file, the input file is overwritten
 ---------------------------------------------------*/
 process mass_spec_raw_convert{
-    // publishDir "${params.outdir}/${params.name}/raw_convert/", mode: 'copy'
+
+    publishDir "${params.outdir}/${params.name}/raw_convert/", mode: 'copy'
     when:
       params.mass_spec != false
 
@@ -1106,6 +1299,12 @@ process mass_spec_raw_convert{
         """
         wine msconvert $raw_file --filter "peakPicking true 1-"
         """
+}
+
+ch_uniprot_protein_fasta_uncompressed.into {
+  ch_uniprot_protein_fasta_for_metamorphisis
+  ch_uniprot_protein_fasta_for_accession_mapping
+  ch_uniprot_protein_fasta_for_peptide_novelty
 }
 
 ch_mass_spec_combined = ch_mass_spec_mzml.concat(ch_mass_spec_converted)
@@ -1127,8 +1326,11 @@ Metamorpheus GENCODE
 process metamorpheus_with_gencode_database{
     label 'metamorpheus'
     tag "${mass_spec}"
+    
     cpus params.max_cpus
+    
     publishDir "${params.outdir}/${params.name}/metamorpheus/gencode", mode: 'copy'
+    
     when:
       params.mass_spec != false
 
@@ -1169,7 +1371,7 @@ process metamorpheus_with_uniprot_database{
 
     input:
         file(toml_file) from ch_metamorpheus_toml_uniprot
-        file(uniprot_fasta) from ch_uniprot_protein_fasta
+        file(uniprot_fasta) from ch_uniprot_protein_fasta_for_metamorphisis
         file(mass_spec) from ch_mass_spec_for_uniprot.collect()
 
     output:
@@ -1283,8 +1485,11 @@ MetaMorpheus with Sample Specific Database - Hybrid
 process metamorpheus_with_sample_specific_database_hybrid{
     label 'metamorpheus'
     tag "${mass_spec}"
+    
     cpus params.max_cpus
+    
     publishDir "${params.outdir}/${params.name}/metamorpheus/pacbio/hybrid", mode: 'copy'
+    
     when:
       params.mass_spec != false
 
@@ -1650,7 +1855,7 @@ process accession_mapping{
   input:
     file(pacbio_fasta) from ch_refined_fasta_mapping
     file(gencode_fasta) from ch_gencode_protein_fasta_mapping
-    file(uniprot_fasta) from ch_uniprot_protein_fasta
+    file(uniprot_fasta) from ch_uniprot_protein_fasta_for_accession_mapping
   
   output:
     file("accession_map_gencode_uniprot_pacbio.tsv") into ch_accession_map
@@ -1718,7 +1923,7 @@ process peptide_novelty_analysis{
     file(peptides_filtered) from ch_pacbio_peptides_filtered_novel
     file(peptides_hybrid) from ch_pacbio_peptides_hybrid_novel
     file(gencode_fasta) from ch_gencode_protein_fasta_novel
-    file(uniprot_fasta) from ch_uniprot_protein_fasta
+    file(uniprot_fasta) from ch_uniprot_protein_fasta_for_peptide_novelty
   output:
     file("*")
   

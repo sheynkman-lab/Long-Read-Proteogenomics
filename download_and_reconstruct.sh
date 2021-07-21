@@ -22,6 +22,8 @@
 #       will know ZENODO and will be able to use the data, AWS has an entry barrier for this group of people
 #
 #-----------------------------------------------------------------------------------------------------------
+echo "downloading from Zenodo record 5076056\n\n"
+
 wget https://zenodo.org/record/5076056/files/gencode.v35.annotation.canonical.gtf
 wget https://zenodo.org/record/5076056/files/gencode.v35.pc_transcripts.fa.gz
 wget https://zenodo.org/record/5076056/files/gencode.v35.pc_translations.fa.gz
@@ -42,4 +44,9 @@ wget https://zenodo.org/record/5076056/files/star_genome.tar.gz
 wget https://zenodo.org/record/5076056/files/Task1SearchTaskconfig_orf.toml
 wget https://zenodo.org/record/5076056/files/uniprot_reviewed_canonical_and_isoform.fasta.gz
 
-echo "done"
+echo "done downloading ... now reconstructing folders untarring and  unzipping mass_spec.tar.gz and star_genome.tar.gz\n\n"
+
+tar xvzf mass_spec.tar.gz
+tar xvzf star_genome.tar.gz
+
+echo "done reconstructing"

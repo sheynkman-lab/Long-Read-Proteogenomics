@@ -3,9 +3,12 @@
 *.gff
 *.gtf
 *.fa
+*.txt
+*.toml
 
 # large file formats
-*fa.gz
+*.gz
+*.bam
 .DS_Store
 .vscode
 #nextflow related files
