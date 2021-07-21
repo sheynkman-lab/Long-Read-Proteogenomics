@@ -1337,7 +1337,7 @@ process metamorpheus_with_gencode_database{
     input:
         file(gencode_fasta) from ch_gencode_protein_fasta_metamorpheus
         file(mass_spec) from ch_mass_spec_for_gencode.collect()
-        file(toml_file) from ch_metamorpheus_toml_gencode
+        toml_file from ch_metamorpheus_toml_gencode
     output:
         file("toml/*")
         file("search_results/Task1SearchTask/All*")
