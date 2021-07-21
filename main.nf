@@ -1337,7 +1337,7 @@ process metamorpheus_with_gencode_database{
     input:
         file(gencode_fasta) from ch_gencode_protein_fasta_metamorpheus
         file(mass_spec) from ch_mass_spec_for_gencode.collect()
-        toml_file from ch_metamorpheus_toml_gencode
+//        toml_file from ch_metamorpheus_toml_gencode
     output:
         file("toml/*")
         file("search_results/Task1SearchTask/All*")
@@ -1347,7 +1347,8 @@ process metamorpheus_with_gencode_database{
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv") into ch_gencode_protein_groups
     
     script:
-        def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
+//        def toml = toml_file.name != 'NO_TOML_FILE' ? "$toml_file" : 'toml/SearchTask.toml'
+        def toml = 'toml/SearchTask.toml'
         """
         dotnet /metamorpheus/CMD.dll -g -o ./toml --mmsettings ./settings
         dotnet /metamorpheus/CMD.dll -d $gencode_fasta settings/Contaminants/MetaMorpheusContaminants.xml -s $mass_spec -t $toml -v normal --mmsettings settings -o ./search_results
