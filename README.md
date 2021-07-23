@@ -5,6 +5,7 @@
 
 `Updated: 2021 July 11`
 
+
 This is the repository for the **Long-Read Proteogenomics** workflow.  Written in [`Nextflow`](https://www.nextflow.io/), it is a modular workflow beneficial to both the `Transcriptomics` and `Proteomics` fields. The data from both `Long-Read IsoSeq sequencing` with `PacBio` and `Mass spectrometry-based proteomics` used in the classification and analysis of protein isoforms expressed in `Jurkat` cells and described in the publication `Enhanced protein isoform characterization through long-read proteogenomics`, which will be made public in Fall 2021.
 
 A goal in the biomedical field is to delineate the protein isoforms that are expressed and have pathophysiological relevance. Towards this end, new approaches are needed to detect protein isoforms in clinical samples. Mass spectrometry (MS) is the main methodology for protein detection; however, poor coverage and incompleteness of protein databases limit its utility for isoform-resolved analysis. Fortunately, long-read RNA-seq approaches from PacBio and Oxford Nanopore platforms offer opportunities to leverage full-length transcript data for proteomics.
@@ -48,6 +49,7 @@ Download Nextflow (use [`anaconda search`] for the correct syntax.  Searching sh
 conda install -c bioconda nextflow -y
 ```
 
+
 ### `3. Clone this repository`
 
 Now with the environment ready - you can either clone the environment or run the repository without cloning. See [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) for all of the available options when running the pipeline.
@@ -57,7 +59,6 @@ Optionally, clone the [Long-Read-Proteomics](https://github.com/sheynkman-lab/Lo
 ```bash
 git clone https://github.com/sheynkman-lab/Long-Read-Proteogenomics.git
 ```
-
 ### `4. Execute the workflow as a test`
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5109695.svg)](https://doi.org/10.5281/zenodo.5109695)
 
@@ -86,6 +87,7 @@ The pipeline accepts as input raw PacBio data and performs the assembly of predi
 
 ![LRP Pipeline_v2](https://user-images.githubusercontent.com/12956799/110397183-5c041b00-803f-11eb-9ba7-02352dab5656.png)
 
+
 ## Using Zenodo
 
 To make the data more accessible and FAIR, the indexed files were transferred to Zenodo using [`zenodo-upload`](https://github.com/jhpoelen/zenodo-upload) from the `University of Virginia's Gloria Sheynkman Lab` Amazon `S3` buckets.
@@ -99,6 +101,22 @@ The main reasons why ZENODO vs AWS S3: or GCP GS: are:
 1. `Data versioning` (of primary importance): In S3 or GS buckets, data can be overwritten for the same path at any point, possibly breaking the pipeline.
 2. `Cost`: These datasets are tiny but the principle stays: The less storage the better
 3. `Access`: Most users of the pipeline can most easily access `ZENODO` and will be able to use the data. AWS and GCP has an entry barriers.
+
+Details on how these data were transferred and moved from `AWS S3:` buckets are described in the [`AWS to Zenodo`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/main/AWStoZenodo.md) markdown document in this repository.
+
+## Using Zenodo
+
+To make the data more accessible and FAIR, the indexed files were transferred to Zenodo using [`zenodo-upload`](https://github.com/jhpoelen/zenodo-upload) from the `University of Virginia's Gloria Sheynkman Lab` Amazon `S3` buckets.
+
+The data were prepared and stored in the development of the `Sheynkman Lab Long-read Proteogenomics Pipeline`
+
+Using Nextflow, configuration items can access locations in Google Compute Platform (GCP) buckets (`gs://`), Amazon Web Services (AWS) buckets (`s3://`) and Zenodo locations (`https://`) seamlessly.
+
+The main reasons why ZENODO vs AWS S3: or GCP GS: are:
+
+1. `Data versioning`: (number 1 important reason), In S3 or GS, data can be overwritten for the same path at any point possibly breaking the pipeline.
+2. `Cost`: These data are tiny but the principle stays: The less storage the better
+3. `Access`: Most reviewers, readers of the pipeline and paper will know `ZENODO` and will be able to use the data, AWS and GCP has an entry barrier for many.
 
 Details on how these data were transferred and moved from `AWS S3:` buckets are described in the [`AWS to Zenodo`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/main/AWStoZenodo.md) markdown document in this repository.
 
