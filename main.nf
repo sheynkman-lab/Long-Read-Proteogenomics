@@ -142,10 +142,17 @@ if (!params.sqanti_fasta == false) {
 
 ch_fastq_reads = Channel.from(params.fastq_read_1, params.fastq_read_2).filter(String).flatMap{ files(it) }
 
-if (params.metamorpheus_toml != false){
-   ch_metamorpheus_toml = Channel.value(file(params.metamorpheus_toml))
-} else {
-   ch_metamorpheus_toml = Channel.value(file("NO_TOML_FILE"))
+// Implements logic for cloud compatibility, NO_TOML_FILE as variable only works for envs with local file system
+projectDir = workflow.projectDir
+
+if (!params.toml_file) {
+    log.warn "No toml file specified via --toml_file for Metamorpheus, proceeding without"
+    ch_metamorpheus_toml = Channel.value(file("${projectDir}/assets/NO_TOML_FILE"))
+}
+
+if (params.toml_file) {
+    log.warn "Metamorpheus toml file specified: ${params.toml_file}"
+    ch_metamorpheus_toml = Channel.value(file(params.metamorpheus_toml))
 }
 
 ch_metamorpheus_toml.into{
