@@ -109,7 +109,7 @@ Details on how these data were transferred and moved from `AWS S3:` buckets are 
 - [Simran Kaur](https://orcid.org/0000-0003-1536-5996)
 - [Raymond Leclair](https://orcid.org/0000-0002-7233-6588)
 - [Anne Deslattes Mays](https://orcid.org/0000-0001-7951-3439)
-- [Madison Mehlferber] (https://orcid.org/0000-0001-9598-8100)
+- [Madison Mehlferber](https://orcid.org/0000-0001-9598-8100)
 - [Rachel M. Miller](http://orcid.org/0000-0003-1461-6386)
 - [Robert J. Millikin](https://orcid.org/0000-0001-7440-3695)
 - [Kyndalanne Pike](https://orcid.org/0000-0002-5906-2340)
