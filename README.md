@@ -27,7 +27,7 @@ This workflow is complex, bringing together two measurement technologies to crea
 
 ### How to use this repository
 
-This repository is organized into modules and parts of this repository could be useful to different researchers to annotate their results.   The workflow is written in Nextflow, allowing it to be run on virtually any platform with alterations to the configurations and other adaptations.   The visitor is encourated to fork clone and adapt and contribute.   All are encouraged to use [`GitHub Issues`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/issues) to communicate with the contributors to this open source software project.   Software addtions, modifications and contributions are done through [`GitHub Pull Requests`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/pulls)  
+This repository is organized into modules and parts of this repository could be useful to different researchers to annotate their own raw data.   The workflow is written in Nextflow, allowing it to be run on virtually any platform with alterations to the configurations and other adaptations.   The visitor is encourated to fork clone and adapt and contribute.   All are encouraged to use [`GitHub Issues`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/issues) to communicate with the contributors to this open source software project.   Software addtions, modifications and contributions are done through [`GitHub Pull Requests`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/pulls)  
 
 Module processes details are documented within the [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) within this repository.  As well as linked to the third party resources used in this workflow.
 
