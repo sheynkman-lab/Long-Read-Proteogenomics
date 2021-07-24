@@ -4,7 +4,7 @@
 
 To make the data more accessible and FAIR, the indexed files were transfered to Zenodo using [`zenodo-upload`](https://github.com/jhpoelen/zenodo-upload) from the `University of Virginia's Gloria Sheynkman Lab` Amazon `S3` buckets.
 
-The data were prepared and stored in the development of the `Sheynkman Lab Long-read Proteogenomics Pipeline`
+The data were prepared and stored in the development of the [`Sheynkman Lab Long-read Proteogenomics Pipeline`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics).
 
 Using Nextflow, configuration items can access locations in Google Compute Platform (GCP) buckets (`gs://`), Amazon Web Services (AWS) buckets (`s3://`) and Zenodo locations (`https://`) seamlessly.
 
