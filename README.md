@@ -95,7 +95,7 @@ For details regarding the processes and results produced, please see the [`Wiki`
 
 To visualize results, please see the [`visualization capabilities of the final annotated results`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette---How-to-Visualize-Results-from-Jurkat-Analysis).
 
-## Documentation and Pipeline Vignette
+## Documentation and Workflow Vignettes
 
 The sheynkman-lab/Long-Read-Proteogenomics pipeline comes with details about each of the processes that make up the pipeline are found in the [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki).   In this you will find:
 
