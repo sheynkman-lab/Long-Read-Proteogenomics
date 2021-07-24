@@ -16,7 +16,7 @@ The main reasons why ZENODO vs AWS S3: or GCP GS: are:
 
 ## Prepare your environment
 
-<p align="center"><img src="https://github.com/lifebit-ai/dry-bench-skills-for-researchers/blob/assets/lifebitCloudOS.png"  width="250" align="right" ></p>
+<p align="center"><img src="https://github.com/lifebit-ai/dry-bench-skills-for-researchers/blob/main/assets/lifebitCloudOS.png"  width="250" align="right" ></p>
 
 We used [`JupyterLab`](https://jupyter.org/) terminal windows within the [`Lifebit's CloudOS`](https://lifebit.ai/cloudos) application.  The documentation here is to be transparent about the data that were moved from the Amazon S3 buckets to Zenodo.  Similar steps may be performed on other datasets following the same step-by-step procedure in an appropriate sized terminal, running a unix environment.
 
