@@ -1,10 +1,12 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5076056.svg)](https://doi.org/10.5281/zenodo.5076056)
+
 [![reviewdog misspell](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/catch_typos.yml/badge.svg)](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/catch_typos.yml)
-[![Testing for Long Reads Proteogenomics](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci.yml/badge.svg)](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci.yml)
+
+[![Testing for Long Reads Proteogenomics without Sqanti](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci_test_without_sqanti.yml/badge.svg)](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci_test_without_sqanti.yml)
+
 # Sheynkman-Lab/Long-Read-Proteogenomics
 
-`Updated: 2021 July 11`
-
+`Updated: 2021 July 24`
 
 This is the repository for the **Long-Read Proteogenomics** workflow.  Written in [`Nextflow`](https://www.nextflow.io/), it is a modular workflow beneficial to both the `Transcriptomics` and `Proteomics` fields. The data from both `Long-Read IsoSeq sequencing` with `PacBio` and `Mass spectrometry-based proteomics` used in the classification and analysis of protein isoforms expressed in `Jurkat` cells and described in the publication `Enhanced protein isoform characterization through long-read proteogenomics`, which will be made public in Fall 2021.
 
@@ -17,59 +19,68 @@ Proteogenomics is providing new insights into cancer and other diseases. The pro
 We acknowledge the beginning kernels of this work were formed during the Fall of 2020 at the [`Cold Spring Harbor Laboratory Biological Data Science Codeathon`](https://datascience.nih.gov/news/cold-spring-harbor-laboratory-biological-data-science-codeathon).  
 
 We acknowledge Lifebit and the use of their platform Lifebit's CloudOS key in development of the open source software Nextflow workflow used in this work.  
-<p align="center"><img src="https://github.com/lifebit-ai/dry-bench-skills-for-researchers/blob/adds-mini-courses/assets/lifebitCloudOS.png"  width="250" align="right" ></p>
+<p align="center"><img src="https://github.com/lifebit-ai/dry-bench-skills-for-researchers/blob/main/assets/lifebitCloudOS.png"  width="250" align="right" ></p>
 
 ## How to use this repository and Quick Start
 
-This workflow was used end-to-end in with the Nextflow main.nf workflow.  However, processes within this workflow maybe useful for others and are self-contained with clear identification of inputs and outputs.  These are documented on the [`wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) within this repository.
+This workflow is complex, bringing together two measurement technologies to create hybrid results enhancing the identification and annotation of sample specific protein and transcript isoforms.   To orient the user with the steps involved in the transformation of raw measurement data to these fully resolved, identified and annotated results, we have developed this quick start.  
 
-You can clone this GitHub repository and run this on an appropriately sized machine.  
+### How to use this repository
 
-## Quick Start
+This repository is organized into modules and parts of this repository could be useful to different researchers to annotate their results.   The workflow is written in Nextflow, allowing it to be run on virtually any platform with alterations to the configurations and other adaptations.   The visitor is encourated to fork clone and adapt and contribute.   All are encouraged to use [`GitHub Issues`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/issues) to communicate with the contributors to this open source software project.   Software addtions, modifications and contributions are done through [`GitHub Pull Requests`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/pulls)  
 
-### `1. Create the environment`
+Module processes details are documented within the [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) within this repository.  As well as linked to the third party resources used in this workflow.
 
-Always best practice to work within a controlled environment.  We use [`conda`] to create this environment.
+Vignettes have been developed to go into greater detail and walk the visitor through the [`visualization capabilities of the final annotated results`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette---How-to-Visualize-Results-from-Jurkat-Analysis) and to walk the [`visitor through a workflow with the quick start run with a demonstration configuration file`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette-Long-Read-Proteogenomics-Workflow-with-Test-Data)
 
-```bash
-conda init bash
-exec -l bash
-```
-Create and activate a new conda environment `lrp`.
+### Quick Start
+
+This quick start and steps were performed on a MacBook Pro running BigSur Version 11.4 with 16 GB 2667 MHz DDR48 RAM and a 2.3 GHz 8-Core Intel Core i9 processor.
+
+The visitor will be walked through the pre-requisites, clone the library and execute with demonstration data also used in the [`GitHub Actions`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci_test_without_sqanti.yml) and with a [`Vignette`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette-Long-Read-Proteogenomics-Workflow-with-Test-Data).   The user is referred to the [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) and the vignette for greater details into each of the steps.
+
+#### Obtain the Desktop DockerHub Application
+
+<p align="center"><img src="https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/main/docs/images/Moby-logo.png"  width="100" align="right" ></p>
+
+In this quick start, [`Dockerhub Desktop Application for the Mac with an Intel Chip`](https://hub.docker.com/editions/community/docker-ce-desktop-mac) was used.
+Follow the instructions there to install.
+
+#### Configure the Desktop DockerHub Application
+
+On the MacBook Pro running BigSur Version 11.4 with 16 GB Ram, It was necessary to configure the Dockerhub resources to use **`6GB`** of Ram.
+
+<img src="https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/main/docs/images/DockerHubDesktopResourceConfigurationMacWithIntelChip.png"  width="600" height="200">
+
+#### Obtain miniconda
+
+On the MacBook Pro, the [`64-bit version of miniconda was downloaded and installed`](https://docs.conda.io/en/latest/miniconda.html) follow the installation instructions.
+
+#### Create and activate a new conda environment `lrp`.
 
 ```bash
 conda create -n lrp
 conda activate lrp
 ```
-### `2. Download nextflow`
 
-Download Nextflow (use [`anaconda search`] for the correct syntax.  Searching shows [`Nextflow`] is available on the `Bioconda` channel.
+#### Clone this repository 
 
-```bash
-conda install -c bioconda nextflow -y
-```
-
-
-### `3. Clone this repository`
-
-Now with the environment ready - you can either clone the environment or run the repository without cloning. See [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) for all of the available options when running the pipeline.
-
-Optionally, clone the [Long-Read-Proteomics](https://github.com/sheynkman-lab/Long-Read-Proteogenomics) repository.
+Now with the environment ready, we can clone.
 
 ```bash
-git clone https://github.com/sheynkman-lab/Long-Read-Proteogenomics.git
+git clone https://github.com/sheynkman-lab/Long-Read-Proteogenomics
+cd Long-Read-Proteogenomics
 ```
-### `4. Execute the workflow as a test`
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5109695.svg)](https://doi.org/10.5281/zenodo.5109695)
 
-One test that can be run uses a test configuration file stored on [`Zenodo`](https://doi.org/10.5281/zenodo.5109695).
+#### Run the pipeline with the test_without_sqanti.config
 
-Running a test from the clone can be done with the command - without metamorphesis
+This Quick start uses `test_without_sqanti.config` and uses data in the Zenodo Test Data Repository
 
 ```bash
-nextflow run main.nf -profile test
+nextflow run main.nf --config conf/test_without_sqanti.config 
 ```
-This was done on a MacBook Pro running BigSur Version 11.4 with 16 GB 2667 MHz DDR48 RAM and a 2.3 GHz 8-Core Intel Core i9 processor.  
+
+For details regarding the processes and results produced, please see the [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) and the  [`Vignette: Workflow with test data`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette-Long-Read-Proteogenomics-Workflow-with-Test-Data)
 
 ## Documentation and Pipeline Vignette
 
@@ -79,14 +90,14 @@ The sheynkman-lab/Long-Read-Proteogenomics pipeline comes with details about eac
 2. [`Input parameters`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Input-Parameters)
 3. [`Output files`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Output-Files)
 4. [`Pipeline processes descriptions`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Pipeline-Processes)
-5. [`Pipeline vignette`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Pipeline-Vignette)
+5. [`Vignette: Visualization`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette---How-to-Visualize-Results-from-Jurkat-Analysis)
+6. [`Vignette: Workflow with test data`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette-Long-Read-Proteogenomics-Workflow-with-Test-Data)
 
-## Pipeline overview
+## Workflow overview
 
-The pipeline accepts as input raw PacBio data and performs the assembly of predicted protein isoforms with high probability of existing in the sample. This database is then used in [MetaMorpheus](https://github.com/smith-chem-wisc/MetaMorpheus) to search raw mass spectrometry data against the PacBio reference. MetaMorpheus will use protein isoform read counts during protein inference. Two other protein databases are employed for the purposes of comparison. One is from [UniProt](https://www.uniprot.org/) and the other is from [GENCODE](https://www.gencodegenes.org/). A series of [Jupyter notebooks](https://github.com/sheynkman-lab/LRPG-Manuscript) can be used to perform all final comparisons and data analysis. 
+The workflow accepts as input raw PacBio data and performs the assembly of predicted protein isoforms with high probability of existing in the sample. This database is then used in [MetaMorpheus](https://github.com/smith-chem-wisc/MetaMorpheus) to search raw mass spectrometry data against the PacBio reference. MetaMorpheus will use protein isoform read counts during protein inference. Two other protein databases are employed for the purposes of comparison. One is from [UniProt](https://www.uniprot.org/) and the other is from [GENCODE](https://www.gencodegenes.org/). A series of [Jupyter notebooks](https://github.com/sheynkman-lab/LRPG-Manuscript) can be used to perform all final comparisons and data analysis. 
 
 ![LRP Pipeline_v2](https://user-images.githubusercontent.com/12956799/110397183-5c041b00-803f-11eb-9ba7-02352dab5656.png)
-
 
 ## Using Zenodo
 
@@ -101,22 +112,6 @@ The main reasons why ZENODO vs AWS S3: or GCP GS: are:
 1. `Data versioning` (of primary importance): In S3 or GS buckets, data can be overwritten for the same path at any point, possibly breaking the pipeline.
 2. `Cost`: These datasets are tiny but the principle stays: The less storage the better
 3. `Access`: Most users of the pipeline can most easily access `ZENODO` and will be able to use the data. AWS and GCP has an entry barriers.
-
-Details on how these data were transferred and moved from `AWS S3:` buckets are described in the [`AWS to Zenodo`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/main/AWStoZenodo.md) markdown document in this repository.
-
-## Using Zenodo
-
-To make the data more accessible and FAIR, the indexed files were transferred to Zenodo using [`zenodo-upload`](https://github.com/jhpoelen/zenodo-upload) from the `University of Virginia's Gloria Sheynkman Lab` Amazon `S3` buckets.
-
-The data were prepared and stored in the development of the `Sheynkman Lab Long-read Proteogenomics Pipeline`
-
-Using Nextflow, configuration items can access locations in Google Compute Platform (GCP) buckets (`gs://`), Amazon Web Services (AWS) buckets (`s3://`) and Zenodo locations (`https://`) seamlessly.
-
-The main reasons why ZENODO vs AWS S3: or GCP GS: are:
-
-1. `Data versioning`: (number 1 important reason), In S3 or GS, data can be overwritten for the same path at any point possibly breaking the pipeline.
-2. `Cost`: These data are tiny but the principle stays: The less storage the better
-3. `Access`: Most reviewers, readers of the pipeline and paper will know `ZENODO` and will be able to use the data, AWS and GCP has an entry barrier for many.
 
 Details on how these data were transferred and moved from `AWS S3:` buckets are described in the [`AWS to Zenodo`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/main/AWStoZenodo.md) markdown document in this repository.
 
