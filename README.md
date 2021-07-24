@@ -37,7 +37,7 @@ Vignettes have been developed to go into greater detail and walk the visitor thr
 
 This quick start and steps were performed on a MacBook Pro running BigSur Version 11.4 with 16 GB 2667 MHz DDR48 RAM and a 2.3 GHz 8-Core Intel Core i9 processor.
 
-The visitor will be walked through the pre-requisites, clone the library and execute with demonstration data also used in the [`GitHub Actions`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci_test_without_sqanti.yml) and with a [`Vignette`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette-Long-Read-Proteogenomics-Workflow-with-Test-Data).   The user is referred to the [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) and the vignette for greater details into each of the steps.
+The visitor will be walked through the pre-requisites, clone the library and execute with demonstration data also used in the [`GitHub Actions`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci_test_without_sqanti.yml) and with the [`Quick Start Vignette`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette-Long-Read-Proteogenomics-Workflow-with-Test-Data).   The user is referred to the [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) and the vignette for greater details into each of the steps.
 
 #### Obtain the Desktop DockerHub Application
 
@@ -62,13 +62,22 @@ On the MacBook Pro, the [`64-bit version of miniconda was downloaded and install
 conda create -n lrp
 conda activate lrp
 ```
+#### Install Nextflow.
+
+Install and set the Nextflow version to the same version used in the [`GitHub Actions`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci_test_without_sqanti.yml) and with the [`Quick Start Vignette`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette-Long-Read-Proteogenomics-Workflow-with-Test-Data)
+
+```bash
+conda install -c bioconda nextflow -y
+export NXF_VER=20.01.0
+```
 
 #### Clone this repository 
 
 Now with the environment ready, we can clone.
 
 ```bash
-git clone https://github.com/sheynkman-lab/Long-Read-Proteogenomics
+git clone https://
+.com/sheynkman-lab/Long-Read-Proteogenomics
 cd Long-Read-Proteogenomics
 ```
 
