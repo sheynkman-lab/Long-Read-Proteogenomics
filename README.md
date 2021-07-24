@@ -23,7 +23,7 @@ We acknowledge Lifebit and the use of their platform Lifebit's CloudOS key in de
 
 ## How to use this repository and Quick Start
 
-This workflow is complex, bringing together two measurement technologies to create hybrid results enhancing the identification and annotation of sample specific protein and transcript isoforms.   To orient the user with the steps involved in the transformation of raw measurement data to these fully resolved, identified and annotated results, we have developed this quick start.  
+This workflow is complex, bringing together two measurement technologies to create hybrid results enhancing the identification and annotation of sample specific protein and transcript isoforms.   To orient the user with the steps involved in the transformation of raw measurement data to these fully resolved, identified and annotated results, we have developed this quick start and vignettes.  
 
 ### How to use this repository
 
