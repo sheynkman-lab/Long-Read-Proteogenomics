@@ -114,9 +114,7 @@ The workflow accepts as input raw PacBio data and performs the assembly of predi
 
 ## Using Zenodo
 
-To make the data more accessible and FAIR, the indexed files were transferred to Zenodo using [`zenodo-upload`](https://github.com/jhpoelen/zenodo-upload) from the `University of Virginia's Gloria Sheynkman Lab` Amazon `S3` buckets.
-
-The data were prepared and stored in the development of the `Sheynkman Lab Long-read Proteogenomics Pipeline`.
+To make the data more accessible and FAIR, the indexed files were transferred to Zenodo using [`zenodo-upload`](https://github.com/jhpoelen/zenodo-upload) from the `University of Virginia's Gloria Sheynkman Lab` Amazon `S3` buckets. 
 
 Using Nextflow, configuration items can access locations in Google Compute Platform (GCP) buckets (`gs://`), Amazon Web Services (AWS) buckets (`s3://`) and Zenodo locations (`https://`) seamlessly.
 
@@ -126,7 +124,7 @@ The main reasons why ZENODO vs AWS S3: or GCP GS: are:
 2. `Cost`: These datasets are tiny but the principle stays: The less storage the better
 3. `Access`: Most users of the pipeline can most easily access `ZENODO` and will be able to use the data. AWS and GCP has an entry barriers.
 
-Details on how these data were transferred and moved from `AWS S3:` buckets are described in the [`AWS to Zenodo`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/main/AWStoZenodo.md) markdown document in this repository.
+Details on how these data were transferred and moved from `AWS S3:` buckets are described in the [`AWS to Zenodo`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/main/AWStoZenodo.md).
 
 ## Contributors
 
