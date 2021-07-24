@@ -50,7 +50,7 @@ Follow the instructions there to install.
 
 On the MacBook Pro running BigSur Version 11.4 with 16 GB Ram, It was necessary to configure the Dockerhub resources to use **`6GB`** of Ram.
 
-<img src="https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/main/docs/images/DockerHubDesktopResourceConfigurationMacWithIntelChip.png"  width="600" height="200">
+<img src="https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/main/docs/images/DockerHubDesktopResourceConfigurationMacWithIntelChip.png"  width="600" height="400">
 
 #### Obtain miniconda
 
