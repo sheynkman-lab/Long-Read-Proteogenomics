@@ -27,11 +27,11 @@ This workflow is complex, bringing together two measurement technologies to crea
 
 ### How to use this repository
 
-This repository is organized into modules and parts of this repository could be useful to different researchers to annotate their own raw data.   The workflow is written in Nextflow, allowing it to be run on virtually any platform with alterations to the configurations and other adaptations.   The visitor is encourated to fork clone and adapt and contribute.   All are encouraged to use [`GitHub Issues`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/issues) to communicate with the contributors to this open source software project.   Software addtions, modifications and contributions are done through [`GitHub Pull Requests`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/pulls)  
+This repository is organized into modules and parts of this repository could be useful to different researchers to annotate their own raw data.   The workflow is written in [`Nextflow`](https://www.nextflow.io/), allowing it to be run on virtually any platform with alterations to the configurations and other adaptations.   The visitor is encourated to fork clone and adapt and contribute.   All are encouraged to use [`GitHub Issues`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/issues) to communicate with the contributors to this open source software project.   Software addtions, modifications and contributions are done through [`GitHub Pull Requests`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/pulls)  
 
 Module processes details are documented within the [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) within this repository.  As well as linked to the third party resources used in this workflow.
 
-Vignettes have been developed to go into greater detail and walk the visitor through the [`visualization capabilities of the final annotated results`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette---How-to-Visualize-Results-from-Jurkat-Analysis) and to walk the [`visitor through a workflow with the quick start run with a demonstration configuration file`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette-Long-Read-Proteogenomics-Workflow-with-Test-Data)
+Vignettes have been developed to go into greater detail and walk the visitor through the [`visualization capabilities of the final annotated results`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette---How-to-Visualize-Results-from-Jurkat-Analysis) and to walk the visitor through the workflow with the [`quick start run with a demonstration configuration file`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette-Long-Read-Proteogenomics-Workflow-with-Test-Data)
 
 ### Quick Start
 
@@ -80,7 +80,9 @@ This Quick start uses `test_without_sqanti.config` and uses data in the Zenodo T
 nextflow run main.nf --config conf/test_without_sqanti.config 
 ```
 
-For details regarding the processes and results produced, please see the [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) and the  [`Vignette: Workflow with test data`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette-Long-Read-Proteogenomics-Workflow-with-Test-Data)
+For details regarding the processes and results produced, please see the [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) and the  [`Vignette: Workflow with test data`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette-Long-Read-Proteogenomics-Workflow-with-Test-Data).
+
+To visualize results, please see the [`visualization capabilities of the final annotated results`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette---How-to-Visualize-Results-from-Jurkat-Analysis).
 
 ## Documentation and Pipeline Vignette
 
