@@ -37,7 +37,7 @@ Vignettes have been developed to go into greater detail and walk the visitor thr
 
 This quick start and steps were performed on a MacBook Pro running BigSur Version 11.4 with 16 GB 2667 MHz DDR48 RAM and a 2.3 GHz 8-Core Intel Core i9 processor.
 
-The visitor will be walked through the pre-requisites, clone the library and execute with demonstration data also used in the [`GitHub Actions`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci_test_without_sqanti.yml).   The user is referred to the [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) and the [`Vignette: Workflow with test data`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette-Long-Read-Proteogenomics-Workflow-with-Test-Data) for greater details into each of the steps.
+The visitor will be walked through the pre-requisites, clone the library and execute with demonstration data also used in the [`GitHub Actions`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci_test_without_sqanti.yml). 
 
 #### Obtain the Desktop DockerHub Application
 
