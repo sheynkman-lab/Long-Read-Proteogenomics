@@ -85,7 +85,7 @@ cd Long-Read-Proteogenomics
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5131682.svg)](https://doi.org/10.5281/zenodo.5131682)
 
-This Quick start uses `test_without_sqanti.config` and uses data in the Zenodo Test Data Repository
+This Quick start uses the `test_without_sqanti.config` configuration file found in the `conf` directory of this repository.
 
 ```bash
 nextflow run main.nf --config conf/test_without_sqanti.config 
