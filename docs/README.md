@@ -1,8 +1,5 @@
-# sheynkman-lab/Long-Read-Proteogenomics: Documentation
+# docs
 
-The sheynkman-lab/Long-Read-Proteogenomics documentation is split into the following pages:
+This directory contains assets and images used throughout the documentation found in the [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki), [`Visualization Vignette`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette---How-to-Visualize-Results-from-Jurkat-Analysis), [`Quick Start`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics#quick-start) and [`Quick Start Processing Steps Vignette`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette-Long-Read-Proteogenomics-Workflow-with-Test-Data).
 
-* [Usage](usage.md)
-  * An overview of how the pipeline works, how to run it and a description of all of the different command-line flags.
-* [Output](output.md)
-  * An overview of the different results produced by the pipeline and how to interpret them.
+The user is refered to the *Enhanced protein isoform characterization through long-read proteogenomics* manuscript for additional details.
