@@ -31,7 +31,7 @@ This repository is organized into modules and parts of this repository could be 
 
 Module processes details are documented within the [`Wiki`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki) within this repository.  As well as linked to the third party resources used in this workflow.
 
-Vignettes have been developed to go into greater detail and walk the visitor through the [`visualization capabilities of the final annotated results`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette---How-to-Visualize-Results-from-Jurkat-Analysis) and to walk the visitor through the workflow with the [`quick start run with a demonstration configuration file`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette-Long-Read-Proteogenomics-Workflow-with-Test-Data)
+Vignettes have been developed to go into greater detail and walk the visitor through the [`visualization capabilities of the final annotated results`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette---How-to-Visualize-Results-from-Jurkat-Analysis) and to walk the visitor through the workflow with presented here with the [`quick start`](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/wiki/Vignette-Long-Read-Proteogenomics-Workflow-with-Test-Data)
 
 ### Quick Start
 
