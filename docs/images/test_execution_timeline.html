@@ -1,0 +1,231 @@
+<!doctype html>
+<!--
+  ~ Copyright 2013-2019, Centre for Genomic Regulation (CRG)
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<script type="text/javascript">
+var prot = (("https:" == document.location.protocol) ? "https://" : "http://");
+document.write(unescape("%3Cscript src='" + prot + "code.jquery.com/jquery-latest.min.js' type='text/javascript' %3E%3C/script%3E"));
+document.write(unescape("%3Cscript src='" + prot + "d3js.org/d3.v3.min.js' charset='utf-8' type='text/javascript' %3E%3C/script%3E"));
+document.write(unescape("%3Cscript src='" + prot + "cdn.rawgit.com/nextflow-io/d3-timeline/82622c4cc35bac7283b3a317826b0709ac1ae476/src/d3-timeline.js' type='text/javascript' %3E%3C/script%3E"));
+</script>
+<style type="text/css">
+* {
+  font-family: 'Lato', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+}
+
+.axis path,
+.axis line {
+fill: none;
+  stroke: black;
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+  font-size: 10px;
+}
+
+div#timeline g text {
+  font-size: 13px;
+}
+
+text.timeline-label {
+  font-size: 13px;
+}
+
+#timeline2 .axis {
+  transform: translate(0px,30px);
+  -ms-transform: translate(0px,30px); /* IE 9 */
+  -webkit-transform: translate(0px,30px); /* Safari and Chrome */
+  -o-transform: translate(0px,30px); /* Opera */
+  -moz-transform: translate(0px,30px); /* Firefox */
+}
+
+.coloredDiv {
+  height:20px; width:20px; float:left;
+}
+
+#footer {
+  padding-top: 3em; color: #bfbfbf; font-size: 13px;
+}
+
+#footer a:visited {
+  color: #bfbfbf;
+  text-decoration: underline;
+}
+</style>
+<script type="text/javascript">
+var handler=null;
+// see https://github.com/mbostock/d3/wiki/Ordinal-Scales#category20c
+var colors = d3.scale.category20c().domain(d3.range(0,20)).range()
+
+function c0(index) { return "#9c9c9c"; }
+function c1(index) { return "#bdbdbd"; }
+function c2(index) { return colors[index % 16]; } // <-- note: uses only the first 16 colors
+
+var elapsed="4m 38s"
+var beginningMillis=1627128575532;
+var endingMillis=1627128853369;
+var data=[
+{"label": "gunzip_logit_model (decompress logit model)", "times": [{"starting_time": 1627128585055, "ending_time": 1627128585152, "color":c1(0)}, {"starting_time": 1627128585152, "ending_time": 1627128585367, "color":c2(0), "label": "2s \/ 3.7 MB"}, {"starting_time": 1627128585367, "ending_time": 1627128587080, "color":c1(0)}]},
+{"label": "gencode_track_visualization", "times": [{"starting_time": 1627128585662, "ending_time": 1627128585766, "color":c1(1)}, {"starting_time": 1627128585766, "ending_time": 1627128587309, "color":c2(1), "label": "2.8s \/ 20.3 MB"}, {"starting_time": 1627128587309, "ending_time": 1627128588445, "color":c1(1)}]},
+{"label": "generate_reference_tables (gencode.v35.annotation.chr22.gtf, gencode.v35.pc_transcripts.chr22.fa)", "times": [{"starting_time": 1627128585678, "ending_time": 1627128585770, "color":c1(2)}, {"starting_time": 1627128585770, "ending_time": 1627128588322, "color":c2(2), "label": "3.8s \/ 119.5 MB"}, {"starting_time": 1627128588322, "ending_time": 1627128589461, "color":c1(2)}]},
+{"label": "make_gencode_database (gencode_protein.chr22.fasta)", "times": [{"starting_time": 1627128594877, "ending_time": 1627128594961, "color":c1(3)}, {"starting_time": 1627128594961, "ending_time": 1627128595520, "color":c2(3), "label": "1.4s \/ 15.1 MB"}, {"starting_time": 1627128595520, "ending_time": 1627128596244, "color":c1(3)}]},
+{"label": "filter_sqanti", "times": [{"starting_time": 1627128597890, "ending_time": 1627128597993, "color":c1(4)}, {"starting_time": 1627128597993, "ending_time": 1627128603047, "color":c2(4), "label": "6s \/ 86.6 MB"}, {"starting_time": 1627128603047, "ending_time": 1627128603884, "color":c1(4)}]},
+{"label": "six_frame_translation (jurkat_chr22_classification.5degfilter.tsv, ensg_gene.tsv)", "times": [{"starting_time": 1627128603913, "ending_time": 1627128603987, "color":c1(5)}, {"starting_time": 1627128603987, "ending_time": 1627128613274, "color":c2(5), "label": "10.3s \/ 82.7 MB"}, {"starting_time": 1627128613274, "ending_time": 1627128614177, "color":c1(5)}]},
+{"label": "cpat (Human_Hexamer.tsv, Human_logitModel.RData, jurkat_chr22_corrected.5degfilter.fasta)", "times": [{"starting_time": 1627128607926, "ending_time": 1627128607962, "color":c1(6)}, {"starting_time": 1627128607962, "ending_time": 1627128621171, "color":c2(6), "label": "14.1s \/ 22.3 MB"}, {"starting_time": 1627128621171, "ending_time": 1627128622047, "color":c1(6)}]},
+{"label": "transcriptome_summary", "times": [{"starting_time": 1627128610814, "ending_time": 1627128610921, "color":c1(7)}, {"starting_time": 1627128610921, "ending_time": 1627128611699, "color":c2(7), "label": "1.7s \/ 17.6 MB"}, {"starting_time": 1627128611699, "ending_time": 1627128612560, "color":c1(7)}]},
+{"label": "orf_calling (null, gencode.v35.annotation.chr22.gtf, jurkat_chr22_corrected.5degfilter.gff, pb_gene.tsv, jurkat_chr22_classification.5degfilter.tsv, jurkat_chr22_corrected.5degfilter.fasta )", "times": [{"starting_time": 1627128623874, "ending_time": 1627128623888, "color":c1(8)}, {"starting_time": 1627128623888, "ending_time": 1627128667041, "color":c2(8), "label": "44.2s \/ 517.2 MB"}, {"starting_time": 1627128667041, "ending_time": 1627128668087, "color":c1(8)}]},
+{"label": "untar_mass_spec (mass_spec_test.tar.gz)", "times": [{"starting_time": 1627128628241, "ending_time": 1627128628289, "color":c1(9)}, {"starting_time": 1627128628289, "ending_time": 1627128639653, "color":c2(9), "label": "12.4s \/ 6.5 MB"}, {"starting_time": 1627128639653, "ending_time": 1627128640636, "color":c1(9)}]},
+{"label": "mass_spec_raw_convert", "times": [{"starting_time": 1627128640713, "ending_time": 1627128640736, "color":c1(10)}, {"starting_time": 1627128640736, "ending_time": 1627128701748, "color":c2(10), "label": "1m 2s \/ 449.4 MB"}, {"starting_time": 1627128701748, "ending_time": 1627128702833, "color":c1(10)}]},
+{"label": "refine_orf_database (jurkat_chr22_best_orf.tsv, jurkat_chr22_corrected.5degfilter.fasta, 0.0)", "times": [{"starting_time": 1627128668106, "ending_time": 1627128668191, "color":c1(11)}, {"starting_time": 1627128668191, "ending_time": 1627128669754, "color":c2(11), "label": "2.4s \/ 78.5 MB"}, {"starting_time": 1627128669754, "ending_time": 1627128670541, "color":c1(11)}]},
+{"label": "make_pacbio_cds_gtf", "times": [{"starting_time": 1627128670553, "ending_time": 1627128670644, "color":c1(12)}, {"starting_time": 1627128670644, "ending_time": 1627128678992, "color":c2(12), "label": "9.3s \/ 73.1 MB"}, {"starting_time": 1627128678992, "ending_time": 1627128679891, "color":c1(12)}]},
+{"label": "rename_cds_to_exon (jurkat_chr22 gencode.v35.annotation.chr22.gtf jurkat_chr22_with_cds.gtf)", "times": [{"starting_time": 1627128681701, "ending_time": 1627128681734, "color":c1(13)}, {"starting_time": 1627128681734, "ending_time": 1627128750936, "color":c2(13), "label": "1m 10s \/ 736.9 MB"}, {"starting_time": 1627128750936, "ending_time": 1627128751956, "color":c1(13)}]},
+{"label": "metamorpheus_with_gencode_database (120426_Jurkat_highLC_Frac28.mzML)", "times": [{"starting_time": 1627128702843, "ending_time": 1627128702935, "color":c1(14)}, {"starting_time": 1627128702935, "ending_time": 1627128741935, "color":c2(14), "label": "40.5s \/ 1.7 GB"}, {"starting_time": 1627128741935, "ending_time": 1627128743322, "color":c1(14)}]},
+{"label": "metamorpheus_with_uniprot_database (120426_Jurkat_highLC_Frac28.mzML)", "times": [{"starting_time": 1627128707207, "ending_time": 1627128707234, "color":c1(15)}, {"starting_time": 1627128707234, "ending_time": 1627128746234, "color":c2(15), "label": "39.2s \/ 1.7 GB"}, {"starting_time": 1627128746234, "ending_time": 1627128746385, "color":c1(15)}]},
+{"label": "sqanti_protein", "times": [{"starting_time": 1627128751974, "ending_time": 1627128752058, "color":c1(16)}, {"starting_time": 1627128752058, "ending_time": 1627128765076, "color":c2(16), "label": "13.9s \/ 105.1 MB"}, {"starting_time": 1627128765076, "ending_time": 1627128765923, "color":c1(16)}]},
+{"label": "five_prime_utr", "times": [{"starting_time": 1627128767828, "ending_time": 1627128767877, "color":c1(17)}, {"starting_time": 1627128767877, "ending_time": 1627128771669, "color":c2(17), "label": "4.7s \/ 57.6 MB"}, {"starting_time": 1627128771669, "ending_time": 1627128772554, "color":c1(17)}]},
+{"label": "protein_classification", "times": [{"starting_time": 1627128772566, "ending_time": 1627128772654, "color":c1(18)}, {"starting_time": 1627128772654, "ending_time": 1627128773638, "color":c2(18), "label": "1.9s \/ 11.6 MB"}, {"starting_time": 1627128773638, "ending_time": 1627128774452, "color":c1(18)}]},
+{"label": "protein_gene_rename", "times": [{"starting_time": 1627128774464, "ending_time": 1627128774554, "color":c1(19)}, {"starting_time": 1627128774554, "ending_time": 1627128775372, "color":c2(19), "label": "1.7s \/ 12.3 MB"}, {"starting_time": 1627128775372, "ending_time": 1627128776123, "color":c1(19)}]},
+{"label": "metamorpheus_with_sample_specific_database_refined (120426_Jurkat_highLC_Frac28.mzML)", "times": [{"starting_time": 1627128776136, "ending_time": 1627128776226, "color":c1(20)}, {"starting_time": 1627128776226, "ending_time": 1627128831226, "color":c2(20), "label": "55.6s \/ 1.7 GB"}, {"starting_time": 1627128831226, "ending_time": 1627128831688, "color":c1(20)}]},
+{"label": "accession_mapping", "times": [{"starting_time": 1627128778859, "ending_time": 1627128778969, "color":c1(21)}, {"starting_time": 1627128778969, "ending_time": 1627128780365, "color":c2(21), "label": "2.4s \/ 68 MB"}, {"starting_time": 1627128780365, "ending_time": 1627128781287, "color":c1(21)}]},
+{"label": "filter_protein", "times": [{"starting_time": 1627128778870, "ending_time": 1627128778970, "color":c1(22)}, {"starting_time": 1627128778970, "ending_time": 1627128779830, "color":c2(22), "label": "1.9s \/ 18.4 MB"}, {"starting_time": 1627128779830, "ending_time": 1627128780734, "color":c1(22)}]},
+{"label": "metamorpheus_with_sample_specific_database_filtered (120426_Jurkat_highLC_Frac28.mzML)", "times": [{"starting_time": 1627128780755, "ending_time": 1627128780836, "color":c1(23)}, {"starting_time": 1627128780836, "ending_time": 1627128831836, "color":c2(23), "label": "51.8s \/ 1.5 GB"}, {"starting_time": 1627128831836, "ending_time": 1627128832551, "color":c1(23)}]},
+{"label": "make_hybrid_database", "times": [{"starting_time": 1627128780773, "ending_time": 1627128780837, "color":c1(24)}, {"starting_time": 1627128780837, "ending_time": 1627128781816, "color":c2(24), "label": "2.1s \/ 11.8 MB"}, {"starting_time": 1627128781816, "ending_time": 1627128782922, "color":c1(24)}]},
+{"label": "peptide_analysis", "times": [{"starting_time": 1627128782937, "ending_time": 1627128783023, "color":c1(25)}, {"starting_time": 1627128783023, "ending_time": 1627128784043, "color":c2(25), "label": "2.9s \/ 18.1 MB"}, {"starting_time": 1627128784043, "ending_time": 1627128785820, "color":c1(25)}]},
+{"label": "protein_track_visualization", "times": [{"starting_time": 1627128782944, "ending_time": 1627128783025, "color":c1(26)}, {"starting_time": 1627128783025, "ending_time": 1627128807227, "color":c2(26), "label": "25.8s \/ 63 MB"}, {"starting_time": 1627128807227, "ending_time": 1627128808773, "color":c1(26)}]},
+{"label": "metamorpheus_with_sample_specific_database_hybrid (120426_Jurkat_highLC_Frac28.mzML)", "times": [{"starting_time": 1627128782951, "ending_time": 1627128783027, "color":c1(27)}, {"starting_time": 1627128783027, "ending_time": 1627128834027, "color":c2(27), "label": "53.1s \/ 1.2 GB"}, {"starting_time": 1627128834027, "ending_time": 1627128836051, "color":c1(27)}]},
+{"label": "make_multiregion", "times": [{"starting_time": 1627128782958, "ending_time": 1627128783029, "color":c1(28)}, {"starting_time": 1627128783029, "ending_time": 1627128786255, "color":c2(28), "label": "5.1s \/ 29.8 MB"}, {"starting_time": 1627128786255, "ending_time": 1627128788091, "color":c1(28)}]},
+{"label": "metamorpheus_with_sample_specific_database_rescue_resolve ( 120426_Jurkat_highLC_Frac28.mzML jurkat_chr22_hybrid.fasta jurkat_chr22_refined_high_confidence.tsv  Task1SearchTaskconfig_rescue_resolve.toml)", "times": [{"starting_time": 1627128786415, "ending_time": 1627128786440, "color":c1(29)}, {"starting_time": 1627128786440, "ending_time": 1627128837440, "color":c2(29), "label": "52.9s \/ 1.3 GB"}, {"starting_time": 1627128837440, "ending_time": 1627128839324, "color":c1(29)}]},
+{"label": "protein_group_compare", "times": [{"starting_time": 1627128836075, "ending_time": 1627128836155, "color":c1(30)}, {"starting_time": 1627128836155, "ending_time": 1627128839481, "color":c2(30), "label": "4.5s \/ 63.5 MB"}, {"starting_time": 1627128839481, "ending_time": 1627128840550, "color":c1(30)}]},
+{"label": "peptide_novelty_analysis", "times": [{"starting_time": 1627128838895, "ending_time": 1627128838912, "color":c1(31)}, {"starting_time": 1627128838912, "ending_time": 1627128840720, "color":c2(31), "label": "3s \/ 63.6 MB"}, {"starting_time": 1627128840720, "ending_time": 1627128841932, "color":c1(31)}]},
+{"label": "peptide_track_visualization", "times": [{"starting_time": 1627128838900, "ending_time": 1627128838914, "color":c1(32)}, {"starting_time": 1627128838914, "ending_time": 1627128851051, "color":c2(32), "label": "13.2s \/ 132 MB"}, {"starting_time": 1627128851051, "ending_time": 1627128852107, "color":c1(32)}]}
+]
+
+
+function getTickFormat() {
+  var MIN = 1000 * 60
+  var HOUR = MIN * 60
+  var DAY = HOUR * 24
+  var delta = (endingMillis - beginningMillis)
+
+  if( delta < 2 * MIN ) {
+    return {
+      format: d3.time.format("%S"),
+      tickTime: d3.time.seconds,
+      tickInterval: 5,
+      tickSize: 6
+    }
+  }
+
+  if( delta < 2 * HOUR ) {
+    return {
+      format: d3.time.format("%M"),
+      tickTime: d3.time.minutes,
+      tickInterval: 5,
+      tickSize: 6
+    }
+  }
+
+  if( delta < 2 * DAY ) {
+    return {
+      format: d3.time.format("%H:%M"),
+      tickTime: d3.time.hours,
+      tickInterval: 1,
+      tickSize: 6
+    }
+  }
+
+  if( delta <= 7 * DAY ) {
+    return {
+      format: d3.time.format("%b %e %H:%M"),
+      tickTime: d3.time.hours,
+      tickInterval: 6,
+      tickSize: 6
+    }
+  }
+
+  return {
+    format: d3.time.format("%b %e"),
+    tickTime: d3.time.days,
+    tickInterval: 1,
+    tickSize: 6
+  }
+}
+
+function getLabelMargin(scale) {
+    $('<span class="labelSpan" style="display: none"></span>').appendTo('body');
+
+    var labelMargin = 0
+    $.each(data, function (key, value) {
+      labelMargin = Math.max(labelMargin, $('.labelSpan').html(value.label).width());
+    });
+
+    $('.labelSpan').remove();
+
+    return (labelMargin * scale);
+}
+
+function render() {
+  handler=null;
+  $("#timeline").empty()
+  $('#label_elapsed').text(elapsed)
+  $('#label_launch').text( d3.time.format('%d %b %Y %H:%M')(new Date(beginningMillis)) )
+
+  var width = $(window).width();
+  var chart = d3.timeline()
+    .stack() // toggles graph stacking
+    .margin({left:getLabelMargin(0.85), right:100, top:0, bottom:0})
+    .tickFormat( getTickFormat() )
+    .rowSeperators('#f5f5f5')
+    .showTimeAxisTick()
+    ;
+  var svg = d3.select("#timeline").append("svg").attr("width", width).datum(data).call(chart);
+}
+
+function hrz() {
+if( handler != null ) clearTimeout(handler)
+  handler = setTimeout(render, 150);
+}
+
+$(document).ready(render)
+$(window).resize(hrz); // resize the applet on window resize
+</script>
+</head>
+
+<body>
+<div>
+  <h3>Processes execution timeline</h3>
+  <p>
+    Launch time: <span id='label_launch'> </span><br>
+    Elapsed time: <span id='label_elapsed'> </span><br>
+    Legend: job wall time / memory usage (RAM) <span id='label_legend'> </span>
+  </p>
+  <div id="timeline"></div>
+</div>
+
+<div id='footer'>
+  Created with Nextflow -- <a href='http://www.nextflow.io' target='_blank'>http://nextflow.io</a>
+</div>
+
+<script type="text/javascript">
+var prot = (("https:" == document.location.protocol) ? "https://" : "http://");
+document.write(unescape("%3Clink href='" + prot + "fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css' %3E%3C/link%3E"));
+</script>
+</body>
+</html>

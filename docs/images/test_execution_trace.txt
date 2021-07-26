@@ -1,0 +1,34 @@
+task_id	hash	native_id	name	status	exit	submit	duration	realtime	%cpu	peak_rss	peak_vmem	rchar	wchar
+1	f0/f09963	8821	gunzip_logit_model (decompress logit model)	COMPLETED	0	2021-07-24 08:09:45.055	2s	215ms	21.7%	3.7 MB	8 MB	3 MB	3.5 MB
+4	b7/7cf8ee	8862	gencode_track_visualization	COMPLETED	0	2021-07-24 08:09:45.662	2.8s	1.5s	102.0%	20.3 MB	1009.2 MB	68.1 MB	4.3 MB
+3	4a/384dcc	8867	generate_reference_tables (gencode.v35.annotation.chr22.gtf, gencode.v35.pc_transcripts.chr22.fa)	COMPLETED	0	2021-07-24 08:09:45.678	3.8s	2.6s	106.0%	119.5 MB	1.1 GB	68.3 MB	378.9 KB
+5	31/3b940d	8955	make_gencode_database (gencode_protein.chr22.fasta)	COMPLETED	0	2021-07-24 08:09:54.877	1.4s	559ms	198.7%	15.1 MB	1005.3 MB	10.4 MB	723.3 KB
+6	ca/d5a49f	8996	filter_sqanti	COMPLETED	0	2021-07-24 08:09:57.890	6s	5.1s	118.2%	86.6 MB	1.1 GB	101.3 MB	29.2 MB
+8	78/c85399	9124	transcriptome_summary	COMPLETED	0	2021-07-24 08:10:10.814	1.7s	778ms	154.5%	17.6 MB	1007.1 MB	10.6 MB	1.1 MB
+7	26/afd42d	9041	six_frame_translation (jurkat_chr22_classification.5degfilter.tsv, ensg_gene.tsv)	COMPLETED	0	2021-07-24 08:10:03.913	10.3s	9.3s	110.9%	82.7 MB	1.1 GB	18.9 MB	5.2 MB
+9	ff/587936	9085	cpat (Human_Hexamer.tsv, Human_logitModel.RData, jurkat_chr22_corrected.5degfilter.fasta)	COMPLETED	0	2021-07-24 08:10:07.926	14.1s	13.2s	102.9%	22.3 MB	64.4 MB	24.5 MB	16 MB
+2	10/19ced1	9240	untar_mass_spec (mass_spec_test.tar.gz)	COMPLETED	0	2021-07-24 08:10:28.241	12.4s	11.4s	31.5%	6.5 MB	15.3 MB	370.9 MB	448.6 MB
+10	4e/8e4882	9194	orf_calling (null, gencode.v35.annotation.chr22.gtf, jurkat_chr22_corrected.5degfilter.gff, pb_gene.tsv, jurkat_chr22_classification.5degfilter.tsv, jurkat_chr22_corrected.5degfilter.fasta )	COMPLETED	0	2021-07-24 08:10:23.874	44.2s	43.2s	107.4%	517.2 MB	3.5 GB	86.2 MB	30.7 MB
+12	b3/8c4194	9332	refine_orf_database (jurkat_chr22_best_orf.tsv, jurkat_chr22_corrected.5degfilter.fasta, 0.0)	COMPLETED	0	2021-07-24 08:11:08.106	2.4s	1.6s	142.2%	78.5 MB	1.1 GB	20.2 MB	2.2 MB
+13	c8/4a0546	9374	make_pacbio_cds_gtf	COMPLETED	0	2021-07-24 08:11:10.553	9.3s	8.3s	94.5%	73.1 MB	1.1 GB	24.7 MB	7.8 MB
+11	8c/6804dc	9283	mass_spec_raw_convert	COMPLETED	0	2021-07-24 08:10:40.713	1m 2s	1m 1s	37.7%	449.4 MB	3.7 GB	104.8 MB	280 MB
+15	8e/93d9cd	9466	metamorpheus_with_gencode_database (120426_Jurkat_highLC_Frac28.mzML)	COMPLETED	0	2021-07-24 08:11:42.843	40.5s	39s	148.0%	1.7 GB	3.8 GB	688.2 MB	81.8 MB
+16	c2/9dd121	9530	metamorpheus_with_uniprot_database (120426_Jurkat_highLC_Frac28.mzML)	COMPLETED	0	2021-07-24 08:11:47.207	39.2s	39s	144.1%	1.7 GB	3.8 GB	689.3 MB	81.1 MB
+14	03/7061ad	9421	rename_cds_to_exon (jurkat_chr22 gencode.v35.annotation.chr22.gtf jurkat_chr22_with_cds.gtf)	COMPLETED	0	2021-07-24 08:11:21.701	1m 10s	1m 9s	102.6%	736.9 MB	4.8 GB	61.5 MB	48.8 MB
+17	52/ddcedd	9609	sqanti_protein	COMPLETED	0	2021-07-24 08:12:31.974	13.9s	13s	96.6%	105.1 MB	326.9 MB	35.8 MB	3 MB
+18	13/4b8a87	9658	five_prime_utr	COMPLETED	0	2021-07-24 08:12:47.828	4.7s	3.8s	136.8%	57.6 MB	1.2 GB	112.5 MB	2.8 MB
+19	40/98b45e	9700	protein_classification	COMPLETED	0	2021-07-24 08:12:52.566	1.9s	984ms	258.4%	11.6 MB	17.7 MB	17.9 MB	1.1 MB
+20	61/ddd848	9744	protein_gene_rename	COMPLETED	0	2021-07-24 08:12:54.464	1.7s	818ms	168.7%	12.3 MB	18.1 MB	13.8 MB	4.4 MB
+21	d0/2ac5cb	9840	filter_protein	COMPLETED	0	2021-07-24 08:12:58.870	1.9s	860ms	117.5%	18.4 MB	1007.4 MB	14.1 MB	3.5 MB
+22	fe/9226b7	9839	accession_mapping	COMPLETED	0	2021-07-24 08:12:58.859	2.4s	1.4s	121.8%	68 MB	1 GB	12.6 MB	1.3 MB
+25	f1/1a7fb2	9928	make_hybrid_database	COMPLETED	0	2021-07-24 08:13:00.773	2.1s	979ms	122.9%	11.8 MB	17.8 MB	13.6 MB	3.1 MB
+30	81/0a6758	10012	peptide_analysis	COMPLETED	0	2021-07-24 08:13:02.937	2.9s	1s	99.4%	18.1 MB	879.1 MB	12.3 MB	4.8 KB
+27	8f/ba6fdf	10022	make_multiregion	COMPLETED	0	2021-07-24 08:13:02.958	5.1s	3.2s	97.7%	29.8 MB	1020.4 MB	48.9 MB	7.2 MB
+26	3f/f07294	10014	protein_track_visualization	COMPLETED	0	2021-07-24 08:13:02.944	25.8s	24.2s	99.0%	63 MB	1 GB	33.9 MB	2.8 MB
+23	3c/388014	9787	metamorpheus_with_sample_specific_database_refined (120426_Jurkat_highLC_Frac28.mzML)	COMPLETED	0	2021-07-24 08:12:56.136	55.6s	55s	121.0%	1.7 GB	3.8 GB	688.2 MB	81.7 MB
+24	97/ace956	9923	metamorpheus_with_sample_specific_database_filtered (120426_Jurkat_highLC_Frac28.mzML)	COMPLETED	0	2021-07-24 08:13:00.755	51.8s	51s	120.2%	1.5 GB	3.5 GB	691.1 MB	82.7 MB
+29	63/cd2531	10017	metamorpheus_with_sample_specific_database_hybrid (120426_Jurkat_highLC_Frac28.mzML)	COMPLETED	0	2021-07-24 08:13:02.951	53.1s	51s	126.4%	1.2 GB	3.3 GB	687.9 MB	82.1 MB
+28	e1/923179	10197	metamorpheus_with_sample_specific_database_rescue_resolve ( 120426_Jurkat_highLC_Frac28.mzML jurkat_chr22_hybrid.fasta jurkat_chr22_refined_high_confidence.tsv  Task1SearchTaskconfig_rescue_resolve.toml)	COMPLETED	0	2021-07-24 08:13:06.415	52.9s	51s	130.9%	1.3 GB	3.3 GB	688 MB	82.2 MB
+33	93/501e4c	10306	protein_group_compare	COMPLETED	0	2021-07-24 08:13:56.075	4.5s	3.3s	152.3%	63.5 MB	1.1 GB	30.1 MB	161 KB
+31	e9/87016e	10353	peptide_novelty_analysis	COMPLETED	0	2021-07-24 08:13:58.895	3s	1.8s	189.0%	63.6 MB	1 GB	33.9 MB	3 KB
+32	33/98bd78	10354	peptide_track_visualization	COMPLETED	0	2021-07-24 08:13:58.900	13.2s	12.1s	126.9%	132 MB	1.1 GB	150.6 MB	100.3 KB
