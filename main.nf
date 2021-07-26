@@ -145,13 +145,13 @@ ch_fastq_reads = Channel.from(params.fastq_read_1, params.fastq_read_2).filter(S
 // Implements logic for cloud compatibility, NO_TOML_FILE as variable only works for envs with local file system
 projectDir = workflow.projectDir
 
-if (!params.toml_file) {
-    log.warn "No toml file specified via --toml_file for Metamorpheus, proceeding without"
+if (!params.metamorpheus_toml) {
+    log.warn "No toml file specified via --metamorpheus_toml for Metamorpheus, proceeding without"
     ch_metamorpheus_toml = Channel.value(file("${projectDir}/assets/NO_TOML_FILE"))
 }
 
-if (params.toml_file) {
-    log.warn "Metamorpheus toml file specified: ${params.toml_file}"
+if (params.metamorpheus_toml) {
+    log.warn "Metamorpheus toml file specified: ${params.metamorpheus_toml}"
     ch_metamorpheus_toml = Channel.value(file(params.metamorpheus_toml))
 }
 
@@ -2005,7 +2005,6 @@ def logHeader() {
     -${c_dim}--------------------------------------------------${c_reset}-
     """.stripIndent()
 }
-
 
 
 
