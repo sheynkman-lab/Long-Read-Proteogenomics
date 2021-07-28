@@ -1347,9 +1347,7 @@ process metamorpheus_with_gencode_database{
         file(toml_file) from ch_metamorpheus_toml_gencode
     output:
         file("toml/*")
-        file("search_results/Task1SearchTask/All*")
-        file("search_results/Task1SearchTask/prose.txt")
-        file("search_results/Task1SearchTask/results.txt")
+        file("search_results/*")
         file("search_results/Task1SearchTask/AllPeptides.Gencode.psmtsv") into ch_gencode_peptides
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.Gencode.tsv") into ch_gencode_protein_groups
     
@@ -1383,9 +1381,7 @@ process metamorpheus_with_uniprot_database{
 
     output:
         file("toml/*")
-        file("search_results/Task1SearchTask/All*")
-        file("search_results/Task1SearchTask/prose.txt")
-        file("search_results/Task1SearchTask/results.txt")
+        file("search_results/*")
         file("search_results/Task1SearchTask/AllPeptides.UniProt.psmtsv") into ch_uniprot_peptides
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.UniProt.tsv") into ch_uniprot_protein_groups
     
@@ -1421,9 +1417,7 @@ process metamorpheus_with_sample_specific_database_refined{
 
     output:
         file("toml/*")
-        file("search_results/Task1SearchTask/All*")
-        file("search_results/Task1SearchTask/prose.txt")
-        file("search_results/Task1SearchTask/results.txt")
+        file("search_results/*")
         file("search_results/Task1SearchTask/AllPeptides.${params.name}.refined.psmtsv") into ch_pacbio_peptides_refined
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.refined.tsv") into ch_pacbio_protein_groups_refined
     
@@ -1463,9 +1457,7 @@ process metamorpheus_with_sample_specific_database_filtered{
 
     output:
         file("toml/*")
-        file("search_results/Task1SearchTask/All*")
-        file("search_results/Task1SearchTask/prose.txt")
-        file("search_results/Task1SearchTask/results.txt")
+        file("search_results/*")
         file("search_results/Task1SearchTask/AllPeptides.${params.name}.filtered.psmtsv") into ch_pacbio_peptides_filtered
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.filtered.tsv") into ch_pacbio_protein_groups_filtered
     
@@ -1508,9 +1500,7 @@ process metamorpheus_with_sample_specific_database_hybrid{
 
     output:
         file("toml/*")
-        file("search_results/Task1SearchTask/All*")
-        file("search_results/Task1SearchTask/prose.txt")
-        file("search_results/Task1SearchTask/results.txt")
+        file("search_results/*")
         file("search_results/Task1SearchTask/AllPeptides.${params.name}.hybrid.psmtsv") into ch_pacbio_peptides_hybrid
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.hybrid.tsv") into ch_pacbio_protein_groups_hybrid
     
@@ -1556,9 +1546,7 @@ process metamorpheus_with_sample_specific_database_rescue_resolve{
 
     output:
         file("toml/*")
-        file("search_results/Task1SearchTask/All*")
-        file("search_results/Task1SearchTask/prose.txt")
-        file("search_results/Task1SearchTask/results.txt")
+        file("search_results/*")
         file("search_results/Task1SearchTask/AllPeptides.${params.name}.rescue_resolve.psmtsv")
         file("search_results/Task1SearchTask/AllQuantifiedProteinGroups.${params.name}.rescue_resolve.tsv")
     
