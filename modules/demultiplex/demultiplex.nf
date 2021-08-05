@@ -2,11 +2,16 @@ log.info "Demultiplexing - N F  ~  version 0.1"
 log.info "====================================="
 // Header log info
 log.info "\nPARAMETERS SUMMARY"
-log.info "ccs_reads                 : ${params.ccs_reads_dir}"
+log.info "ccs_reads                 : ${params.ccs_reads}"
 log.info "barcodes                  : ${params.barcodes}"
 
-if (!params.ccs_reads_dir) exit 1, "Cannot find file for parameter --ccs_reads_dir: ${params.ccs_reads_dir}"
-ch_ccs_reads = Channel.fromPath("${params.ccs_reads_dir}/*.ccs.bam")
+if (!params.ccs_reads) exit 1, "Cannot find file for parameter --ccs_reads_dir: ${params.ccs_reads_dir}"
+if (params.ccs_reads.endsWith(".ccs.bam")){
+    ch_ccs_reads = Channel.value(file(params.ccs_reads))
+}
+else{
+    ch_ccs_reads = Channel.fromPath("${params.ccs_reads}/*.ccs.bam")
+}
 
 if (!params.barcodes) exit 1, "Cannot find file for parameter --barcodes: ${params.barcodes}"
 ch_barcodes = Channel.value(file(params.barcodes))
@@ -162,10 +167,7 @@ process align {
     script:
         """
         pbmm2 align $genome_fasta $clustered_reads ${params.name}.aligned.bam --preset ISOSEQ --sort -j ${task.cpus} --log-level INFO
-
         """
-
-
 }
 
 process collapse {
@@ -181,6 +183,4 @@ process collapse {
         """
         isoseq3 collapse $aligned_reads ${params.name}.collapsed.gff
         """
-
-
 }

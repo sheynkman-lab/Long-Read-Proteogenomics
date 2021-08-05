@@ -3,13 +3,15 @@ FROM continuumio/miniconda3:4.8.2
 LABEL description="Basic docker image containing util software requirements for the sheynkman-lab/Long-Read-Proteogenomics pipeline's SQANTI3 module"
 ENV CONDA_ENV="sqanti3"
 
-COPY environment.yml /opt/environment.yml
+
 
 # Install procps so that Nextflow can poll CPU usage and
 # deep clean the apt cache to reduce image/layer size
 RUN apt-get update && \
     apt-get install -y \
         procps \
+        libcurl4-openssl-dev \
+        r-base \
         build-essential && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
@@ -27,10 +29,10 @@ ENV PATH /opt/conda/envs/${CONDA_ENV}/bin:$PATH
 # Clone SQANTI v1.3 from release tag using the --branch flag into new folder /opt/sqanti3
 RUN git clone https://github.com/ConesaLab/SQANTI3.git --branch v1.3 /opt/sqanti3 && \
     rm -rf /opt/sqanti3/.git && \
-    rm -rf /opt/sqanti3/example && \
-    wget -q http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/gtfToGenePred -P /opt/sqanti3/utilities/ && \
-    chmod +x /opt/sqanti3/utilities/gtfToGenePred 
+    rm -rf /opt/sqanti3/example
 
+RUN wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/gtfToGenePred -P /opt/sqanti3/utilities/ && \
+    chmod +x /opt/sqanti3/utilities/gtfToGenePred
 # Clone cDNA_Cupcake v15.1.0 from release tag using the --branch flag into new folder /opt/cDNA_Cupcake
 RUN git clone https://github.com/Magdoll/cDNA_Cupcake.git --branch v15.1.0 /opt/cDNA_Cupcake && \
     cd /opt/cDNA_Cupcake && \
@@ -42,4 +44,66 @@ RUN git clone https://github.com/Magdoll/cDNA_Cupcake.git --branch v15.1.0 /opt/
 ENV PYTHONPATH /opt/cDNA_Cupcake/sequence/
 ENV PATH "$PATH:/opt/sqanti3/"
 
-CMD [ "sqanti3_qc.py" ]
+
+# Install R packages necessary to run
+RUN Rscript -e "install.packages('BiocManager', repos='http://cran.rstudio.com'); \
+        BiocManager::install( \
+            c( \
+                'ggpubr', \
+                'ggthemes', \
+                'kableExtra', \
+                'NOISeq', \
+                'optparse', \
+                'paletteer', \
+                'qs', \
+                'rstatix', \
+                'scales', \
+                'stringr', \
+                'targets', \
+                'tarchetypes', \
+                'tidyverse' \
+            ) \
+        )"
+RUN Rscript -e "install.packages( \
+                    c( \
+                    'ggplot2', \
+                    'scales', \
+                    'reshape', \
+                    'gridExtra', \
+                    'grid', \
+                    'dplyr', \
+                    'NOISeq', \
+                    'ggplotify'), repo='http://cran.rstudio.com/')"
+# RUN Rscript -e \
+#     "tinytex::install_tinytex(); \
+#      tinytex::tlmgr_install(\
+#         c(\
+#             'amsmath', \
+#             'latex-amsmath-dev', \
+#             'iftex', \
+#             'unicode-math', \
+#             'kvoptions', \
+#             'ulem', \
+#             'environ', \
+#             'threeparttablex', \
+#             'threeparttable', \
+#             'tabu', \
+#             'pdflscape', \
+#             'colortbl', \
+#             'float', \
+#             'wrapfig', \
+#             'multirow', \
+#             'sectsty', \
+#             'makecell', \
+#             'booktabs', \
+#             'infwarerr', \
+#             'pdftexcmds', \
+#             'hyperref', \
+#             'xcolor', \
+#             'etoolbox', \
+#             'kvsetkeys', \
+#             'ltxcmds' \
+#         ) \
+#     )"
+
+CMD ["sqanti3_qc.py"]
