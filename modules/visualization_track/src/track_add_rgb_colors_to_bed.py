@@ -26,13 +26,23 @@ def calculate_rgb_shading(grp):
     out_df = pd.DataFrame(columns = ['acc_full',  'pb_acc', 'cpm', 'fc', 'log2fc', 'log2fcx3', 'ceil_idx', 'rgb'])
     for i, row in grp.iterrows():
         cpm = row['cpm']
-        fc = float(max_cpm) / float(cpm)
-        log2fc = math.log(fc, 2) 
-        log2fcx3 = log2fc * 3
-        ceil_idx = math.ceil(log2fcx3)
-        if ceil_idx > 19:
+        if cpm > 0:
+
+            fc = float(max_cpm) / float(cpm)
+            log2fc = math.log(fc, 2) 
+            log2fcx3 = log2fc * 3
+            ceil_idx = math.ceil(log2fcx3)
+            if ceil_idx > 19:
+                ceil_idx = 19
+            rgb = rgb_scale[ceil_idx] 
+        else:
+            fc = 0
+            log2fc = 0
+            log2fcx3 = 0
             ceil_idx = 19
-        rgb = rgb_scale[ceil_idx] 
+            rgb = rgb_scale[-1]
+
+
         out_df = out_df.append({'acc_full': row['acc_full'],
                        'pb_acc': row['pb_acc'],
                        'cpm': row['cpm'],
