@@ -71,5 +71,20 @@ PR: https://github.com/sheynkman-lab/Long-Read-Proteogenomics/pull/145
 
 None Added
 
+### `Dependencies`
+
+## v0.2.2
+
+PR: https://github.com/sheynkman-lab/Long-Read-Proteogenomics/pull/153
+
+### `Added`
+- output from the full test with running sqanti and running with the two fastq files now on Zenodo with a new version, [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5234651.svg)](https://doi.org/10.5281/zenodo.5234651).  A smaller version of star limited to only chr22 was added to the test repository - all tests run from laptop as well as with GitHub actions.
+
+### `Fixed`
+-- all conf files now updated with the new latest version number, test.config (which is redundant with test_with_sqanti.config), test_with_sqanti.config and test_without_sqanti.config'
+
+### `Dependencies`
+
+None added
 
 
