@@ -83,8 +83,7 @@ cd Long-Read-Proteogenomics
 
 #### Run the pipeline with the test_without_sqanti.config
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5163862.svg)](https://doi.org/10.5281/zenodo.5163862)
-
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5234651.svg)](https://doi.org/10.5281/zenodo.5234651)
 
 This Quick start uses the `test_without_sqanti.config` configuration file found in the `conf` directory of this repository.
 
