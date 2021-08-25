@@ -1,9 +1,7 @@
 name: Testing for Long Reads Proteogenomics with Sqanti
-# This workflow runs the pipeline with the minimal test dataset to check that it completes without any syntax errors
+# This workflow runs the pipeline with the minimal test dataset to check that it completes without any errors
 on:
   push:
-    branches:
-      - dev
   pull_request:
   release:
     types: [published]
