@@ -1,11 +1,13 @@
 name: Testing for Long Reads Proteogenomics with Sqanti
 # This workflow runs the pipeline with the minimal test dataset to check that it completes without any errors
+
+# Push to main or dev branches, or any commit pushed against an open pull request will trigger the CI workflow
 on:
   push:
+    branches: [main, dev]
+  # options for triggers can be found here: https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request
   pull_request:
-  release:
-    types: [published]
-
+    types: [opened, edited, synchronize, reopened]
 jobs:
   test:
     name: Run workflow tests
