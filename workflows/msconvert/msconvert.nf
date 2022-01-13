@@ -40,7 +40,7 @@ if (params.mass_spec != false) {
 
 process mass_spec_raw_convert{
    tag "${raw_file}"
-   publishDir "${params.outdir}/${params.name}/raw_convert/", mode: 'copy'
+   publishDir "${params.outdir}/raw_convert/", mode: 'copy'
    when:
       params.mass_spec != false
    input:
