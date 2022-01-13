@@ -31,9 +31,9 @@ def helpMessage() {
       | --fl_count       | isoseq full length counts               |
       | --gencode_gtf         | Gencode annotation (GTF)          |
       | --sample_gtf      | IsoSeq annotation (GTF)        |
-      | --gencode_fasta         | GGENCODE   |
-      | --sample_gtf  | SQANTI PB isoform classification  |
-      | --sample_fasta    | SQANTI PB sequence (FASTA)        |
+      | --genome_fasta         | genome fasta file    |
+      | --sample_gtf  | ISOSEQ gtf  |
+
       
 
     Other:
@@ -116,7 +116,6 @@ process sqanti3 {
   file(fl_count) from ch_fl_count
   file(gencode_gtf) from ch_gencode_gtf
   file(genome_fasta) from ch_genome_fasta_uncompressed
-  file(sample_fasta) from ch_sample_fasta
   
   
   output:
