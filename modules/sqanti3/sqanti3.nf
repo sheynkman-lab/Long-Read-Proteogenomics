@@ -77,7 +77,7 @@ Channel
     .set { ch_sample_gtf } 
 
 
-if (!params.gencode_transcript_fasta) exit 1, "Cannot find any file for parameter --gencode_transcript_fasta: ${params.gencode_transcript_fasta}"
+if (!params.genome_fasta) exit 1, "Cannot find any file for parameter --genome_fasta: ${params.genome_fasta}"
 if (params.genome_fasta.endsWith('.gz')){
    ch_genome_fasta = Channel.value(file(params.genome_fasta))
 } else {
