@@ -76,11 +76,6 @@ Channel
     .ifEmpty { error "Cannot find any seq file for parameter --sample_gtf: ${params.sample_gtf}" }
     .set { ch_sample_gtf } 
 
-Channel
-    .value(file(params.sample_fasta))
-    .ifEmpty { error "Cannot find any fasta file for parameter --sample_fasta: ${params.sample_fasta}" }
-    .set { ch_sample_fasta } 
-  
 
 if (!params.gencode_transcript_fasta) exit 1, "Cannot find any file for parameter --gencode_transcript_fasta: ${params.gencode_transcript_fasta}"
 if (params.genome_fasta.endsWith('.gz')){
