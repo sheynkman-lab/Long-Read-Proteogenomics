@@ -1601,7 +1601,7 @@ Reference Track Visualization
  * Gencode database.
 ---------------------------------------------------*/
 process gencode_track_visualization{
-    publishDir "${params.outdir}/${params.name}/track_visualization/reference"
+    publishDir "${params.outdir}/${params.name}/track_visualization/reference", mode: 'copy'
 
   input:
     file(reference_gtf) from ch_gencode_gtf
@@ -1631,9 +1631,9 @@ Protein Track Visualization
  * Shades tracks based on abundance (CPMs) and protein classification.
 ---------------------------------------------------*/
 process protein_track_visualization{
-  publishDir "${params.outdir}/${params.name}/track_visualization/refined/protein", pattern: "*_refined_*"
-  publishDir "${params.outdir}/${params.name}/track_visualization/filtered/protein", pattern: "*_filtered_*"
-  publishDir "${params.outdir}/${params.name}/track_visualization/hybrid/protein", pattern: "*_hybrid_*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/refined/protein", pattern: "*_refined_*", mode: 'copy'
+  publishDir "${params.outdir}/${params.name}/track_visualization/filtered/protein", pattern: "*_filtered_*", mode: 'copy'
+  publishDir "${params.outdir}/${params.name}/track_visualization/hybrid/protein", pattern: "*_hybrid_*", mode: 'copy'
   input:
     file(refined_cds) from ch_pb_cds_bed
     file(filtered_cds) from ch_filtered_cds_bed
@@ -1703,9 +1703,9 @@ Multiregion BED generation
  * intronic regions to be minimized for easier isoform viewing.
 ---------------------------------------------------*/
 process make_multiregion{
-  publishDir "${params.outdir}/${params.name}/track_visualization/refined", pattern: "*_refined*"
-  publishDir "${params.outdir}/${params.name}/track_visualization/filtered", pattern: "*_filtered*"
-  publishDir "${params.outdir}/${params.name}/track_visualization/hybrid", pattern: "*_high_confidence*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/refined", pattern: "*_refined*", mode: 'copy'
+  publishDir "${params.outdir}/${params.name}/track_visualization/filtered", pattern: "*_filtered*", mode: 'copy'
+  publishDir "${params.outdir}/${params.name}/track_visualization/hybrid", pattern: "*_high_confidence*", mode: 'copy'
   input:
     file(refined_gtf) from ch_pb_cds_multiregion
     file(filtered_gtf) from ch_filtered_cds_multiregion
@@ -1739,9 +1739,9 @@ Peptide Track Visualization
  * for refined, filtered and hybrid databases
 ---------------------------------------------------*/
 process peptide_track_visualization{
-  publishDir "${params.outdir}/${params.name}/track_visualization/refined/peptide", pattern: "*_refined_*"
-  publishDir "${params.outdir}/${params.name}/track_visualization/filtered/peptide", pattern: "*_filtered_*"
-  publishDir "${params.outdir}/${params.name}/track_visualization/hybrid/peptide", pattern: "*_hybrid_*"
+  publishDir "${params.outdir}/${params.name}/track_visualization/refined/peptide", pattern: "*_refined_*", mode: 'copy'
+  publishDir "${params.outdir}/${params.name}/track_visualization/filtered/peptide", pattern: "*_filtered_*", mode: 'copy'
+  publishDir "${params.outdir}/${params.name}/track_visualization/hybrid/peptide", pattern: "*_hybrid_*", mode: 'copy'
 
   when:
     params.mass_spec != false
