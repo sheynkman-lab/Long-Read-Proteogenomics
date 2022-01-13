@@ -116,7 +116,7 @@ process sqanti3 {
   file(fl_count) from ch_fl_count
   file(gencode_gtf) from ch_gencode_gtf
   file(genome_fasta) from ch_genome_fasta_uncompressed
-  
+  file(sample_Gtf) from ch_sample_gtf
   
   output:
   file("*")
