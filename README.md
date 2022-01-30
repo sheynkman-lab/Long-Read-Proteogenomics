@@ -6,9 +6,12 @@
 
 # Sheynkman-Lab/Long-Read-Proteogenomics
 
-`Updated: 2021 July 24`
 
-This is the repository for the **Long-Read Proteogenomics** workflow.  Written in [`Nextflow`](https://www.nextflow.io/), it is a modular workflow beneficial to both the `Transcriptomics` and `Proteomics` fields. The data from both `Long-Read IsoSeq sequencing` with `PacBio` and `Mass spectrometry-based proteomics` used in the classification and analysis of protein isoforms expressed in `Jurkat` cells and described in the publication `Enhanced protein isoform characterization through long-read proteogenomics`, which will be made public in Fall 2021.
+`Updated: 2022 January 30`
+
+This is the repository for the **Long-Read Proteogenomics workflow**.  Written in [`Nextflow`](https://www.nextflow.io/), it is a modular workflow beneficial to both the `Transcriptomics` and `Proteomics` fields. The data from both `Long-Read IsoSeq sequencing` with `PacBio` and `Mass spectrometry-based proteomics` used in the classification and analysis of protein isoforms expressed in `Jurkat` cells and described in the publication `Enhanced protein isoform characterization through long-read proteogenomics`, which will be made public in Fall 2022.
+
+The output data resulting from the execution of this workflow for the [Manuscript](). May be found here [insert Zenodo Reference here].   The Analysis to produce the figures for the manuscript may be found in the companion repository [**Long-Read Proteogenomics Analysis**](https://github.com/sheynkman-lab/Long-Read-Proteogenomics-Analysis)
 
 A goal in the biomedical field is to delineate the protein isoforms that are expressed and have pathophysiological relevance. Towards this end, new approaches are needed to detect protein isoforms in clinical samples. Mass spectrometry (MS) is the main methodology for protein detection; however, poor coverage and incompleteness of protein databases limit its utility for isoform-resolved analysis. Fortunately, long-read RNA-seq approaches from PacBio and Oxford Nanopore platforms offer opportunities to leverage full-length transcript data for proteomics.
 
