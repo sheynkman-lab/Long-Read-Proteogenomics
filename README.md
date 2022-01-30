@@ -6,7 +6,7 @@
 
 # Sheynkman-Lab/Long-Read-Proteogenomics
 
-`Updated: 2021 July 24`
+`Updated: 2022 January 30`
 
 This is the repository for the **Long-Read Proteogenomics** workflow.  Written in [`Nextflow`](https://www.nextflow.io/), it is a modular workflow beneficial to both the `Transcriptomics` and `Proteomics` fields. The data from both `Long-Read IsoSeq sequencing` with `PacBio` and `Mass spectrometry-based proteomics` used in the classification and analysis of protein isoforms expressed in `Jurkat` cells and described in the publication `Enhanced protein isoform characterization through long-read proteogenomics`, which will be made public in Fall 2021.
 
@@ -52,16 +52,30 @@ On the MacBook Pro running BigSur Version 11.4 with 16 GB Ram, It was necessary 
 
 <img src="https://github.com/sheynkman-lab/Long-Read-Proteogenomics/blob/main/docs/images/DockerHubDesktopResourceConfigurationMacWithIntelChip.png"  width="600" height="400">
 
-#### Obtain miniconda
+#### Obtain and install miniconda
 
 On the MacBook Pro, the [`64-bit version of miniconda was downloaded and installed`](https://docs.conda.io/en/latest/miniconda.html) follow the installation instructions.
 
 #### Create and activate a new conda environment `lrp`.
 
+To begin, open a terminal window, ensuring the miniconda installation has completed, reboot the terminal shell.
+On the Mac, this is done within a `zsh` shell environment.
+
+```bash
+exec -l zsh
+```
+
+If you already have the environment, you can see what conda environments you have with the following commnad:
+```bash
+conda info --envs
+```
+
+If you haven't already created a conda environment for this work, create and activate it now.
 ```bash
 conda create -n lrp
 conda activate lrp
 ```
+
 #### Install Nextflow.
 
 Install and set the Nextflow version.
