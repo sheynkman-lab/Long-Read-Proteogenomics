@@ -2,6 +2,8 @@
 
 This Repository contains the complete software and documentation to execute the Long-Read-Proteogenomics Workflow.
 
+## Digital Object Identifiers
+
 For the Genome Biology Manuscript.
 | DOI    | Description       |
 | ------------- | --------------------------------------------------------------------------- |
