@@ -6,7 +6,7 @@ For the Genome Biology Manuscript.
 | DOI    | Description       |
 | ------------- | --------------------------------------------------------------------------- |
 | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5920817.svg)](https://doi.org/10.5281/zenodo.5920817) | Contains the version of the repository used for execution and generation of data |
-| [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5076056.svg)](https://doi.org/10.5281/zenodo.5076056) | Contains the input data from Jurkat Samples and Reference data used in execution of the Long-Read-Proteogenomics workflow contained in this repository| 
+| [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5703754.svg)](https://doi.org/10.5281/zenodo.5703754) | Contains the input data from Jurkat Samples and Reference data used in execution of the Long-Read-Proteogenomics workflow contained in this repository| 
 | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5920920.svg)](https://doi.org/10.5281/zenodo.5920920) | Contains the output data from executing the Long-Read-Proteogenomics workflow using the Zenodo version of this repository |
 | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5920847.svg)](https://doi.org/10.5281/zenodo.5920847) | Contains the version of analysis codes and codes for generating the figures using as input the output data from executing the Long-Read-Proteogenomics Workflow version specified above |
 | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5234651.svg)](https://doi.org/10.5281/zenodo.5234651) | Contains the Test Data used with the GitHub Actions to ensure changes to this repository still execute and perform correctly |
