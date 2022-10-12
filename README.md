@@ -4,7 +4,7 @@ This Repository contains the complete software and documentation to execute the 
 
 ## Digital Object Identifiers
 
-For the Genome Biology Manuscript.
+[For the Genome Biology Manuscript: Enhanced Protein Isoform Characterization through Long Read Proteogenomics](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-022-02624-y).
 | DOI    | Description       |
 | ------------- | --------------------------------------------------------------------------- |
 | <a href="https://doi.org/10.5281/zenodo.5920817" target="_blank"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.5920817.svg?raw=true" alt="drawing" width="500"/></a> | Contains the version of the repository used for execution and generation of data |
@@ -25,7 +25,7 @@ For the Genome Biology Manuscript.
 
 This is the repository for the **Long-Read Proteogenomics workflow**.  Written in [`Nextflow`](https://www.nextflow.io/), it is a modular workflow beneficial to both the `Transcriptomics` and `Proteomics` fields. The data from both `Long-Read IsoSeq sequencing` with `PacBio` and `Mass spectrometry-based proteomics` used in the classification and analysis of protein isoforms expressed in `Jurkat` cells and described in the publication `Enhanced protein isoform characterization through long-read proteogenomics`, which will be made public in Fall 2022.
 
-The output data resulting from the execution of this workflow for the [Manuscript](). May be found here [insert Zenodo Reference here].   The Analysis to produce the figures for the manuscript may be found in the companion repository [**Long-Read Proteogenomics Analysis**](https://github.com/sheynkman-lab/Long-Read-Proteogenomics-Analysis)
+The output data resulting from the execution of this workflow for the [Manuscript: Enhanced Protein Isoform Characterization through Long Read Proteogenomics](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-022-02624-y). May be found here [insert Zenodo Reference here].   The Analysis to produce the figures for the manuscript may be found in the companion repository [**Long-Read Proteogenomics Analysis**](https://github.com/sheynkman-lab/Long-Read-Proteogenomics-Analysis)
 
 A goal in the biomedical field is to delineate the protein isoforms that are expressed and have pathophysiological relevance. Towards this end, new approaches are needed to detect protein isoforms in clinical samples. Mass spectrometry (MS) is the main methodology for protein detection; however, poor coverage and incompleteness of protein databases limit its utility for isoform-resolved analysis. Fortunately, long-read RNA-seq approaches from PacBio and Oxford Nanopore platforms offer opportunities to leverage full-length transcript data for proteomics.
 
