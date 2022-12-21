@@ -80,7 +80,7 @@ log.info "gencode_fasta  : ${params.gencode_fasta}"
     --gene_ensp gene_ensp.tsv \
     --gene_isoname gene_isoname.tsv \
     --isoname_lens isoname_lens.tsv \
-    --gen_lens gene_lens.tsv \
+    --gene_lens gene_lens.tsv \
     --protein_coding_genes protein_coding_genes.txt
     """
   }
