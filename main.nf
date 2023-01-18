@@ -1293,7 +1293,7 @@ Mass Spec File Conversion
  * by not specifying the output file, the input file is overwritten
 ---------------------------------------------------*/
 process mass_spec_raw_convert{
-
+    containerOptions "--writable-tmpfs"
     publishDir "${params.outdir}/${params.name}/raw_convert/", mode: 'copy'
     when:
       params.mass_spec != false
