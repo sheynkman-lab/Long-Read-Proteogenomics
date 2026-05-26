@@ -1,3 +1,7 @@
+> ⚠️ **This repository is archived.** LRP has been superseded by **[LRP2](https://github.com/sheynkman-lab/LRP2)**, a ground-up Nextflow rebuild with major improvements in scalability, multi-sample support, and reproducibility. New users should start with LRP2.
+>
+> This repository remains available for reproducibility of analyses in [Miller et al. 2022](https://doi.org/10.1186/s13059-022-02624-y).
+
 [![reviewdog misspell](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/catch_typos.yml/badge.svg)](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/catch_typos.yml)[![Testing for Long Reads Proteogenomics without Sqanti](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci_test_without_sqanti.yml/badge.svg)](https://github.com/sheynkman-lab/Long-Read-Proteogenomics/actions/workflows/ci_test_without_sqanti.yml)
 
 This Repository contains the complete software and documentation to execute the Long-Read-Proteogenomics Workflow.
